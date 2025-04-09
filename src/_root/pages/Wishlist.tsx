@@ -1,15 +1,7 @@
 import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
+import { WishlistItem } from '@/types';
 
-type WishlistItem = {
-  wishlist_id: number;
-  product_id: number;
-  products: {
-    product_title: string;
-    product_img1: string;
-    product_price: string;
-  };
-};
 
 export default function Wishlist() {
   const [items, setItems] = useState<WishlistItem[]>([]);

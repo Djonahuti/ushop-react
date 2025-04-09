@@ -1,17 +1,7 @@
 import supabase from '@/lib/supabaseClient';
+import { CartItem } from '@/types';
 import { useEffect, useState } from 'react';
 
-type CartItem = {
-  cart_id: number;
-  qty: number;
-  p_price: string;
-  size: string;
-  product_id: number;
-  products: {
-    product_title: string;
-    product_img1: string;
-  };
-};
 
 export default function Cart() {
   const [items, setItems] = useState<CartItem[]>([]);

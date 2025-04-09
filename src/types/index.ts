@@ -45,12 +45,14 @@ export type Manufacturer = {
 
 export type CartItem = {
     cart_id: number;
-    ip_add: string;
     product_id: number;
     qty: number;
     p_price: number;
     size: string;
-    customer_id: number;
+    products: {
+        product_title: string;
+        product_img1: string;
+    }
 };
 
 export type Customer = {
@@ -80,5 +82,9 @@ export type Order = {
 export type WishlistItem = {
     wishlist_id: number;
     product_id: number;
-    customer_id: number;
+    products: {
+        product_title: string;
+        product_img1: string;
+        product_price: number;
+    };
 }
