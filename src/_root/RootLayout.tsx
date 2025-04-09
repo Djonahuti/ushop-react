@@ -2,6 +2,7 @@ import Bottombar from "@/components/shared/Bottombar";
 import Navbar from "@/components/shared/Navbar";
 import Topbar from "@/components/shared/TopBar";
 import { Outlet } from "react-router-dom";
+import { Toaster } from "sonner";
 
 const RootLayout = () => {
   return (
@@ -13,6 +14,7 @@ const RootLayout = () => {
 
       <section>
         <Outlet />
+        <Toaster />
       </section>
 
       <Bottombar />

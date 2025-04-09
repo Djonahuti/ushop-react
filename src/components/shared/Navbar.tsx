@@ -15,12 +15,26 @@ const Navbar = () => {
 
   useEffect(() => {
     const fetchCounts = async () => {
-      const { count: wCount } = await supabase
-        .from('wishlist')
-        .select('*', { count: 'exact', head: true });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const { data: customer, error } = await supabase
+        .from('customers')
+        .select('customer_id')
+        .eq('customer_email', user.email)
+        .single();
+
+      if (error || !customer) return;
+
       const { count: cCount } = await supabase
         .from('cart')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
+        .eq('customer_id', customer.customer_id);
+
+      const { count: wCount } = await supabase
+        .from('wishlist')
+        .select('*', { count: 'exact', head: true })
+        .eq('customer_id', customer.customer_id);
   
       setWishlistCount(wCount || 0);
       setCartCount(cCount || 0);
@@ -54,6 +68,8 @@ const Navbar = () => {
       </div>
 
       <div className="flex items-center space-x-4">
+      {customer && (
+        <>
         <Link to="/wishlist">
           <Heart size={18} />
           <span className="bg-red-500 text-white rounded-full px-2 text-xs">{wishlistCount}</span>
@@ -62,6 +78,9 @@ const Navbar = () => {
           <ShoppingCart size={18} />
           <span className="bg-green-500 text-white rounded-full px-2 text-xs">{cartCount}</span>
         </Link>
+        </>
+    )}
+        {/* User Profile */}
         <Link to="/profile" className="rounded-full">
         {customer && customer.customer_image ? (
           <img

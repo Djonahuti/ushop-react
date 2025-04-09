@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '../ui/button';
 import { Product } from '@/types';
 import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from '../ui/pagination';
+import { toast } from 'sonner';
 
 type Props = {
   products: Product[];
@@ -28,19 +29,31 @@ export default function ProductCard({ products, itemsPerPage = 8 }: Props) {
   const handleAddToCart = async (product: Product) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      alert('You must be logged in to add to cart.');
+      toast.error('You must be logged in to add to cart.');
+      return;
+    }
+  
+    // Fetch customer_id
+    const { data: customer, error } = await supabase
+      .from('customers')
+      .select('customer_id')
+      .eq('customer_email', user.email)
+      .single();
+  
+    if (error || !customer) {
+      toast.error('Customer not found.');
       return;
     }
   
     await supabase.from('cart').insert({
-      ip_add: user.email, // or store customer_id if available
+      customer_id: customer.customer_id,
       product_id: product.product_id,
       qty: 1,
       p_price: product.product_price,
       size: 'Default',
     });
   
-    alert('Added to cart!');
+    toast.success('Added to cart!');
   };
 
   // Add to Cart Wishlist
@@ -48,7 +61,7 @@ export default function ProductCard({ products, itemsPerPage = 8 }: Props) {
     const { data: { user } } = await supabase.auth.getUser();
   
     if (!user) {
-      alert('You must be logged in to add to wishlist.');
+      toast.error('You must be logged in to add to wishlist.');
       return;
     }
   
@@ -60,7 +73,7 @@ export default function ProductCard({ products, itemsPerPage = 8 }: Props) {
       .single();
   
     if (error || !customer) {
-      alert('Customer not found.');
+      toast.error('Customer not found.');
       return;
     }
   
@@ -71,10 +84,10 @@ export default function ProductCard({ products, itemsPerPage = 8 }: Props) {
     });
   
     if (insertError) {
-      alert('Failed to add to wishlist.');
+      toast.error('Failed to add to wishlist.');
       console.error(insertError);
     } else {
-      alert('Added to wishlist!');
+      toast.success('Added to wishlist!');
     }
   };
 

@@ -22,12 +22,20 @@ export default function Cart() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
+      const { data: customer, error } = await supabase
+        .from('customers')
+        .select('customer_id')
+        .eq('customer_email', user.email)
+        .single();
+
+      if (error || !customer) return;
+
+      const { data, error: fetchError } = await supabase
         .from('cart')
         .select('*, products(product_title, product_img1)')
-        .eq('ip_add', user.email);
+        .eq('customer_id', customer.customer_id);
 
-      if (!error) setItems(data || []);
+      if (!fetchError) setItems(data || []);
       setLoading(false);
     };
 
