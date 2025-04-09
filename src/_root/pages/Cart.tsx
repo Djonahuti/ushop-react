@@ -1,11 +1,18 @@
+import { Button } from '@/components/ui/button';
 import supabase from '@/lib/supabaseClient';
 import { CartItem } from '@/types';
+import { Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 
 export default function Cart() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const handleRemove = async (cart_id: number) => {
+    await supabase.from('cart').delete().eq('cart_id', cart_id);
+    setItems(items.filter(item => item.cart_id !== cart_id));
+  };  
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -46,6 +53,15 @@ export default function Cart() {
             <p>Qty: {item.qty}</p>
             <p>Size: {item.size}</p>
             <p>Price: ${item.p_price}</p>
+            <Button
+              variant="ghost"
+              type="button"
+              size="sm"
+              className="mt-2 bg-red-500 rounded-full hover:bg-red-600 transition duration-200 text-white"
+              onClick={() => handleRemove(item.cart_id)}
+            >
+              <Trash2 size={16} />
+            </Button>
           </div>
         </div>
       ))}

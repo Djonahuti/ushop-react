@@ -1,11 +1,19 @@
 import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
 import { WishlistItem } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
 
 
 export default function Wishlist() {
   const [items, setItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Handle remove item from wishlist
+  const handleRemove = async (wishlist_id: number) => {
+    await supabase.from('wishlist').delete().eq('wishlist_id', wishlist_id);
+    setItems(items.filter(item => item.wishlist_id !== wishlist_id));
+  };
 
   useEffect(() => {
     const fetchWishlist = async () => {
@@ -44,6 +52,15 @@ export default function Wishlist() {
           <div>
             <h3 className="font-semibold">{item.products.product_title}</h3>
             <p className="text-green-700 font-semibold">₦{item.products.product_price}</p>
+            <Button
+              variant="ghost"
+              type="button"
+              size="sm"
+              className="mt-2 bg-red-500 rounded-full hover:bg-red-600 transition duration-200 text-white"
+              onClick={() => handleRemove(item.wishlist_id)}
+            >
+              <Trash2 size={16} />
+            </Button>
           </div>
         </div>
       ))}
