@@ -26,6 +26,12 @@ import AddImages from "./components/shared/Forms/AddImages"
 import ProductList from "./components/shared/ViewProducts"
 import EditProduct from "./components/shared/EditProduct"
 import { Database } from "./admin/pages/Database"
+import Checkout from "./_root/pages/Checkout"
+import AdminPendingOrders from "./admin/pages/AdminPendingOrders"
+import AddBank from "./components/shared/Forms/AddBank"
+import ViewPayment from "./admin/pages/ViewPayment"
+import CustomerOrders from "./_root/pages/CustomerOrder"
+import ConfirmPay from "./_root/pages/ConfirmPay"
 
 
 function App() {
@@ -54,13 +60,15 @@ function App() {
           <Route path="/admin-dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
           <Route path="/add-cat" element={<PostCategoryForm />} />
           <Route path="/add-product" element={<PostForm />} />
+          <Route path="/add-bank" element={<AddBank />} />
+          <Route path="/view-payments" element={<ViewPayment />} />
           <Route path="/add-form" element={<AddForm />} />
           <Route path="/dashboard" element={<DashboardContent />} />
           <Route path="/account" element={<Profile />} />
           <Route path="/database" element={<Database />} />
           <Route path="/users" element={<Database />} />
           <Route path="/view-products" element={<ProductList />} />
-          <Route path="/view-orders" element={<Database />} />
+          <Route path="/view-orders" element={<AdminPendingOrders />} />
           <Route
             path="/edit/:productId"
             element={
@@ -87,6 +95,33 @@ function App() {
           element={
             <StrictRoute>
               <Wishlist />
+            </StrictRoute>
+          }
+        />
+
+        <Route
+          path="/checkout"
+          element={
+            <StrictRoute>
+              <Checkout />
+            </StrictRoute>
+          }
+        />
+
+        <Route
+          path="/my-orders"
+          element={
+            <StrictRoute>
+              <CustomerOrders />
+            </StrictRoute>
+          }
+        />
+
+        <Route
+          path="/confirm-payment/:invoiceNo"
+          element={
+            <StrictRoute>
+              <ConfirmPay />
             </StrictRoute>
           }
         />

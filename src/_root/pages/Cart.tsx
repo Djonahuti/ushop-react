@@ -1,18 +1,30 @@
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import supabase from '@/lib/supabaseClient';
 import { CartItem } from '@/types';
 import { Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 
 export default function Cart() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  // Handle total sum of cart
+  const total = items.reduce((sum, item) => sum + (Number(item.p_price) * item.qty), 0);
 
   const handleRemove = async (cart_id: number) => {
     await supabase.from('cart').delete().eq('cart_id', cart_id);
     setItems(items.filter(item => item.cart_id !== cart_id));
-  };  
+  };
+  
+  const handleQtyChange = async (cart_id: number, qty: number) => {
+    await supabase.from('cart').update({ qty }).eq('cart_id', cart_id);
+    setItems(prev => prev.map(item => item.cart_id === cart_id ? { ...item, qty } : item));
+  };
+
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -62,9 +74,23 @@ export default function Cart() {
             >
               <Trash2 size={16} />
             </Button>
+            <Input
+              type="number"
+              value={item.qty}
+              min={1}
+              onChange={(e) => handleQtyChange(item.cart_id, Number(e.target.value))}
+              className="w-16 border p-1 rounded"
+            />
+
+            <div className="text-right font-bold text-lg">
+              Total: ₦{total.toLocaleString()}
+            </div>
           </div>
         </div>
       ))}
+      <Button onClick={() => navigate('/checkout')} className="mt-4">
+        Proceed to Checkout
+      </Button>
     </div>
   );
 }

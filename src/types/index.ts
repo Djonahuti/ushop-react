@@ -71,7 +71,10 @@ export type Customer = {
 export type Order = {
     order_id: number;
     order_date: string;
-    order_total: number;
+    due_amount: number;
+    invoice_no: number;
+    qty: number;
+    size: string;
     order_status: string;
     customer_id: number;
     customers: {
@@ -87,4 +90,44 @@ export type WishlistItem = {
         product_img1: string;
         product_price: number;
     };
+}
+
+export type Coupon = {
+    coupon_id: number;
+    coupon_code: string;
+    coupon_price: number;
+    coupon_limit: number;
+    coupon_used: number;
+};
+
+export type PendingOrder = {
+    p_order_id: number;
+    invoice_no: number;
+    qty: number;
+    size: string;
+    order_status: string;
+    products?: {
+        product_title: string;
+    };
+    customers?: {
+        customer_name: string;
+    };
+    payment_ref: number;
+}
+
+export type Bank = {
+    id: number;
+    bank_name: string;
+    account_number: string;
+    account_name: string;
+}
+
+export type Payment = {
+    payment_id: number;
+    ref_no: number;
+    invoice_no: number;
+    payment_date: string;
+    payment_mode: string;
+    code: number;
+    amount: number;
 }
