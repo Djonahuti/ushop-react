@@ -79,6 +79,7 @@ export type Order = {
     customer_id: number;
     customers: {
         customer_name: string;
+        customer_email: string;
     } | null;
 };
 
@@ -120,6 +121,8 @@ export type Bank = {
     bank_name: string;
     account_number: string;
     account_name: string;
+    logo_url: string;
+    payment_url: string;
 }
 
 export type Payment = {

@@ -7,15 +7,17 @@ import { useParams } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import supabase from '@/lib/supabaseClient';
 import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
-  invoice_no: z.string().min(6),
+  invoice_no: z.string().min(12),
   amount: z.string().min(1),
   ref_no: z.string().min(5),
   bank: z.string().nonempty('Select a bank'),
 });
 
 export default function ConfirmPay() {
+  const [isPending, setIsPending] = useState(false);
   const { invoiceNo } = useParams();
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -38,6 +40,7 @@ export default function ConfirmPay() {
   }, []);  
 
   const onSubmit = async (values: { invoice_no: string; amount: string; ref_no: string; bank: string }) => {
+    setIsPending(true);
     const { invoice_no, amount, ref_no } = values;
 
     // Insert payment record
@@ -50,20 +53,21 @@ export default function ConfirmPay() {
       code: null,
     });
 
-    // Update order status to processed
-    await supabase.from('orders').update({ order_status: 'processed' }).eq('invoice_no', invoice_no);
-    await supabase.from('pending_orders').update({ order_status: 'processed' }).eq('invoice_no', invoice_no);
+    // Update order status to Paid
+    await supabase.from('orders').update({ order_status: 'Paid' }).eq('invoice_no', invoice_no);
+    await supabase.from('pending_orders').update({ order_status: 'Paid' }).eq('invoice_no', invoice_no);
 
     alert('Your payment confirmation has been submitted!');
+    setIsPending(false);
   };
 
   return (
     <div className="p-4 max-w-lg mx-auto">
       <h2 className="text-xl font-bold mb-4">Confirm Offline Payment</h2>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <Input {...form.register('invoice_no')} placeholder="Invoice Number" disabled />
-        <Input {...form.register('amount')} placeholder="Amount Paid" type="number" />
-        <Input {...form.register('ref_no')} placeholder="Bank Transaction Ref No." />
+        <div>Invoice NO:<Input {...form.register('invoice_no')} placeholder="Invoice Number" disabled /></div>
+        <div>Exact Amount:<Input {...form.register('amount')} placeholder="Amount Paid" type="number" /></div>
+        <div>Transaction Reference NO:<Input {...form.register('ref_no')} placeholder="Bank Transaction Ref No." /></div>
 
         <Controller
           control={form.control}
@@ -84,8 +88,9 @@ export default function ConfirmPay() {
           )}
         />
 
-        <Button type="submit" className="w-full">
-          Submit Confirmation
+        <Button type="submit" className="w-full" disabled={isPending}>
+          {isPending ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : null}
+          {isPending ? 'Submiting...' : 'Submit Confirmation'}
         </Button>
       </form>
     </div>

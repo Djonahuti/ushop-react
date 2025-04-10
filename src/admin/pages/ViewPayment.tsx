@@ -29,7 +29,6 @@ export default function ViewPayment() {
       const { data } = await supabase
         .from('payments')
         .select('*')
-        .eq('payment_id', 1); // Adjust the query as needed
 
       setPayments(data || []);
     };

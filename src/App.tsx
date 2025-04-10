@@ -118,7 +118,7 @@ function App() {
         />
 
         <Route
-          path="/confirm-payment/:invoiceNo"
+          path="/confirm-pay/:invoiceNo"
           element={
             <StrictRoute>
               <ConfirmPay />

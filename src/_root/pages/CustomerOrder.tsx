@@ -2,34 +2,66 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import supabase from '@/lib/supabaseClient';
-import { Order } from '@/types';
+import { Bank, Order } from '@/types';
 import { generateInvoicePDF } from '@/utils/generateInvoicePDF';
+import { toast } from 'sonner';
 
 export default function CustomerOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const navigate = useNavigate();
   const [customer, setCustomer] = useState<{ customer_id: string } | null>(null);
+  const [banks, setBank] = useState<Bank[]>([]);
 
+  const handleReceive = async (invoice_no: number) => {
+    await supabase
+      .from('orders')
+      .update({ order_status: 'RECEIVED' })
+      .eq('invoice_no', invoice_no);
+
+    await supabase
+      .from('pending_orders')
+      .update({ order_status: 'COMPLETED' })
+      .eq('invoice_no', invoice_no);
+
+      toast.success('RECEIVED!');
+    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+  };
+  
   useEffect(() => {
     const fetchOrders = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      const { data: customer } = await supabase
+      if (!user) return;
+
+      const { data: customerData } = await supabase
         .from('customers')
         .select('customer_id')
-        .eq('customer_email', user?.email)
+        .eq('customer_email', user.email)
         .single();
-        setCustomer(customer);
 
-      const { data } = await supabase
+      if (!customerData) return;
+        setCustomer(customerData);
+
+      const { data: orderData } = await supabase
         .from('orders')
-        .select('*')
-        .eq('customer_id', customer?.customer_id)
+        .select('*, customers(customer_name, customer_email)')
+        .eq('customer_id', customerData.customer_id)
         .order('created_at', { ascending: false });
 
-      setOrders(data || []);
+      setOrders(orderData || []);
     };
 
     fetchOrders();
+  }, []);
+
+  useEffect(() => {
+    const fetchBank = async () => {
+      const { data: bankData } = await supabase
+        .from('banks')
+        .select('*')
+
+      setBank(bankData || []);
+    }
+    fetchBank();
   }, []);
 
   return (
@@ -44,13 +76,19 @@ export default function CustomerOrders() {
             <p><strong>Amount:</strong> ₦{order.due_amount}</p>
             <p><strong>Status:</strong> {order.order_status}</p>
 
-            {order.order_status === 'pending' && (
+            {order.order_status === 'Pending' && (
               <Button onClick={() => navigate(`/confirm-pay/${order.invoice_no}`)} className="mt-2">
+                Mark as Paid
+              </Button>
+            )}
+
+            {order.order_status === 'DELIVERED' && (
+              <Button onClick={() => handleReceive(order.invoice_no)} className="mt-2">
                 Mark as Completed
               </Button>
             )}
 
-            <Button onClick={() => customer && generateInvoicePDF(order, customer)} className="ml-2">
+            <Button onClick={() => customer && generateInvoicePDF(order, banks)} className="ml-2">
               Download Invoice
             </Button>
 

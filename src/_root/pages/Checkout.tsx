@@ -17,7 +17,7 @@ export default function Checkout() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchCart = async () => {
+    const fetchCustomerAndCart = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -27,20 +27,22 @@ export default function Checkout() {
         .eq('customer_email', user.email)
         .single();
 
+      if (!customerData) return;
+
     setCustomer(customerData);
 
-      const { data } = await supabase
+      const { data: cartData } = await supabase
         .from('cart')
-        .select('*, products(product_title, product_price)')
-        .eq('customer_id', customer?.customer_id || 0);
+        .select('*, products(product_title, product_price, product_img1)')
+        .eq('customer_id', customerData.customer_id || 0);
 
-      setCart(data || []);
-      const totalAmount = (data || []).reduce((sum, item) => sum + (Number(item.p_price) * item.qty), 0);
+      setCart(cartData || []);
+      const totalAmount = (cartData || []).reduce((sum, item) => sum + (Number(item.p_price) * item.qty), 0);
       setTotal(totalAmount);
     };
 
-    fetchCart();
-  }, [customer?.customer_id]);
+    fetchCustomerAndCart();
+  }, []);
 
   const handleApplyCoupon = async () => {
     const { data: coupon, error } = await supabase
@@ -73,36 +75,56 @@ export default function Checkout() {
 
   const handlePlaceOrder = async () => {
     if (paymentMethod === 'offline') {
-    const invoice_no = Math.floor(Math.random() * 900000) + 100000; // 6-digit invoice
+      if (!customer) {
+        toast.error("Customer not found. Please log in again.");
+        return;
+      }
+      
+    const invoice_no = Math.floor(Math.random() * 900000000000) + 100000000000; // 6-digit invoice
 
     // Save to orders
-    for (const item of cart) {
-      await supabase.from('orders').insert({
-        customer_id: customer?.customer_id,
-        due_amount: total,
-        invoice_no,
-        qty: item.qty,
-        size: item.size,
-        order_date: new Date().toISOString(),
-        order_status: 'pending',
-      });
+    try {
+      for (const item of cart) {
+        const { error: orderError } = await supabase.from('orders').insert({
+          customer_id: customer.customer_id,
+          due_amount: total,
+          invoice_no,
+          qty: item.qty,
+          size: item.size,
+          order_date: new Date().toISOString(),
+          order_status: 'Pending',
+        });
 
-      await supabase.from('pending_orders').insert({
-        customer_id: customer?.customer_id,
-        invoice_no,
-        product_id: item.product_id,
-        qty: item.qty,
-        size: item.size,
-        order_status: 'pending',
-      });
+        if (orderError) {
+          console.error("Order insert error:", orderError);
+          toast.error("Failed to place order.");
+          return;
+        }
+
+        const { error: pendingError } = await supabase.from('pending_orders').insert({
+          customer_id: customer.customer_id,
+          invoice_no,
+          product_id: item.product_id,
+          qty: item.qty,
+          size: item.size,
+          order_status: 'Pending',
+        });
+
+        if (pendingError) {
+          console.error("Pending order insert error:", pendingError);
+          toast.error("Failed to create pending order.");
+          return;
+        }
+      }
+
+      await supabase.from('cart').delete().eq('customer_id', customer.customer_id);
+
+      alert(`Your order has been submitted! Invoice No: ${invoice_no}. Please pay to the following bank accounts...`);
+      navigate('/my-orders');
+    } catch (err) {
+      console.error("Unexpected error placing order:", err);
+      toast.error("Something went wrong while placing your order.");
     }
-
-
-    // Clear cart
-    await supabase.from('cart').delete().eq('customer_id', customer?.customer_id);
-
-    alert(`Your order has been submitted! Invoice No: ${invoice_no}. Please pay to the following bank accounts...`);
-    navigate('/my-orders'); // or to order history
   }
   };  
 
