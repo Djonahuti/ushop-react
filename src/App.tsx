@@ -32,6 +32,7 @@ import AddBank from "./components/shared/Forms/AddBank"
 import ViewPayment from "./admin/pages/ViewPayment"
 import CustomerOrders from "./_root/pages/CustomerOrder"
 import ConfirmPay from "./_root/pages/ConfirmPay"
+import CustomerLayout from "./_root/CustomerLayout"
 
 
 function App() {
@@ -108,6 +109,10 @@ function App() {
           }
         />
 
+        </Route>
+
+        {/* Customer routes */}
+        <Route element={<CustomerLayout />}>
         <Route
           path="/my-orders"
           element={
@@ -134,7 +139,7 @@ function App() {
             </StrictRoute>
           }
         />
-        </Route>
+        </Route>        
 
         {/* private routes */}
         <Route element={<AuthLayout />}>
