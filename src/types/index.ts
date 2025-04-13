@@ -93,6 +93,12 @@ export type Order = {
         customer_name: string;
         customer_email: string;
     } | null;
+    product_id: number;
+    products: {
+        product_title: string;
+        product_img1: string;
+        product_price: number;
+    } | null;
 };
 
 export type WishlistItem = {
@@ -122,9 +128,11 @@ export type PendingOrder = {
     products?: {
         product_title: string;
         product_img1: string;
+        product_price: number;
     };
     customers?: {
         customer_name: string;
+        customer_image: string;
     };
     created_at: string;
 }

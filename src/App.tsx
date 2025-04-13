@@ -113,6 +113,7 @@ function App() {
 
         {/* Customer routes */}
         <Route element={<CustomerLayout />}>
+
         <Route
           path="/my-orders"
           element={
