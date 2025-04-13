@@ -33,37 +33,44 @@ const data = {
       title: "My Orders",
       url: "/my-orders",
       icon: Package2,
+      toolTip: "My Order",
       isActive: true,
     },
     {
       title: "My Wishlist",
       url: "/wishlist",
       icon: Heart,
+      toolTip: "My Wishlist",
     },
     {
       title: "Payments",
       url: "#",
       icon: HandCoins,
+      toolTip: "Payment",
     },
     {
       title: "Refund and Return",
       url: "#",
       icon: Receipt,
+      toolTip: "Refund & Return",
     },
     {
       title: "Feedback",
       url: "#",
       icon: MessageCircleMore,
+      toolTip: "Feedback",
     },
     {
       title: "Shipping Address",
       url: "#",
       icon: MapPinned,
+      toolTip: "Shipping Address",
     },
     {
       title: "Settings",
       url: "/profile",
       icon: UserCog,
+      toolTip: "Settings",
       badge: "10",
     },
   ],
@@ -71,7 +78,7 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar className="border-r-0" {...props}>
+    <Sidebar collapsible="icon" className="border-r-0" {...props}>
       <SidebarHeader>
       <SidebarMenu>
           <SidebarMenuItem>

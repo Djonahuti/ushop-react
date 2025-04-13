@@ -19,6 +19,7 @@ export function NavMain({
     url: string
     icon: LucideIcon
     isActive?: boolean
+    toolTip: string
   }[]
 }) {
   return (
@@ -27,7 +28,7 @@ export function NavMain({
       <SidebarMenu>
           <SidebarMenuItem className="flex items-center gap-2">
             <SidebarMenuButton
-              tooltip="Quick Create"
+              tooltip="Overview"
               className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
             >
               <Binoculars />
@@ -46,7 +47,7 @@ export function NavMain({
         <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton asChild isActive={item.isActive}>
+            <SidebarMenuButton asChild isActive={item.isActive} tooltip={item.toolTip}>
               <a href={item.url}>
                 <item.icon />
                 <span>{item.title}</span>
