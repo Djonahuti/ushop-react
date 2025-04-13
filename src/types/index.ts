@@ -109,15 +109,16 @@ export type PendingOrder = {
     order_status: string;
     products?: {
         product_title: string;
+        product_img1: string;
     };
     customers?: {
         customer_name: string;
     };
-    payment_ref: number;
+    created_at: string;
 }
 
 export type Bank = {
-    id: number;
+    bank_id: number;
     bank_name: string;
     account_number: string;
     account_name: string;
@@ -131,6 +132,9 @@ export type Payment = {
     invoice_no: number;
     payment_date: string;
     payment_mode: string;
-    code: number;
+    bank_id: number;
+    banks?: {
+        bank_name: string;
+    }
     amount: number;
 }

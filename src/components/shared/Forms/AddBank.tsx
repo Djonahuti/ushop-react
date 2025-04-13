@@ -14,6 +14,8 @@ const schema = z.object({
   bank_name: z.string().min(1, 'Bank Name is required'),
   account_number: z.string().min(1, 'Account Number is required'),
   account_name: z.string().min(1, 'Bank Name is required'),
+  logo_url: z.string().min(1, 'Logo URL is required').optional(),
+  payment_url: z.string().min(1, 'Payment URL is required').optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -36,6 +38,8 @@ const AddBank: React.FC = () => {
         bank_name: data.bank_name,
         account_number: data.account_number,
         account_name: data.account_name,
+        logo_url: data.logo_url || null,
+        payment_url: data.payment_url || null,
       });
 
     if (error) {
@@ -79,6 +83,24 @@ const AddBank: React.FC = () => {
             placeholder="Enter Account Name"
           />
           {errors.account_name && <span className="text-red-500">{errors.account_name.message}</span>}
+        </div>
+        <div>
+          <Label htmlFor="logo_url">Logo URL</Label>
+          <Input
+            id="logo_url"
+            {...register('logo_url')}
+            placeholder="Enter Bank Logo URL"
+          />
+          {errors.logo_url && <span className="text-red-500">{errors.logo_url.message}</span>}
+        </div>
+        <div>
+          <Label htmlFor="payment_url">Payment URL</Label>
+          <Input
+            id="payment_url"
+            {...register('payment_url')}
+            placeholder="Enter Your Payment URL"
+          />
+          {errors.payment_url && <span className="text-red-500">{errors.payment_url.message}</span>}
         </div>
         <Button type="submit" disabled={isPending}>
             {isPending ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : null}

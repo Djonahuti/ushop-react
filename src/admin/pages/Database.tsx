@@ -4,41 +4,34 @@ import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/shared/data-table";
 import supabase from "@/lib/supabaseClient";
-import { Customer, Order, Product } from "@/types";
+import { Customer, PendingOrder, Payment, Order } from "@/types";
 import { toast } from "sonner";
+import { BanknoteX, Handshake, PackageCheck, Truck } from "lucide-react";
+import { IconCashRegister, IconPackageExport, IconTrolleyFilled } from '@tabler/icons-react';
 
 
 export const Database = () => {
+  const [pOrders, setPOrders] = useState<PendingOrder[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [users, setUsers] = useState<Customer[]>([]);
   const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
-    const fetchProducts = async () => {
-      const { data, error } = await supabase.from('products').select('*, manufacturers(manufacturer_title), categories(cat_title), product_categories(p_cat_title)').order('product_id', { ascending: false });
+    const fetchPayments = async () => {
+      const { data, error } = await supabase.from('payments').select('*, banks(bank_name)').order('payment_id', { ascending: false });
 
       if (error) {
-        setError('Failed to fetch products');
+        setError('Failed to fetch payments');
         console.error(error);
       } else {
-        setProducts(data || []);
+        setPayments(data || []);
       }
 
     };
 
-    fetchProducts();
+    fetchPayments();
   }, []);
-
-  const getOrders = async (): Promise<Order[]> => {
-    const { data, error } = await supabase.from('orders').select('*, customers(customer_name)').order('order_id', { ascending: false });
-    if (error) {
-      console.error('Error fetching orders:', error.message);
-      toast.error('Failed to fetch orders');
-      return [];
-    }
-    return data || [];
-  };  
   
   useEffect(() => {
     const fetchOrders = async () => {
@@ -66,27 +59,115 @@ export const Database = () => {
         }
     };
     fetchCustomerData();
-  }, []);  
+  }, []);
+  
+  useEffect(() => {
+    const fetchPendingOrders = async () => {
+      const { data, error } = await supabase
+        .from('pending_orders')
+        .select('*, products(product_title, product_img1), customers(customer_name)')
+        .order('invoice_no', { ascending: false });
 
-  const handleUpdateOrderStatus = async (id: string, status: string) => {
-    await updateOrderStatus(id, status);
-    getOrders().then(setOrders);
+      if (error) {
+        setError('Failed to fetch pending orders');
+        console.error(error);
+      } else {
+        setPOrders(data || []);
+      }
+    };
+
+    fetchPendingOrders();
+  }, []);
+
+  const handleConfirm = async (invoice_no: number) => {
+    await supabase
+      .from('orders')
+      .update({ order_status: 'Payment confirmed' })
+      .eq('invoice_no', invoice_no);
+
+    await supabase
+      .from('pending_orders')
+      .update({ order_status: 'Payment confirmed' })
+      .eq('invoice_no', invoice_no);
+
+    alert('Payment confirmed!');
+    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+  };
+
+  const handleShipped = async (invoice_no: number) => {
+    await supabase
+      .from('orders')
+      .update({ order_status: 'SHIPPED' })
+      .eq('invoice_no', invoice_no);
+
+    await supabase
+      .from('pending_orders')
+      .update({ order_status: 'SHIPPED' })
+      .eq('invoice_no', invoice_no);
+
+    alert('SHIPPED!');
+    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+  };
+
+  const handleWaiting = async (invoice_no: number) => {
+    await supabase
+      .from('orders')
+      .update({ order_status: 'WAITING TO BE SHIPPED' })
+      .eq('invoice_no', invoice_no);
+
+    await supabase
+      .from('pending_orders')
+      .update({ order_status: 'WAITING TO BE SHIPPED' })
+      .eq('invoice_no', invoice_no);
+
+    alert('WAITING TO BE SHIPPED!');
+    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+  };
+
+  const handleOutForDelivery = async (invoice_no: number) => {
+    await supabase
+      .from('orders')
+      .update({ order_status: 'OUT FOR DELIVERY' })
+      .eq('invoice_no', invoice_no);
+
+    await supabase
+      .from('pending_orders')
+      .update({ order_status: 'OUT FOR DELIVERY' })
+      .eq('invoice_no', invoice_no);
+
+    alert('OUT FOR DELIVERY!');
+    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+  };
+
+  const handleDelivered = async (invoice_no: number) => {
+    await supabase
+      .from('orders')
+      .update({ order_status: 'DELIVERED' })
+      .eq('invoice_no', invoice_no);
+
+    await supabase
+      .from('pending_orders')
+      .update({ order_status: 'DELIVERED' })
+      .eq('invoice_no', invoice_no);
+
+    alert('DELIVERED!');
+    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
 
 
-  // Function to delete a product
-  const deleteProduct = async (productId: number) => {
+  // Function to delete a payment
+  const deletePayment = async (paymentId: number) => {
     const { error } = await supabase
-      .from('products')
+      .from('payments')
       .delete()
-      .eq('product_id', productId);
+      .eq('payment_id', paymentId);
   
     if (error) {
-      console.error('Error deleting product:', error.message);
-      toast.error('Failed to delete product');
+      console.error('Error deleting payment:', error.message);
+      toast.error('Failed to delete payment');
     } else {
-      toast.success('Product deleted successfully');
-      // Optionally, refresh the product list or redirect
+      toast.success('Payment deleted successfully');
+      setPayments(payments.filter(payment => payment.payment_id !== paymentId));
     }
   };
 
@@ -107,49 +188,122 @@ export const Database = () => {
   };
 
   const orderColumns: ColumnDef<Order>[] = [
-    { accessorKey: "id", header: "Order ID" },
-    { accessorKey: "customerName", header: "Customer" },
-    { accessorKey: "status", header: "Status" },
+    { accessorKey: "order_id", header: "Order ID" },
+    { accessorKey: "customer_id", header: "Customer",
+      cell: ({ row }) => row.original.customers?.customer_name || "Unknown",
+     },
+    { accessorKey: "invoice_no", header: "Invoice No" },
+    { accessorKey: "order_date", header: "Order Date" },
+    { accessorKey: "order_status", header: "Status" },
+    { accessorKey: "qty", header: "Quantity" },
+    { accessorKey: "due_amount", header: "Total Price" },
+    { accessorKey: "size", header: "Size" },
     {
       accessorKey: "actions",
       header: "Actions",
       cell: ({ row }) => (
-        <Button onClick={() => handleUpdateOrderStatus(String(row.original.order_id), "Shipped")}>Mark as Shipped</Button>
+        <div className="flex gap-2">
+         {row.original.order_status === 'Paid' && (
+          <Button onClick={() => handleConfirm(row.original.invoice_no)} title="Confirm Payment"><IconCashRegister stroke={2} /></Button>
+         )}
+
+         {row.original.order_status === 'Payment confirmed' && (
+          <Button onClick={() => handleWaiting(row.original.invoice_no)} title="Mark as Waiting"><IconTrolleyFilled /></Button>          
+         )}
+
+         {row.original.order_status === 'WAITING TO BE SHIPPED' && (
+          <Button onClick={() => handleShipped(row.original.invoice_no)} title="Mark as Shipped"><Truck /></Button>
+         )}
+
+         {row.original.order_status === 'SHIPPED' && (
+          <Button onClick={() => handleOutForDelivery(row.original.invoice_no)} title="Mark as Out for delivery"><IconPackageExport stroke={2} /></Button>
+         )}
+
+         {row.original.order_status === 'OUT FOR DELIVERY' && (
+          <Button onClick={() => handleDelivered(row.original.invoice_no)} title="Mark as Delivered"><Handshake /></Button>
+         )}
+
+         {row.original.order_status === 'Pending' && (
+          <BanknoteX />
+         )}
+
+         {row.original.order_status === 'COMPLETED' && (
+          <PackageCheck />
+         )} 
+
+        </div>
       ),
     },
   ];
 
-  const productColumns: ColumnDef<Product>[] = [
-    { accessorKey: "product_title", header: "Title" },
-    { accessorKey: "product_price", header: "Price" },
-    { accessorKey: "product_desc", header: "Description" },
-    { accessorKey: "product_features", header: "Features" },
-    { accessorKey: "product_label", header: "Label" },
-    {
-      accessorKey: "cat_id",
-      header: "Categories",
-      cell: ({ row }) => row.original.categories?.cat_title || "Unknown",
+  const pOrderColumns: ColumnDef<PendingOrder>[] = [
+    { accessorKey: "p_order_id", header: "ID" },
+    { accessorKey: "customer_id", header: "Customer",
+      cell: ({ row }) => row.original.customers?.customer_name || "Unknown",
+     },
+    { accessorKey: "product_id", header: "Product",
+      cell: ({ row }) => row.original.products?.product_title || "Unknown",
+     },
+    { accessorKey: "product_img1", header: "Image",
+     cell: ({ row }) => <img src={`/products/${row.original.products?.product_img1}`} alt="Product" width="50" className="rounded-full" />,
     },
-    {
-      accessorKey: "p_cat_id",
-      header: "Product Categories",
-      cell: ({ row }) => row.original.product_categories?.p_cat_title || "Unknown",
-    },
-    {
-      accessorKey: "manufacturer_id",
-      header: "Manufacturers",
-      cell: ({ row }) => row.original.manufacturers?.manufacturer_title || "Unknown",
-    },
-    {
-      accessorKey: "product_img1",
-      header: "Image",
-      cell: ({ row }) => <img src={`/products/${row.original.product_img1}`} alt="Product" width="50" />,
-    },
+    { accessorKey: "invoice_no", header: "Invoice NO" },
+    { accessorKey: "order_status", header: "Status" },
+    { accessorKey: "qty", header: "Qty" },
+    { accessorKey: "size", header: "Size" },
+    { accessorKey: "created_at", header: "Order Date" },
     {
       accessorKey: "actions",
       header: "Actions",
       cell: ({ row }) => (
-        <Button onClick={() => deleteProduct(row.original.product_id)} variant="destructive">Delete</Button>
+        <div className="flex gap-2">
+         {row.original.order_status === 'Paid' && (
+          <Button onClick={() => handleConfirm(row.original.invoice_no)} title="Confirm Payment"><IconCashRegister stroke={2} /></Button>
+         )}
+
+         {row.original.order_status === 'Payment confirmed' && (
+          <Button onClick={() => handleWaiting(row.original.invoice_no)} title="Mark as Waiting"><IconTrolleyFilled /></Button>          
+         )}
+
+         {row.original.order_status === 'WAITING TO BE SHIPPED' && (
+          <Button onClick={() => handleShipped(row.original.invoice_no)} title="Mark as Shipped"><Truck /></Button>
+         )}
+
+         {row.original.order_status === 'SHIPPED' && (
+          <Button onClick={() => handleOutForDelivery(row.original.invoice_no)} title="Mark as Out for delivery"><IconPackageExport stroke={2} /></Button>
+         )}
+
+         {row.original.order_status === 'OUT FOR DELIVERY' && (
+          <Button onClick={() => handleDelivered(row.original.invoice_no)} title="Mark as Delivered"><Handshake /></Button>
+         )}
+
+         {row.original.order_status === 'Pending' && (
+          <BanknoteX />
+         )}
+
+         {row.original.order_status === 'RECEIVED' && (
+          <PackageCheck />
+         )} 
+
+        </div>
+      ),
+    },
+  ];  
+
+  const paymentColumns: ColumnDef<Payment>[] = [
+    { accessorKey: "payment_id", header: "Payment ID" },
+    { accessorKey: "amount", header: "Price" },
+    { accessorKey: "ref_no", header: "Rederence NO" },
+    { accessorKey: "payment_date", header: "Payment Date" },
+    { accessorKey: "banks", header: "Bank",
+      cell: ({ row }) => row.original.banks?.bank_name || "Unknown",
+     },
+    { accessorKey: "payment_mode", header: "Payment Mode" },
+    {
+      accessorKey: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <Button onClick={() => deletePayment(row.original.payment_id)} variant="destructive">Delete</Button>
       ),
     },
   ];
@@ -192,15 +346,19 @@ export const Database = () => {
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
                 <Tabs defaultValue="users">
                   <TabsList>
+                    <TabsTrigger value="pOrders">Pending Orders</TabsTrigger>
                     <TabsTrigger value="orders">Orders</TabsTrigger>
-                    <TabsTrigger value="products">Products</TabsTrigger>
+                    <TabsTrigger value="payments">Payments</TabsTrigger>
                     <TabsTrigger value="users">Users</TabsTrigger>
                   </TabsList>
+                  <TabsContent value="pOrders">
+                    <DataTable columns={pOrderColumns} data={pOrders} />
+                  </TabsContent>
                   <TabsContent value="orders">
                     <DataTable columns={orderColumns} data={orders} />
-                  </TabsContent>
-                  <TabsContent value="products">
-                    <DataTable columns={productColumns} data={products} />
+                  </TabsContent>                  
+                  <TabsContent value="payments">
+                    <DataTable columns={paymentColumns} data={payments} />
                   </TabsContent>
                   <TabsContent value="users">
                     <DataTable columns={userColumns} data={users} />
@@ -211,18 +369,4 @@ export const Database = () => {
     </div>
   );
 };
-async function updateOrderStatus(id: string, status: string): Promise<void> {
-  const { error } = await supabase
-    .from('orders')
-    .update({ status })
-    .eq('order_id', id);
-
-  if (error) {
-    console.error('Error updating order status:', error.message);
-    toast.error('Failed to update order status');
-  } else {
-    toast.success('Order status updated successfully');
-  }
-}
-
 

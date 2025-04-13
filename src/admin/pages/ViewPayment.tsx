@@ -28,7 +28,7 @@ export default function ViewPayment() {
     const fetchPayment = async () => {
       const { data } = await supabase
         .from('payments')
-        .select('*')
+        .select('*, banks(bank_name)')
 
       setPayments(data || []);
     };
@@ -45,7 +45,9 @@ export default function ViewPayment() {
         payments.map(payment => (
           <div key={payment.payment_id} className="border p-3 rounded mb-2">
             <p><strong>Reference NO:</strong> {payment.ref_no}</p>
-            <p><strong>Code:</strong> {payment.code}</p>
+           {payment.banks?.bank_name && (
+            <p><strong>Bank:</strong> {payment.banks.bank_name}</p>
+           )}
             <p><strong>Invoice:</strong> {payment.invoice_no}</p>
             <p><strong>Amount Paid:</strong> {payment.amount}</p>
             <p><strong>Payment Mode:</strong> {payment.payment_mode}</p>

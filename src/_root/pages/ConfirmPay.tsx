@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import supabase from '@/lib/supabaseClient';
 import { useEffect, useState } from 'react';
@@ -13,10 +13,11 @@ const formSchema = z.object({
   invoice_no: z.string().min(12),
   amount: z.string().min(1),
   ref_no: z.string().min(5),
-  bank: z.string().nonempty('Select a bank'),
+  bank_id: z.coerce.number().optional(),
 });
 
 export default function ConfirmPay() {
+  const navigate = useNavigate();
   const [isPending, setIsPending] = useState(false);
   const { invoiceNo } = useParams();
   const form = useForm({
@@ -25,21 +26,20 @@ export default function ConfirmPay() {
       invoice_no: invoiceNo || '',
       amount: '',
       ref_no: '',
-      bank: '',
     },
   });
 
-  const [banks, setBanks] = useState<{ bank_name: string }[]>([]);
+  const [banks, setBanks] = useState<{ bank_id: number; bank_name: string }[]>([]);
 
   useEffect(() => {
     const loadBanks = async () => {
-      const { data } = await supabase.from('banks').select('*');
-      setBanks(data || []);
+      const { data: banksData } = await supabase.from('banks').select('*');
+      setBanks(banksData || []);
     };
     loadBanks();
   }, []);  
 
-  const onSubmit = async (values: { invoice_no: string; amount: string; ref_no: string; bank: string }) => {
+  const onSubmit = async (values: { invoice_no: string; amount: string; ref_no: string; bank_id?: number }) => {
     setIsPending(true);
     const { invoice_no, amount, ref_no } = values;
 
@@ -50,7 +50,7 @@ export default function ConfirmPay() {
       payment_mode: 'offline',
       ref_no: Number(ref_no),
       payment_date: new Date().toISOString(),
-      code: null,
+      bank_id: values.bank_id,
     });
 
     // Update order status to Paid
@@ -58,6 +58,7 @@ export default function ConfirmPay() {
     await supabase.from('pending_orders').update({ order_status: 'Paid' }).eq('invoice_no', invoice_no);
 
     alert('Your payment confirmation has been submitted!');
+    navigate('/my-orders');
     setIsPending(false);
   };
 
@@ -71,15 +72,15 @@ export default function ConfirmPay() {
 
         <Controller
           control={form.control}
-          name="bank"
+          name="bank_id"
           render={({ field }) => (
-            <Select onValueChange={field.onChange} value={field.value}>
+            <Select onValueChange={(value) => field.onChange(Number(value))}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select Bank" />
               </SelectTrigger>
               <SelectContent>
               {banks.map((b) => (
-                <SelectItem key={b.bank_name} value={b.bank_name}>
+                <SelectItem key={b.bank_id} value={String(b.bank_id)}>
                   {b.bank_name}
                 </SelectItem>
               ))}
@@ -87,6 +88,7 @@ export default function ConfirmPay() {
             </Select>
           )}
         />
+        
 
         <Button type="submit" className="w-full" disabled={isPending}>
           {isPending ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : null}
