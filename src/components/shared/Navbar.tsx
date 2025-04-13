@@ -81,7 +81,7 @@ const Navbar = () => {
         </>
     )}
         {/* User Profile */}
-        <Link to="/profile" className="rounded-full">
+        <Link to="/profile" className="rounded-full" title={customer.customer_name}>
         {customer && customer.customer_image ? (
           <img
             src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
