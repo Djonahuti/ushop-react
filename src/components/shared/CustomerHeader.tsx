@@ -14,7 +14,7 @@ export function CustomerHeader() {
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbPage className="line-clamp-1">
-                  Dashboard
+                  <h1 className="text-base font-medium">DashBoard</h1>
                 </BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>

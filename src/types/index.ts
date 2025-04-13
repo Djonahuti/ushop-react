@@ -55,6 +55,18 @@ export type CartItem = {
     }
 };
 
+export type Admin = {
+    admin_id: number;
+    admin_email: string;
+    admin_name: string;
+    admin_contact: string;
+    admin_about: string;
+    admin_country: string;
+    admin_pass?: string;
+    admin_image?: string;
+    admin_job: string;
+};
+
 export type Customer = {
     customer_id: number;
     customer_email: string;

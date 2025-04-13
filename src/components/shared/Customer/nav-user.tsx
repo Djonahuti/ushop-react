@@ -31,29 +31,29 @@ import {
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import supabase from "@/lib/supabaseClient"
-import { Admin } from "@/types"
+import { Customer } from "@/types"
 
 
 export function NavUser() {
-  const [admin, setAdmin] = useState<Admin | null>(null);
+  const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
   const { isMobile } = useSidebar();
   
     useEffect(() => {
-      const fetchAdminData = async () => {
+      const fetchCustomerData = async () => {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
   
         if (user) {
           const { data, error } = await supabase
-            .from('admins')
+            .from('customers')
             .select('*')
-            .eq('admin_email', user.email)
+            .eq('customer_email', user.email)
             .single();
   
           if (error) {
-            console.error('Error fetching admin data:', error.message);
+            console.error('Error fetching customer data:', error.message);
           } else {
-            setAdmin(data);
+            setCustomer(data);
           }
         } else if (userError) {
           console.error('Error getting user:', userError.message);
@@ -61,20 +61,20 @@ export function NavUser() {
         setLoading(false);
       };
   
-      fetchAdminData();
+      fetchCustomerData();
     }, []);
   
     if (loading) {
       return <div>Loading...</div>;
     }
   
-    if (!admin) {
-      return <div>No admin data found.</div>;
+    if (!customer) {
+      return <div>No customer data found.</div>;
     }
   
     const handleLogout = async () => {
       await supabase.auth.signOut()
-      window.location.href = "/admin-login"
+      window.location.href = "/login"
     }
 
   return (
@@ -87,18 +87,18 @@ export function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                {admin.admin_image ? (
+                {customer.customer_image ? (
                 <AvatarImage
-                 src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${admin.admin_image}`}
-                 alt={admin.admin_name} />
+                 src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
+                 alt={customer.customer_name} />
                 ):(
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 )}
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{admin.admin_name}</span>
+                <span className="truncate font-medium">{customer.customer_name}</span>
                 <span className="truncate text-xs text-muted-foreground">
-                  {admin.admin_email}
+                  {customer.customer_email}
                 </span>
               </div>
               <MoreVerticalIcon className="ml-auto size-4" />
@@ -113,18 +113,18 @@ export function NavUser() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg grayscale">
-                {admin.admin_image ? (
+                {customer.customer_image ? (
                 <AvatarImage
-                 src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${admin.admin_image}`} 
-                 alt={admin.admin_name} />
+                 src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`} 
+                 alt={customer.customer_name} />
                 ):(
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 )}
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{admin.admin_name}</span>
+                  <span className="truncate font-medium">{customer.customer_name}</span>
                   <span className="truncate text-xs text-muted-foreground">
-                    {admin.admin_email}
+                    {customer.customer_email}
                   </span>
                 </div>
               </div>
@@ -132,7 +132,7 @@ export function NavUser() {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <Link to="/account" className="flex justify-between gap-2">
+                <Link to="/profile" className="flex justify-between gap-2">
                 <UserCircleIcon />Account
                 </Link>
               </DropdownMenuItem>

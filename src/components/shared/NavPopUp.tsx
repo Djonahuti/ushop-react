@@ -1,21 +1,17 @@
 
 import * as React from "react"
 import {
-  ArrowDown,
-  ArrowUp,
   Bell,
-  Copy,
-  CornerUpLeft,
-  CornerUpRight,
-  FileText,
-  GalleryVerticalEnd,
-  LineChart,
-  Link,
+  BriefcaseBusiness,
+  CircleHelp,
+  Megaphone,
+  MessageCircleQuestion,
   MoreHorizontal,
-  Settings2,
-  Star,
-  Trash,
-  Trash2,
+  PersonStanding,
+  Scale,
+  Cog,
+  ShieldCheck,
+  ShoppingBag,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -33,66 +29,65 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { Customer } from "@/types"
+import supabase from "@/lib/supabaseClient"
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 
 const data = [
   [
     {
-      label: "Customize Page",
-      icon: Settings2,
+      label: "Settings",
+      icon: Cog,
+      url: "*",
     },
     {
-      label: "Turn into wiki",
-      icon: FileText,
-    },
-  ],
-  [
-    {
-      label: "Copy Link",
-      icon: Link,
-    },
-    {
-      label: "Duplicate",
-      icon: Copy,
-    },
-    {
-      label: "Move to",
-      icon: CornerUpRight,
-    },
-    {
-      label: "Move to Trash",
-      icon: Trash2,
+      label: "UShop Business",
+      icon: BriefcaseBusiness,
+      url: "*",
     },
   ],
   [
     {
-      label: "Undo",
-      icon: CornerUpLeft,
+      label: "Seller Login",
+      icon: ShoppingBag,
+      url: "*",
     },
     {
-      label: "View analytics",
-      icon: LineChart,
+      label: "Buyer Protection",
+      icon: ShieldCheck,
+      url: "*",
     },
     {
-      label: "Version History",
-      icon: GalleryVerticalEnd,
+      label: "Help Center",
+      icon: CircleHelp,
+      url: "*",
     },
     {
-      label: "Show delete pages",
-      icon: Trash,
+      label: "Disputes and Reports",
+      icon: MessageCircleQuestion,
+      url: "*",
+    },
+  ],
+  [
+    {
+      label: "Report IPR infringement",
+      icon: Megaphone,
+      url: "*",
+    },
+    {
+      label: "Accessibily",
+      icon: PersonStanding,
+      url: "*",
+    },
+    {
+      label: "Penalties Information",
+      icon: Scale,
+      url: "*",
     },
     {
       label: "Notifications",
       icon: Bell,
-    },
-  ],
-  [
-    {
-      label: "Import",
-      icon: ArrowUp,
-    },
-    {
-      label: "Export",
-      icon: ArrowDown,
+      url: "*",
     },
   ],
 ]
@@ -102,16 +97,58 @@ export function NavPopUp() {
 
   React.useEffect(() => {
     setIsOpen(true)
-  }, [])
+  }, []);
+
+  const [customer, setCustomer] = React.useState<Customer | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchCustomerData = async () => {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+      if (user) {
+        const { data, error } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('customer_email', user.email)
+          .single();
+
+        if (error) {
+          console.error('Error fetching customer data:', error.message);
+        } else {
+          setCustomer(data);
+        }
+      } else if (userError) {
+        console.error('Error getting user:', userError.message);
+      }
+      setLoading(false);
+    };
+
+    fetchCustomerData();
+  }, []);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!customer) {
+    return <div>No customer data found.</div>;
+  }  
 
   return (
     <div className="flex items-center gap-2 text-sm">
       <div className="hidden font-medium text-muted-foreground md:inline-block">
-        Edit Oct 08
+        {customer.customer_email}
       </div>
-      <Button variant="ghost" size="icon" className="h-7 w-7">
-        <Star />
-      </Button>
+      <Avatar className="h-8 w-8 rounded-lg">
+        {customer.customer_image ? (
+        <AvatarImage
+         src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
+         alt={customer.customer_name} />
+        ):(
+          <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+        )}
+      </Avatar>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -135,7 +172,9 @@ export function NavPopUp() {
                       {group.map((item, index) => (
                         <SidebarMenuItem key={index}>
                           <SidebarMenuButton>
+                          <a href={item.url} className="flex items-center gap-2">
                             <item.icon /> <span>{item.label}</span>
+                          </a>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       ))}
