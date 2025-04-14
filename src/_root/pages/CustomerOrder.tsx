@@ -18,7 +18,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { generateInvoicePDF } from '@/utils/generateInvoicePDF'
 import { IconCreditCard, IconReceipt } from '@tabler/icons-react'
-import { PackageCheck } from 'lucide-react'
+import { MessageSquareText, PackageCheck } from 'lucide-react'
 import DeliveryTimeline from '@/components/shared/DeliveryTimeline'
 
 
@@ -180,11 +180,28 @@ export default function CustomerOrders() {
                     )}
 
                     {order.order_status === 'DELIVERED' && (
-                      <Button onClick={() => handleReceive(order.invoice_no)} className="mt-2">
+                      <Button onClick={() => handleReceive(order.invoice_no)} className="mt-2" title="Mark as Recieved">
                         <PackageCheck />
                       </Button>
                     )}
 
+                    {order.order_status === 'COMPLETED' && (
+                      <Button
+                        className="mt-2"
+                        onClick={() =>
+                          navigate('/feedback', {
+                            state: {
+                              customer_id: order.customer_id,
+                              product_id: order.product_id,
+                            },
+                          })
+                        }
+                        title="Leave Feedback"
+                      >
+                        <MessageSquareText />
+                      </Button>
+                    )}
+                    
                     <Button onClick={() => customer && generateInvoicePDF(order, banks)} className="ml-2" title="Download Invoice">
                         <IconReceipt stroke={2} />
                     </Button>

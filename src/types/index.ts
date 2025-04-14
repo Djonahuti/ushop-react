@@ -173,3 +173,24 @@ export type Contact = {
         subject: string;
     }
 }
+
+export type Feedback = {
+    feedback_id: number;
+    created_at: string;
+    customer_id: number;
+    product_id: number;
+    feedtype_id: number;
+    feedtype?:{
+        feedback_type: string;
+    };
+    comment: Text;
+    rating: number;
+    customers?:{
+        customer_name:string;
+        customer_image:string;
+    };
+    products?:{
+        product_title: string;
+        product_img1: string;
+    };
+}

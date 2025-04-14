@@ -36,6 +36,7 @@ import CustomerLayout from "./_root/CustomerLayout"
 import MailLayout from "./components/shared/Mail/MailLayout"
 import Inbox from "./components/shared/Mail/Inbox"
 import Overview from "./components/shared/Overview"
+import FeedbackPage from "./_root/pages/FeedbackPage"
 
 
 function App() {
@@ -50,7 +51,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Navigate to={user ? "/" : "/login"} />} />
         <Route
-          path="/feedback"
+          path="/aba"
           element={
             <ProtectedRoute>
               <AddImages />
@@ -144,6 +145,15 @@ function App() {
           element={
             <StrictRoute>
               <ConfirmPay />
+            </StrictRoute>
+          }
+        />
+
+        <Route
+          path="/feedback"
+          element={
+            <StrictRoute>
+              <FeedbackPage />
             </StrictRoute>
           }
         />

@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Heart, Ticket, CreditCard, Truck, Package, CheckCircle, Clock } from "lucide-react"
+import { Heart, Ticket, CreditCard, Truck, Package, CheckCircle, Clock, Wallet } from "lucide-react"
 import { Customer } from "@/types"
 import { useEffect, useState } from "react"
 import supabase from "@/lib/supabaseClient"
@@ -100,7 +100,7 @@ export default function Overview() {
           <div className="grid grid-cols-4 gap-4 text-center text-sm text-muted-foreground">
             <div className="flex flex-col items-center">
             <Link to="/my-orders">
-                <CreditCard className="w-6 h-6 mb-1 text-orange-500" />
+                <Wallet className="w-6 h-6 mb-1 text-orange-500" />
                 Unpaid           
             </Link>                
             </div>
