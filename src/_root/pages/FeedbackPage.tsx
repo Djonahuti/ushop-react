@@ -1,3 +1,4 @@
+//It's not storing the order_id in the feedback database table. So I updated the code to this
 // FeedbackPage.tsx
 
 'use client'
@@ -17,6 +18,7 @@ import supabase from '@/lib/supabaseClient'
 import { useEffect, useState } from 'react'
 
 const schema = z.object({
+  order_id: z.number(),
   customer_id: z.number(),
   product_id: z.number(),
   feedtype_id:z.coerce.number().optional(),
@@ -27,6 +29,7 @@ const schema = z.object({
 type FeedbackFormData = z.infer<typeof schema>
 
 export default function FeedbackPage() {
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const { state } = useLocation()
   const navigate = useNavigate()
   const [feedtypes, setFeedtypes] = useState<{ feedback_type: string; feedtype_id: number }[]>([])
@@ -46,6 +49,7 @@ export default function FeedbackPage() {
     if (state?.customer_id && state?.product_id) {
       setValue('customer_id', state.customer_id)
       setValue('product_id', state.product_id)
+      setValue('order_id', state.order_id);
     } else {
       toast.error('Missing order data')
       navigate('/my-orders')
@@ -74,15 +78,42 @@ export default function FeedbackPage() {
     }
   }
 
+  useEffect(() => {
+    const checkFeedback = async () => {
+      if (!state?.order_id || !state?.customer_id) return;
+  
+      const { data, error } = await supabase
+        .from('feedbacks')
+        .select('feedback_id')
+        .eq('order_id', state.order_id)
+        .eq('customer_id', state.customer_id);
+  
+      if (error) {
+        console.error('Error checking feedback:', error.message);
+      }
+  
+      if (data && data.length > 0) {
+        setHasSubmitted(true);
+      }
+    };
+  
+    checkFeedback();
+  }, [state]);
+
+
+
   return (
     <div className="max-w-xl mx-auto p-4">
       <Card>
         <CardContent className="p-6 space-y-4">
           <h2 className="text-xl font-bold">Leave Feedback</h2>
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {hasSubmitted ? (
+            <p>You've submitted already</p>
+          ): (
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Input type="hidden" {...register('customer_id')} />
             <Input type="hidden" {...register('product_id')} />
+            <Input type="hidden" {...register('order_id')} />
 
             {/* Feedback Type */}
             <div>
@@ -140,9 +171,13 @@ export default function FeedbackPage() {
             </div>
 
             <Button type="submit" className="w-full">Submit Feedback</Button>
-          </form>
+          </form>    
+          )}
+
         </CardContent>
       </Card>
     </div>
   )
 }
+
+

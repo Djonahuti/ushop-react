@@ -13,8 +13,8 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
-import { Bank, Order } from '@/types'
-import { useNavigate } from 'react-router-dom'
+import { Bank, Feedback, Order } from '@/types'
+import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { generateInvoicePDF } from '@/utils/generateInvoicePDF'
 import { IconCreditCard, IconReceipt } from '@tabler/icons-react'
@@ -22,8 +22,9 @@ import { MessageSquareText, PackageCheck } from 'lucide-react'
 import DeliveryTimeline from '@/components/shared/DeliveryTimeline'
 
 
-export default function CustomerOrders() {
-  const [orders, setOrders] = useState<Order[]>([]);
+const CustomerOrders = () => {
+  const [order, setOrders] = useState<Order[]>([]);
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const navigate = useNavigate();  
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [tab, setTab] = useState<string>('all');
@@ -35,16 +36,16 @@ export default function CustomerOrders() {
   const handleReceive = async (invoice_no: number) => {
     await supabase
       .from('orders')
-      .update({ order_status: 'RECEIVED' })
+      .update({ order_status: 'COMPLETED' })
       .eq('invoice_no', invoice_no);
 
     await supabase
       .from('pending_orders')
-      .update({ order_status: 'COMPLETED' })
+      .update({ order_status: 'RECEIVED' })
       .eq('invoice_no', invoice_no);
 
       toast.success('RECEIVED!');
-    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+    setOrders(order.filter(o => o.invoice_no !== invoice_no));
   };
 
   useEffect(() => {
@@ -74,24 +75,35 @@ export default function CustomerOrders() {
 
       setOrders(orderData || []);
       setFilteredOrders(orderData || []);
+
+      const { data: feedbackData, error: feedbackError } = await supabase
+        .from('feedbacks')
+        .select('*, customers(customer_name, customer_image), products(product_title, product_img1)')
+        .eq('customer_id', customerData.customer_id);
+
+      if (feedbackError) {
+        console.error('Failed to fetch feedbacks', feedbackError.message);
+      } else {
+        setFeedbacks(feedbackData || []);
+      }
     };
 
     fetchOrders();
   }, []);
 
   useEffect(() => {
-    const filtered = orders.filter(order => {
-      const matchStatus = tab === 'all' || order.order_status === tab;
+    const filtered = order.filter(o => {
+      const matchStatus = tab === 'all' || o.order_status === tab;
       const matchSearch = search.trim().length === 0 || (
-        order.invoice_no.toString().includes(search) ||
-        order.products?.product_title?.toLowerCase().includes(search.toLowerCase()) ||
-        order.customers?.customer_name?.toLowerCase().includes(search.toLowerCase())
+        o.invoice_no.toString().includes(search) ||
+        o.products?.product_title?.toLowerCase().includes(search.toLowerCase()) ||
+        o.customers?.customer_name?.toLowerCase().includes(search.toLowerCase())
       );
       return matchStatus && matchSearch;
     });
 
     setFilteredOrders(filtered);
-  }, [search, tab, orders]);
+  }, [search, tab, order]);
 
   useEffect(() => {
     const fetchBank = async () => {
@@ -115,6 +127,7 @@ export default function CustomerOrders() {
           <TabsTrigger value="WAITING TO BE SHIPPED">To Ship</TabsTrigger>
           <TabsTrigger value="SHIPPED">Shipped</TabsTrigger>
           <TabsTrigger value="OUT FOR DELIVERY">Out for delivery</TabsTrigger>
+          <TabsTrigger value="DELIVERED">Arrived</TabsTrigger>
           <TabsTrigger value="COMPLETED">Completed</TabsTrigger>
         </TabsList>
 
@@ -133,8 +146,13 @@ export default function CustomerOrders() {
             {filteredOrders.length === 0 ? (
               <p className="text-muted-foreground">No orders found.</p>
             ) : (
-              filteredOrders.map(order => (
-                <Card key={order.order_id} className="shadow-sm">
+              filteredOrders.map(order => {
+                const orderFeedback = feedbacks.find(
+                  f => f.order_id === order.order_id
+                );
+
+                return (
+                  <Card key={order.order_id} className="shadow-sm">
                   <CardContent className="p-4 flex flex-col gap-2">
                     <div className="flex justify-between text-sm text-muted-foreground">
                       <div>
@@ -173,6 +191,7 @@ export default function CustomerOrders() {
                       Total: ₦{order.due_amount?.toLocaleString()}
                       <DeliveryTimeline status={order.order_status} />                      
                     <div>
+                      
                     {order.order_status === 'Pending' && (
                       <Button onClick={() => navigate(`/confirm-pay/${order.invoice_no}`)} className="mt-2" title="Mark as paid">
                         <IconCreditCard stroke={2} />
@@ -185,22 +204,31 @@ export default function CustomerOrders() {
                       </Button>
                     )}
 
-                    {order.order_status === 'COMPLETED' && (
-                      <Button
-                        className="mt-2"
-                        onClick={() =>
-                          navigate('/feedback', {
-                            state: {
-                              customer_id: order.customer_id,
-                              product_id: order.product_id,
-                            },
-                          })
-                        }
-                        title="Leave Feedback"
-                      >
-                        <MessageSquareText />
-                      </Button>
-                    )}
+              {/* Feedback section */}
+              {orderFeedback ? (
+                <div className="mt-4 border-top space-y-2">
+                  <h4 className="text-lg font-semibold">Your Feedback</h4>
+                  <p className="text-sm text-muted-foreground">Type: {orderFeedback.feedtype?.feedback_type}</p>
+                  <p className="text-yellow-500 text-xl">
+                    {'★'.repeat(orderFeedback.rating)}{'☆'.repeat(5 - orderFeedback.rating)}
+                  </p>
+                  <p className="text-base">{String(orderFeedback.comment)}</p>
+                  <small className="text-muted">
+                    - {orderFeedback.customers?.customer_name}
+                  </small>
+                </div>
+              ) : (
+                order.order_status === "COMPLETED" && (
+                  <Link
+                    to={`/feedback/${order.order_id}`}
+                    state={{ order_id: order.order_id, customer_id: order.customer_id, product_id: order.product_id }}
+                    className="btn btn-outline-primary mt-2"
+                    title="Leave Feedback"
+                  >
+                    <MessageSquareText />
+                  </Link>
+                )
+              )}
                     
                     <Button onClick={() => customer && generateInvoicePDF(order, banks)} className="ml-2" title="Download Invoice">
                         <IconReceipt stroke={2} />
@@ -210,11 +238,15 @@ export default function CustomerOrders() {
                     </div>
                   </CardContent>
                 </Card>
-              ))
+                );
+              })
             )}
           </div>
         </TabsContent>
+
       </Tabs>
     </div>
   )
 }
+
+export default CustomerOrders

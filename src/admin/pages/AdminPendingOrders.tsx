@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { IconCashRegister, IconPackageExport, IconTrolleyFilled } from '@tabler/icons-react';
-import { BanknoteX, Handshake, PackageCheck, Truck } from 'lucide-react';
+import { BanknoteX, DoorOpen, Handshake, PackageCheck, Truck } from 'lucide-react';
 import DeliveryProgressBar from '@/components/shared/DeliveryProgressBar';
 
 export default function AdminPendingOrders() {
@@ -135,6 +135,7 @@ export default function AdminPendingOrders() {
           <TabsTrigger value="WAITING TO BE SHIPPED">To Ship</TabsTrigger>
           <TabsTrigger value="SHIPPED">Shipped</TabsTrigger>
           <TabsTrigger value="OUT FOR DELIVERY">Out for delivery</TabsTrigger>
+          <TabsTrigger value="DELIVERED">Arrived</TabsTrigger>
           <TabsTrigger value="RECEIVED">Completed</TabsTrigger>
         </TabsList>
 
@@ -223,6 +224,12 @@ export default function AdminPendingOrders() {
                     {order.order_status === 'Pending' && (
                      <Button className='mt-2 ml-2'>
                       <BanknoteX />                      
+                     </Button>                      
+                    )}
+
+                    {order.order_status === 'DELIVERED' && (
+                     <Button className='mt-2 ml-2'>
+                      <DoorOpen />                     
                      </Button>                      
                     )}
 

@@ -8,6 +8,7 @@ const orderStages = [
   { label: 'WAITING TO BE SHIPPED', short: 'To Ship' },
   { label: 'SHIPPED', short: 'Shipped' },
   { label: 'OUT FOR DELIVERY', short: 'Delivery' },
+  { label: 'DELIVERED', short: 'Arrived' },
   { label: 'RECEIVED', short: 'Done' }
 ]
 
