@@ -29,7 +29,7 @@ export default function DeliveryProgressBar({ status }: Props) {
       <Progress value={percentage} className="h-2 bg-muted" />
 
       {/* Step labels */}
-      <div className="grid grid-cols-7 gap-1 text-[10px] text-center text-muted-foreground md:text-xs">
+      <div className="grid grid-cols-8 gap-1 text-[10px] text-center text-muted-foreground md:text-xs">
         {orderStages.map((stage, index) => (
           <div
             key={stage.label}
