@@ -162,28 +162,28 @@ export default function Overview() {
         </CardContent>
       </Card>
 
-{/* Recommended Products Section */}
-<div className="space-y-2">
-  <h3 className="font-semibold text-lg">Recommended for you</h3>
-  <ScrollArea className="w-full whitespace-nowrap">
-    <div className="flex space-x-4 pb-4">
-      {recommended.length === 0 ? (
-        <p className="text-muted-foreground">No recommendations yet.</p>
-      ) : (
-        recommended.map((item, index) => (
-          <Card key={index} className="min-w-[160px]">
-            <img src={`/products/${item.product_img1 || 'default.png'}`} alt={item.product_title} className="w-full h-28 object-contain p-2" />
-            <CardContent className="space-y-1 py-2 text-sm">
-              <p className="line-clamp-2">{item.product_title}</p>
-              <p className="font-semibold text-primary">₦{item.product_price?.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Suggested for you</p>
-            </CardContent>
-          </Card>
-        ))
-      )}
-    </div>
-  </ScrollArea>
-</div>
+      {/* Recommended Products Section */}
+      <div className="space-y-2">
+        <h3 className="font-semibold text-lg">Recommended for you</h3>
+        <ScrollArea className="w-full whitespace-nowrap">
+          <div className="flex space-x-4 pb-4">
+            {recommended.length === 0 ? (
+              <p className="text-muted-foreground">No recommendations yet.</p>
+            ) : (
+              recommended.map((item, index) => (
+                <Card key={index} className="min-w-[160px]">
+                  <img src={`/products/${item.product_img1 || 'default.png'}`} alt={item.product_title} className="w-full h-28 object-contain p-2" />
+                  <CardContent className="space-y-1 py-2 text-sm">
+                    <p className="line-clamp-2">{item.product_title}</p>
+                    <p className="font-semibold text-primary">₦{item.product_price?.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">Suggested for you</p>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </ScrollArea>
+      </div>
                     
                 </div>
             </div>
