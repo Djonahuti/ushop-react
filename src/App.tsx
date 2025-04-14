@@ -35,6 +35,7 @@ import ConfirmPay from "./_root/pages/ConfirmPay"
 import CustomerLayout from "./_root/CustomerLayout"
 import MailLayout from "./components/shared/Mail/MailLayout"
 import Inbox from "./components/shared/Mail/Inbox"
+import Overview from "./components/shared/Overview"
 
 
 function App() {
@@ -119,6 +120,15 @@ function App() {
 
         {/* Customer routes */}
         <Route element={<CustomerLayout />}>
+
+        <Route
+          path="/overview"
+          element={
+            <StrictRoute>
+              <Overview />
+            </StrictRoute>
+          }
+        />
 
         <Route
           path="/my-orders"

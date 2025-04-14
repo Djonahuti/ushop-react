@@ -90,7 +90,9 @@ export function NavUser() {
                 {customer.customer_image ? (
                 <AvatarImage
                  src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
-                 alt={customer.customer_name} />
+                 alt={customer.customer_name}
+                 className="rounded-full" 
+                 />
                 ):(
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 )}
@@ -116,7 +118,9 @@ export function NavUser() {
                 {customer.customer_image ? (
                 <AvatarImage
                  src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`} 
-                 alt={customer.customer_name} />
+                 alt={customer.customer_name}
+                 className="rounded-full" 
+                 />
                 ):(
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 )}
