@@ -1,13 +1,14 @@
 import { cn } from '@/lib/utils'
+import { Progress } from '../ui/progress'
 
 const orderStages = [
-  'Pending',
-  'Paid',
-  'Payment confirmed',
-  'WAITING TO BE SHIPPED',
-  'SHIPPED',
-  'OUT FOR DELIVERY',
-  'RECEIVED',
+  { label: 'Pending', short: 'Pending' },
+  { label: 'Paid', short: 'Paid' },
+  { label: 'Payment confirmed', short: 'Confirmed' },
+  { label: 'WAITING TO BE SHIPPED', short: 'To Ship' },
+  { label: 'SHIPPED', short: 'Shipped' },
+  { label: 'OUT FOR DELIVERY', short: 'Delivery' },
+  { label: 'RECEIVED', short: 'Done' }
 ]
 
 type Props = {
@@ -16,53 +17,33 @@ type Props = {
 
 export default function DeliveryProgressBar({ status }: Props) {
   const currentIndex = orderStages.findIndex(
-    stage => stage.toLowerCase() === status.toLowerCase()
+    s => s.label.toLowerCase() === status.toLowerCase()
   )
 
-  return (
-    <div className="w-full flex flex-col items-center mt-4">
-      <div className="flex justify-between w-full relative">
-        {orderStages.map((stage, index) => {
-          const isPast = index < currentIndex
-          const isCurrent = index === currentIndex
+  const percentage = ((currentIndex + 1) / orderStages.length) * 100
 
-          return (
-            <div key={stage} className="flex-1 flex flex-col items-center text-center relative z-10">
-              <div
-                className={cn(
-                  'w-4 h-4 rounded-full border-2',
-                  isPast
-                    ? 'bg-green-500 border-green-500'
-                    : isCurrent
-                    ? 'bg-yellow-500 border-yellow-500 animate-pulse'
-                    : 'bg-white border-gray-300'
-                )}
-              />
-              <p
-                className={cn(
-                  'text-[10px] mt-1 w-[60px]',
-                  isPast
-                    ? 'text-green-600'
-                    : isCurrent
-                    ? 'text-yellow-600 font-semibold'
-                    : 'text-gray-400'
-                )}
-              >
-                {stage}
-              </p>
-            </div>
-          )
-        })}
-        
-      {/* Connecting line */}
-      <div className="absolute top-2 w-full h-0.5 bg-gray-300 z-0">
-        <div
-          className="h-0.5 bg-green-500 transition-all duration-500"
-          style={{
-            width: `${(currentIndex / (orderStages.length - 1)) * 100}%`
-          }}
-        />
-      </div>        
+  return (
+    <div className="w-full mt-4 space-y-3">
+      {/* Progress bar */}
+      <Progress value={percentage} className="h-2 bg-muted" />
+
+      {/* Step labels */}
+      <div className="grid grid-cols-7 gap-1 text-[10px] text-center text-muted-foreground md:text-xs">
+        {orderStages.map((stage, index) => (
+          <div
+            key={stage.label}
+            className={cn(
+              'truncate',
+              index < currentIndex
+                ? 'text-green-600'
+                : index === currentIndex
+                ? 'text-yellow-600 font-semibold'
+                : 'text-gray-400'
+            )}
+          >
+            {stage.short}
+          </div>
+        ))}
       </div>
 
 

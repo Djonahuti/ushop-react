@@ -1,39 +1,39 @@
 import { cn } from '@/lib/utils'
+import { Progress } from '../ui/progress'
 
 const orderStages = [
-  'Pending',
-  'Paid',
-  'Payment confirmed',
-  'WAITING TO BE SHIPPED',
-  'SHIPPED',
-  'OUT FOR DELIVERY',
-  'COMPLETED',
+  { label: 'Pending', short: 'Pending' },
+  { label: 'Paid', short: 'Paid' },
+  { label: 'Payment confirmed', short: 'Confirmed' },
+  { label: 'WAITING TO BE SHIPPED', short: 'To Ship' },
+  { label: 'SHIPPED', short: 'Shipped' },
+  { label: 'OUT FOR DELIVERY', short: 'Delivery' },
+  { label: 'COMPLETED', short: 'Done' }
 ]
 
 type Props = {
   status: string
 }
 
-export default function DeliveryTimeline({ status }: Props) {
-  const currentIndex = orderStages.findIndex(stage => stage.toLowerCase() === status.toLowerCase())
+export default function DeliveryProgressBar({ status }: Props) {
+  const currentIndex = orderStages.findIndex(
+    s => s.label.toLowerCase() === status.toLowerCase()
+  )
+
+  const percentage = ((currentIndex + 1) / orderStages.length) * 100
 
   return (
-    <div className="flex flex-col space-y-4 mt-4">
-      {orderStages.map((stage, index) => (
-        <div key={stage} className="flex items-center gap-2">
+    <div className="w-full mt-4 space-y-3">
+      {/* Progress bar */}
+      <Progress value={percentage} className="h-2 bg-muted" />
+
+      {/* Step labels */}
+      <div className="grid grid-cols-7 gap-1 text-[10px] text-center text-muted-foreground md:text-xs">
+        {orderStages.map((stage, index) => (
           <div
+            key={stage.label}
             className={cn(
-              'w-4 h-4 rounded-full border-2',
-              index < currentIndex
-                ? 'bg-green-500 border-green-500'
-                : index === currentIndex
-                ? 'bg-yellow-500 border-yellow-500 animate-pulse'
-                : 'border-gray-300'
-            )}
-          />
-          <p
-            className={cn(
-              'text-sm',
+              'truncate',
               index < currentIndex
                 ? 'text-green-600'
                 : index === currentIndex
@@ -41,10 +41,12 @@ export default function DeliveryTimeline({ status }: Props) {
                 : 'text-gray-400'
             )}
           >
-            {stage}
-          </p>
-        </div>
-      ))}
+            {stage.short}
+          </div>
+        ))}
+      </div>
+
+
     </div>
   )
 }

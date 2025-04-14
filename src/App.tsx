@@ -33,6 +33,8 @@ import ViewPayment from "./admin/pages/ViewPayment"
 import CustomerOrders from "./_root/pages/CustomerOrder"
 import ConfirmPay from "./_root/pages/ConfirmPay"
 import CustomerLayout from "./_root/CustomerLayout"
+import MailLayout from "./components/shared/Mail/MailLayout"
+import Inbox from "./components/shared/Mail/Inbox"
 
 
 function App() {
@@ -76,6 +78,10 @@ function App() {
               <EditProduct productId={parseInt(window.location.pathname.split("/edit/")[1], 10)} />
             }
           />
+        </Route>
+
+        <Route element={<MailLayout />}>
+          <Route path="/inbox" element={<Inbox />} />
         </Route>
         
         {/* public routes */}

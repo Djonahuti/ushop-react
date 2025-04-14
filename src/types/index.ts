@@ -158,3 +158,18 @@ export type Payment = {
     }
     amount: number;
 }
+
+export type Contact = {
+    id: number;
+    customer_id: number;
+    subject_id: number;
+    message: Text;
+    submitted_at: string;
+    customers?: {
+        customer_name: string;
+        customer_email: string;
+    };
+    subject?: {
+        subject: string;
+    }
+}

@@ -2,7 +2,7 @@
 
 import { MailIcon, PlusCircleIcon, type LucideIcon } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
+//import { Button } from "@/components/ui/button"
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -10,6 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { Link } from "react-router-dom"
 
 export function NavMain({
   items,
@@ -32,14 +33,13 @@ export function NavMain({
               <PlusCircleIcon />
               <a href="/add-form"><span>Quick Create</span></a>
             </SidebarMenuButton>
-            <Button
-              size="icon"
+            <Link
+              to="/inbox"
               className="h-9 w-9 shrink-0 group-data-[collapsible=icon]:opacity-0"
-              variant="outline"
             >
               <MailIcon />
               <span className="sr-only">Inbox</span>
-            </Button>
+            </Link>
           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu>

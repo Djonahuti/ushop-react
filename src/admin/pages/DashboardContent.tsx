@@ -1,6 +1,7 @@
 import { ChartAreaInteractive } from "@/components/shared/chart-area-interactive"
 import { SectionCards } from "@/components/shared/SectionCards"
 import { DataFetch } from "./DataFetch"
+import { PendingOrdersChart } from "@/components/shared/PendingOrdersChart"
 
 const DashboardContent = () => {
   return (
@@ -10,6 +11,9 @@ const DashboardContent = () => {
           <SectionCards />
           <div className="px-4 lg:px-6">
             <ChartAreaInteractive />
+          </div>
+          <div className="px-4 lg:px-6">
+            <PendingOrdersChart />
           </div>
           <DataFetch />
         </div>
