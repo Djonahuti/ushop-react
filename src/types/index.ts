@@ -98,6 +98,9 @@ export type Order = {
         product_title: string;
         product_img1: string;
         product_price: number;
+        p_cat_id: number;
+        cat_id: number;
+        manufacturer_id: number;
     } | null;
 };
 

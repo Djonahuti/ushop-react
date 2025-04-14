@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Heart, Ticket, CreditCard, Truck, Package, CheckCircle, Clock, Wallet } from "lucide-react"
-import { Customer } from "@/types"
+import { Customer, Product } from "@/types"
 import { useEffect, useState } from "react"
 import supabase from "@/lib/supabaseClient"
 import { toast } from "sonner"
@@ -12,40 +12,67 @@ import { Link } from "react-router-dom"
 export default function Overview() {
     const [customer, setCustomer] = useState<Customer | null>(null);
     const [loading, setLoading] = useState(true);
+    const [recommended, setRecommended] = useState<Product[]>([]);
 
     useEffect(() => {
-        const fetchCustomerData = async () => {
-            const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-            if (user) {
-                const { data, error } = await supabase
-                    .from('customers')
-                    .select('*')
-                    .eq('customer_email', user.email)
-                    .single();
-
-                if (error) {
-                    console.error('Error fetching customer data:', error.message);
-                    toast.error('No customer found')
-                } else {
-                    setCustomer(data);
-                }
-            } else if (userError) {
-                console.error('Error getting user:', userError.message);
-            }
-            setLoading(false);
-        };
-
-        fetchCustomerData();
+      const fetchCustomerData = async () => {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (!user) return;
+  
+        const { data: customerData, error } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('customer_email', user.email)
+          .single();
+  
+        if (error || !customerData) {
+          toast.error('No customer found');
+          setLoading(false);
+          return;
+        }
+  
+        setCustomer(customerData);
+  
+        const { data: orders } = await supabase
+          .from('orders')
+          .select('product_id, products(cat_id, p_cat_id, manufacturer_id)')
+          .eq('customer_id', customerData.customer_id);
+  
+        const seenIds = new Set<number>();
+        const catIds = new Set<number>();
+        const pCatIds = new Set<number>();
+        const manuIds = new Set<number>();
+  
+        orders?.forEach((o) => {
+          if (o.product_id) seenIds.add(o.product_id);
+          const p = o.products;
+          if (p?.cat_id) catIds.add(p.cat_id);
+          if (p?.p_cat_id) pCatIds.add(p.p_cat_id);
+          if (p?.manufacturer_id) manuIds.add(p.manufacturer_id);
+        });
+  
+        const filters = [
+          ...Array.from(catIds).map(id => `cat_id.eq.${id}`),
+          ...Array.from(pCatIds).map(id => `p_cat_id.eq.${id}`),
+          ...Array.from(manuIds).map(id => `manufacturer_id.eq.${id}`)
+        ];
+  
+        const { data: recs } = await supabase
+          .from('products')
+          .select('*')
+          .or(filters.join(','))
+          .not('product_id', 'in', `(${Array.from(seenIds).join(',')})`)
+          .limit(10);
+  
+        setRecommended(recs || []);
+        setLoading(false);
+      };
+  
+      fetchCustomerData();
     }, []);
-
-    if (loading) {
-        return <div>Loading...</div>;
-    }
-
-    if (!customer) {
-        return <div>No customer data found.</div>
-    }
+  
+    if (loading) return <div>Loading...</div>;
+    if (!customer) return <div>No customer data found.</div>;
 
   return (
     <div className="flex flex-1 flex-col">
@@ -135,31 +162,29 @@ export default function Overview() {
         </CardContent>
       </Card>
 
-      {/* More to Love Section */}
-      <div className="space-y-2">
-        <h3 className="font-semibold text-lg">More to love</h3>
-        <ScrollArea className="w-full whitespace-nowrap">
-          <div className="flex space-x-4 pb-4">
-            {/* You can map this from a product array */}
-            {[
-              { name: "Wireless Mouse", price: "₦1,460.72", sold: "600+", img: "/mouse.png" },
-              { name: "Air Pro 6 TWS", price: "₦6,243.78", sold: "427", img: "/earbuds.png" },
-              { name: "Laptop Stand", price: "₦12,266.59", sold: "293", img: "/stand.png" },
-              { name: "USB 3.0 2TB", price: "₦2,210.49", sold: "1000+", img: "/usb.png" },
-              { name: "Xiaomi Mijia J18", price: "₦7,016.73", sold: "359", img: "/xiaomi.png" },
-            ].map((item, index) => (
-              <Card key={index} className="min-w-[160px]">
-                <img src={item.img} alt={item.name} className="w-full h-28 object-contain p-2" />
-                <CardContent className="space-y-1 py-2 text-sm">
-                  <p className="line-clamp-2">{item.name}</p>
-                  <p className="font-semibold text-primary">{item.price}</p>
-                  <p className="text-xs text-muted-foreground">{item.sold} sold</p>
-                </CardContent>
-              </Card>
-            ))}
-         </div>
-        </ScrollArea>
-      </div>                    
+{/* Recommended Products Section */}
+<div className="space-y-2">
+  <h3 className="font-semibold text-lg">Recommended for you</h3>
+  <ScrollArea className="w-full whitespace-nowrap">
+    <div className="flex space-x-4 pb-4">
+      {recommended.length === 0 ? (
+        <p className="text-muted-foreground">No recommendations yet.</p>
+      ) : (
+        recommended.map((item, index) => (
+          <Card key={index} className="min-w-[160px]">
+            <img src={`/products/${item.product_img1 || 'default.png'}`} alt={item.product_title} className="w-full h-28 object-contain p-2" />
+            <CardContent className="space-y-1 py-2 text-sm">
+              <p className="line-clamp-2">{item.product_title}</p>
+              <p className="font-semibold text-primary">₦{item.product_price?.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Suggested for you</p>
+            </CardContent>
+          </Card>
+        ))
+      )}
+    </div>
+  </ScrollArea>
+</div>
+                    
                 </div>
             </div>
         </div>
