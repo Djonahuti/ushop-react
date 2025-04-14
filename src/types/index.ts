@@ -179,6 +179,10 @@ export type Feedback = {
     created_at: string;
     customer_id: number;
     product_id: number;
+    order_id: number;
+    orders?:{
+        invoice_no: number;
+    };
     feedtype_id: number;
     feedtype?:{
         feedback_type: string;
