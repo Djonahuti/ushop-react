@@ -7,34 +7,17 @@ import { AvatarImage } from "@radix-ui/react-avatar";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-const SeeFeedbacks = () => {
+const AllFeedbacks = () => {
     const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
 
     useEffect(() => {
-        const fetchFeedbacks = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            const { data: customerData } = await supabase
-                .from('customers')
-                .select('customer_id')
-                .eq('customer_email', user?.email)
-                .single();
-
-            if (!customerData) return;
-            
-            const {data: feedbackData, error} = await supabase
+        const fetchFeedbacks = async () => {            
+            const {data} = await supabase
                 .from('feedbacks')
                 .select('*, customers(customer_name, customer_email, customer_image), products(product_img1, product_title), feedtype(feedback_type), orders(invoice_no), order_id, product_id, feedtype_id ')
-
                 .order('created_at', { ascending: false});
-
-            if (error) {
-                console.error('Failed to fetch Feedbacks', error.message);
-                return;
-            }
             
-            setFeedbacks(feedbackData || []);
+            setFeedbacks(data || []);
 
         };
 
@@ -94,4 +77,4 @@ const SeeFeedbacks = () => {
   )
 }
 
-export default SeeFeedbacks
+export default AllFeedbacks

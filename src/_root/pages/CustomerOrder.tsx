@@ -78,7 +78,7 @@ const CustomerOrders = () => {
 
       const { data: feedbackData, error: feedbackError } = await supabase
         .from('feedbacks')
-        .select('*, customers(customer_name, customer_image), products(product_title, product_img1)')
+        .select('*, customers(customer_name, customer_image), products(product_title, product_img1), feedtype(feedback_type)')
         .eq('customer_id', customerData.customer_id);
 
       if (feedbackError) {
@@ -189,52 +189,50 @@ const CustomerOrders = () => {
 
                     <div className="text-right text-base font-medium">
                       Total: ₦{order.due_amount?.toLocaleString()}
-                      <DeliveryTimeline status={order.order_status} />                      
-                    <div>
-                      
-                    {order.order_status === 'Pending' && (
-                      <Button onClick={() => navigate(`/confirm-pay/${order.invoice_no}`)} className="mt-2" title="Mark as paid">
-                        <IconCreditCard stroke={2} />
-                      </Button>
-                    )}
+                      <DeliveryTimeline status={order.order_status} />
+                    </div>
+                    <div className="relative flex justify-between items-center mt-2">
+                      <p className="px-2 py-1">
+                        {/* Feedback section */}
+                        {orderFeedback ? (
+                          <div className="mt-4 border-top space-y-2">
+                            <p className="text-sm text-muted-foreground">{orderFeedback.feedtype?.feedback_type}</p>
+                            <p className="text-yellow-500 text-xl">
+                              {'★'.repeat(orderFeedback.rating)}{'☆'.repeat(5 - orderFeedback.rating)}
+                            </p>
+                          </div>
+                        ) : (
+                          order.order_status === "COMPLETED" && (
+                            <Link
+                              to={`/feedback/${order.order_id}`}
+                              state={{ order_id: order.order_id, customer_id: order.customer_id, product_id: order.product_id }}
+                              className="btn btn-outline-primary mt-2"
+                              title="Leave Feedback"
+                            >
+                              <MessageSquareText />
+                            </Link>
+                          )
+                        )}                        
+                      </p>
+                      <p className="text-right text-base font-medium">
+                        {order.order_status === 'Pending' && (
+                          <Button onClick={() => navigate(`/confirm-pay/${order.invoice_no}`)} className="mt-2" title="Mark as paid">
+                            <IconCreditCard stroke={2} />
+                          </Button>
+                        )}
 
-                    {order.order_status === 'DELIVERED' && (
-                      <Button onClick={() => handleReceive(order.invoice_no)} className="mt-2" title="Mark as Recieved">
-                        <PackageCheck />
-                      </Button>
-                    )}
+                        {order.order_status === 'DELIVERED' && (
+                          <Button onClick={() => handleReceive(order.invoice_no)} className="mt-2" title="Mark as Recieved">
+                            <PackageCheck />
+                          </Button>
+                        )}
 
-              {/* Feedback section */}
-              {orderFeedback ? (
-                <div className="mt-4 border-top space-y-2">
-                  <h4 className="text-lg font-semibold">Your Feedback</h4>
-                  <p className="text-sm text-muted-foreground">Type: {orderFeedback.feedtype?.feedback_type}</p>
-                  <p className="text-yellow-500 text-xl">
-                    {'★'.repeat(orderFeedback.rating)}{'☆'.repeat(5 - orderFeedback.rating)}
-                  </p>
-                  <p className="text-base">{String(orderFeedback.comment)}</p>
-                  <small className="text-muted">
-                    - {orderFeedback.customers?.customer_name}
-                  </small>
-                </div>
-              ) : (
-                order.order_status === "COMPLETED" && (
-                  <Link
-                    to={`/feedback/${order.order_id}`}
-                    state={{ order_id: order.order_id, customer_id: order.customer_id, product_id: order.product_id }}
-                    className="btn btn-outline-primary mt-2"
-                    title="Leave Feedback"
-                  >
-                    <MessageSquareText />
-                  </Link>
-                )
-              )}
-                    
-                    <Button onClick={() => customer && generateInvoicePDF(order, banks)} className="ml-2" title="Download Invoice">
-                        <IconReceipt stroke={2} />
-                    </Button>
-                    </div>                      
 
+                        
+                        <Button onClick={() => customer && generateInvoicePDF(order, banks)} className="ml-2" title="Download Invoice">
+                            <IconReceipt stroke={2} />
+                        </Button>                        
+                      </p>
                     </div>
                   </CardContent>
                 </Card>

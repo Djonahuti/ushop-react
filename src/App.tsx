@@ -39,6 +39,7 @@ import Overview from "./components/shared/Overview"
 import FeedbackPage from "./_root/pages/FeedbackPage"
 import Contact from "./_root/pages/Contact"
 import SeeFeedbacks from "./_root/pages/SeeFeedbacks"
+import AllFeedbacks from "./admin/pages/AllFeedbacks"
 
 
 function App() {
@@ -76,7 +77,7 @@ function App() {
           <Route path="/users" element={<AdminRoute><Database /></AdminRoute>} />
           <Route path="/view-products" element={<AdminRoute><ProductList /></AdminRoute>} />
           <Route path="/view-orders" element={<AdminRoute><AdminPendingOrders /></AdminRoute>} />
-          <Route path="/feeds" element={<AdminRoute><SeeFeedbacks /></AdminRoute>} />
+          <Route path="/feeds" element={<AdminRoute><AllFeedbacks /></AdminRoute>} />
           <Route
             path="/edit/:productId"
             element={
