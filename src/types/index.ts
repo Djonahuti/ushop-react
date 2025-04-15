@@ -111,6 +111,11 @@ export type WishlistItem = {
         product_title: string;
         product_img1: string;
         product_price: number;
+        product_psp_price: number;
+        manufacrurer_id: number;
+        manufacturers: {
+            manufacturer_title: string;
+        }
     };
 }
 

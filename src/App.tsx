@@ -38,6 +38,7 @@ import Inbox from "./components/shared/Mail/Inbox"
 import Overview from "./components/shared/Overview"
 import FeedbackPage from "./_root/pages/FeedbackPage"
 import Contact from "./_root/pages/Contact"
+import SeeFeedbacks from "./_root/pages/SeeFeedbacks"
 
 
 function App() {
@@ -75,6 +76,7 @@ function App() {
           <Route path="/users" element={<AdminRoute><Database /></AdminRoute>} />
           <Route path="/view-products" element={<AdminRoute><ProductList /></AdminRoute>} />
           <Route path="/view-orders" element={<AdminRoute><AdminPendingOrders /></AdminRoute>} />
+          <Route path="/feeds" element={<AdminRoute><SeeFeedbacks /></AdminRoute>} />
           <Route
             path="/edit/:productId"
             element={
@@ -124,6 +126,15 @@ function App() {
         <Route element={<CustomerLayout />}>
 
         <Route
+          path="/feedbacks"
+          element={
+            <StrictRoute>
+              <SeeFeedbacks />
+            </StrictRoute>
+          }
+        />
+
+        <Route
           path="/overview"
           element={
             <StrictRoute>
@@ -167,6 +178,15 @@ function App() {
             </StrictRoute>
           }
         />
+
+        <Route
+          path="/wishlists"
+          element={
+            <StrictRoute>
+              <Wishlist />
+            </StrictRoute>
+          }
+        />        
 
         <Route
           path="/profile"

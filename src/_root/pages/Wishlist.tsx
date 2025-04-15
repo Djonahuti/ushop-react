@@ -3,6 +3,9 @@ import supabase from '@/lib/supabaseClient';
 import { WishlistItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Link } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
 
 
 export default function Wishlist() {
@@ -30,7 +33,7 @@ export default function Wishlist() {
 
       const { data, error: fetchError } = await supabase
         .from('wishlist')
-        .select('*, products(product_title, product_img1, product_price)')
+        .select('*, products(product_title, product_img1, product_price, product_psp_price, manufacturers(manufacturer_title), manufacturer_id)')
         .eq('customer_id', customer.customer_id);
 
       if (!fetchError) setItems(data || []);
@@ -44,26 +47,53 @@ export default function Wishlist() {
   if (items.length === 0) return <div>Your wishlist is empty</div>;
 
   return (
-    <div className="space-y-4 p-4">
-      <h2 className="text-xl font-bold">Your Wishlist</h2>
-      {items.map((item) => (
-        <div key={item.wishlist_id} className="border p-2 rounded flex items-center gap-4">
-          <img src={`/products/${item.products.product_img1}`} className="w-20 h-20 object-cover" />
-          <div>
-            <h3 className="font-semibold">{item.products.product_title}</h3>
-            <p className="text-green-700 font-semibold">₦{item.products.product_price}</p>
-            <Button
-              variant="ghost"
-              type="button"
-              size="sm"
-              className="mt-2 bg-red-500 rounded-full hover:bg-red-600 transition duration-200 text-white"
-              onClick={() => handleRemove(item.wishlist_id)}
-            >
-              <Trash2 size={16} />
-            </Button>
-          </div>
-        </div>
-      ))}
+    <div className="container mx-auto space-y-2 px-4">
+<div className="mt-12">
+<h2 className="text-xl font-bold text-gray-700 mb-4 text-center">Your Wishlist</h2>
+<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+  {items.map((item) => (
+    <Card key={item.wishlist_id} className="bg-gray-800 p-4 rounded-lg shadow-md">
+    <CardHeader>
+      <CardTitle className="text-orange-400 text-center">
+          <Link to={`/products/${item.product_id}`} className="hover:underline">
+              {item.products.product_title}
+          </Link>
+      </CardTitle>
+      <Badge className="bg-black text-xs text-white">
+      {item.products.manufacturers?.manufacturer_title}
+      </Badge>
+    </CardHeader>
+    <CardContent>
+      <img
+        src={`/products/${item.products.product_img1}`}
+        alt={item.products.product_title}
+        className="w-full h-32 object-contain rounded-md mb-2"
+      />
+      <p className="text-gray-300">
+        <s className="text-gray-500">{item.products.product_psp_price && `₦${item.products.product_psp_price}`}</s>{" "}
+        ₦{item.products.product_price}
+      </p>
+    </CardContent>
+    <CardFooter className='flex item-center'>
+      <Link to={`/products/${item.product_id}`}>
+        <Button variant="outline" className="w-full text-sm hover:bg-orange-400">
+          View Details
+        </Button>
+      </Link>
+      <Button
+        variant="ghost"
+        type="button"
+        size="sm"
+        className="mt-2 bg-red-500 rounded-full hover:bg-red-600 transition duration-200 text-white"
+        onClick={() => handleRemove(item.wishlist_id)} 
+        >
+          <Trash2 size={16} />
+       </Button>      
+    </CardFooter>
+    </Card>
+  ))}
+</div>
+</div>
     </div>
   );
 }

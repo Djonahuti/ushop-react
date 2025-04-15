@@ -34,11 +34,10 @@ const data = {
       url: "/my-orders",
       icon: Package2,
       toolTip: "My Order",
-      isActive: true,
     },
     {
       title: "My Wishlist",
-      url: "/wishlist",
+      url: "/wishlists",
       icon: Heart,
       toolTip: "My Wishlist",
     },
@@ -55,8 +54,8 @@ const data = {
       toolTip: "Refund & Return",
     },
     {
-      title: "Feedback",
-      url: "#",
+      title: "Feedbacks",
+      url: "/feedbacks",
       icon: MessageCircleMore,
       toolTip: "Feedback",
     },

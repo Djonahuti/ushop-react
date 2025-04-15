@@ -26,7 +26,7 @@ export function NavMain({
   return (
     <SidebarGroup>
       <SidebarGroupContent>
-      <SidebarMenu>
+      <SidebarMenu className="space-y-2">
           <SidebarMenuItem className="flex items-center gap-2">
             <SidebarMenuButton
               tooltip="Overview"
