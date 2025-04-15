@@ -1,12 +1,12 @@
 "use client"
 
 import {
-  BadgeCheck,
+  UserCircleIcon,
   Bell,
   ChevronsUpDown,
   CreditCard,
   LogOutIcon,
-  Sparkles,
+  BadgeCheck,
 } from "lucide-react"
 
 import {
@@ -32,6 +32,7 @@ import {
 import supabase from "@/lib/supabaseClient"
 import { useEffect, useState } from "react"
 import { Admin } from "@/types"
+import { Link } from "react-router-dom"
 
 export function NavUser() {
   const [admin, setAdmin] = useState<Admin | null>(null);
@@ -73,7 +74,7 @@ export function NavUser() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    window.location.href = "/admin-login"
+    window.location.href = "/login"
   }
 
   return (
@@ -127,15 +128,16 @@ export function NavUser() {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <Sparkles />
+                <BadgeCheck />
                 Administrator
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
+            <DropdownMenuItem>
+                <Link to="/account" className="flex justify-between gap-2">
+                <UserCircleIcon />Account
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <CreditCard />

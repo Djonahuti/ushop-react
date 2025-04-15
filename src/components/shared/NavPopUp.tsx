@@ -12,6 +12,7 @@ import {
   Cog,
   ShieldCheck,
   ShoppingBag,
+  LogOut,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -38,7 +39,7 @@ const data = [
     {
       label: "Settings",
       icon: Cog,
-      url: "*",
+      url: "/profile",
     },
     {
       label: "UShop Business",
@@ -60,24 +61,24 @@ const data = [
     {
       label: "Help Center",
       icon: CircleHelp,
-      url: "*",
+      url: "/contact",
     },
     {
       label: "Disputes and Reports",
       icon: MessageCircleQuestion,
-      url: "*",
+      url: "/contact",
     },
   ],
   [
     {
       label: "Report IPR infringement",
       icon: Megaphone,
-      url: "*",
+      url: "/contact",
     },
     {
       label: "Accessibily",
       icon: PersonStanding,
-      url: "*",
+      url: "/profile",
     },
     {
       label: "Penalties Information",
@@ -87,7 +88,7 @@ const data = [
     {
       label: "Notifications",
       icon: Bell,
-      url: "*",
+      url: "/my-orders",
     },
   ],
 ]
@@ -133,6 +134,11 @@ export function NavPopUp() {
 
   if (!customer) {
     return <div>No customer data found.</div>;
+  }  
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    window.location.href = "/login"
   }  
 
   return (
@@ -184,6 +190,17 @@ export function NavPopUp() {
                   </SidebarGroupContent>
                 </SidebarGroup>
               ))}
+              <SidebarGroup className="border-b last:border-none">
+                <SidebarGroupContent className="gap-0">
+                  <SidebarMenu>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton onClick={handleLogout} className="flex items-center gap-2">
+                          <LogOut /> <span>Log Out</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>              
             </SidebarContent>
           </Sidebar>
         </PopoverContent>

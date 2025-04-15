@@ -78,7 +78,7 @@ const data = [
     {
       label: "Accessibily",
       icon: PersonStanding,
-      url: "*",
+      url: "/account",
     },
     {
       label: "Penalties Information",
@@ -88,13 +88,8 @@ const data = [
     {
       label: "Notifications",
       icon: Bell,
-      url: "*",
-    },
-    {
-      label: "Logout",
-      icon: LogOut,
-      url: "/Logout",
-    },    
+      url: "/inbox",
+    },   
   ],
 ]
 
@@ -140,6 +135,11 @@ export function PopRight() {
   if (!admin) {
     return <div>No admin data found.</div>;
   }  
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    window.location.href = "/login"
+  }
 
   return (
     <div className="flex items-center gap-2 text-sm">
@@ -190,6 +190,17 @@ export function PopRight() {
                   </SidebarGroupContent>
                 </SidebarGroup>
               ))}
+              <SidebarGroup className="border-b last:border-none">
+                <SidebarGroupContent className="gap-0">
+                  <SidebarMenu>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton onClick={handleLogout} className="flex items-center gap-2">
+                          <LogOut /> <span>Log Out</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
             </SidebarContent>
           </Sidebar>
         </PopoverContent>
