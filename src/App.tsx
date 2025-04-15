@@ -64,17 +64,17 @@ function App() {
         {/* Admin routes */}
         <Route element={<AdminLayout />}>
           <Route path="/admin-dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-          <Route path="/add-cat" element={<PostCategoryForm />} />
-          <Route path="/add-product" element={<PostForm />} />
-          <Route path="/add-bank" element={<AddBank />} />
-          <Route path="/view-payments" element={<ViewPayment />} />
-          <Route path="/add-form" element={<AddForm />} />
-          <Route path="/dashboard" element={<DashboardContent />} />
-          <Route path="/account" element={<Profile />} />
-          <Route path="/database" element={<Database />} />
-          <Route path="/users" element={<Database />} />
-          <Route path="/view-products" element={<ProductList />} />
-          <Route path="/view-orders" element={<AdminPendingOrders />} />
+          <Route path="/add-cat" element={<AdminRoute><PostCategoryForm /></AdminRoute>} />
+          <Route path="/add-product" element={<AdminRoute><PostForm /></AdminRoute>} />
+          <Route path="/add-bank" element={<AdminRoute><AddBank /></AdminRoute>} />
+          <Route path="/view-payments" element={<AdminRoute><ViewPayment /></AdminRoute>} />
+          <Route path="/add-form" element={<AdminRoute><AddForm /></AdminRoute>} />
+          <Route path="/dashboard" element={<AdminRoute><DashboardContent /></AdminRoute>} />
+          <Route path="/account" element={<AdminRoute><Profile /></AdminRoute>} />
+          <Route path="/database" element={<AdminRoute><Database /></AdminRoute>} />
+          <Route path="/users" element={<AdminRoute><Database /></AdminRoute>} />
+          <Route path="/view-products" element={<AdminRoute><ProductList /></AdminRoute>} />
+          <Route path="/view-orders" element={<AdminRoute><AdminPendingOrders /></AdminRoute>} />
           <Route
             path="/edit/:productId"
             element={
@@ -84,7 +84,7 @@ function App() {
         </Route>
 
         <Route element={<MailLayout />}>
-          <Route path="/inbox" element={<Inbox />} />
+          <Route path="/inbox" element={<AdminRoute><Inbox /></AdminRoute>} />
         </Route>
         
         {/* public routes */}

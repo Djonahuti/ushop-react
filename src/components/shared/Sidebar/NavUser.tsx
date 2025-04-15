@@ -74,7 +74,7 @@ export function NavUser() {
   
     const handleLogout = async () => {
       await supabase.auth.signOut()
-      window.location.href = "/admin-login"
+      window.location.href = "/login"
     }
 
   return (

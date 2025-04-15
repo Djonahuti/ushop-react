@@ -28,23 +28,46 @@ export function LoginForm({
     resolver: zodResolver(schema),
   });
   
-    const onSubmit = async (data: FormData) => {
-      setIsPending(true); // Show loader
-      const { error } = await supabase.auth.signInWithPassword({
-        email: data.customer_email,
-        password: data.customer_pass,
-      });
-  
-      if (error) {
-        console.error('Error logging in:', error.message);
+  const onSubmit = async (data: FormData) => {
+    setIsPending(true); // Show loader
+    const { error } = await supabase.auth.signInWithPassword({
+      email: data.customer_email,
+      password: data.customer_pass,
+    });
+
+    if (error) {
+      console.error('Error logging in:', error.message);
+    } else {
+      console.log('Login successful');
+
+      // Check if the user is an admin or a customer
+      const { error: userError } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('admin_email', data.customer_email)
+        .single();
+
+      if (userError) {
+        // If no admin found, check if it's a customer
+        const { error: customerError } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('customer_email', data.customer_email)
+          .single();
+
+        if (customerError) {
+          console.error('Error finding customer:', customerError.message);
+        } else {
+          // Redirect to customer dashboard
+          navigate('/');
+        }
       } else {
-        console.log('Login successful');
-        
-        // Redirect or perform other actions after successful login
-        navigate('/'); // Redirect to the dashboard or any other page
-        setIsPending(false); // Hide loader
+        // Redirect to admin dashboard
+        navigate('/admin-dashboard');
       }
-    };
+    }
+    setIsPending(false); // Hide loader
+  };
     
       return (
         <div className={cn("flex flex-col gap-6", className)} {...props}>
