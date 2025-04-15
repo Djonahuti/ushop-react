@@ -43,7 +43,7 @@ const data = {
     },
     {
       title: "Payments",
-      url: "#",
+      url: "/my-payments",
       icon: HandCoins,
       toolTip: "Payment",
     },
