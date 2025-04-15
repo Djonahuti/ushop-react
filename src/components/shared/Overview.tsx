@@ -1,6 +1,6 @@
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
+//import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Heart, Ticket, CreditCard, Truck, Package, CheckCircle, Clock, Wallet } from "lucide-react"
 import { Customer, Product } from "@/types"
@@ -8,6 +8,7 @@ import { useEffect, useState } from "react"
 import supabase from "@/lib/supabaseClient"
 import { toast } from "sonner"
 import { Link } from "react-router-dom"
+import { Badge } from "../ui/badge"
 
 export default function Overview() {
     const [customer, setCustomer] = useState<Customer | null>(null);
@@ -59,7 +60,7 @@ export default function Overview() {
   
         const { data: recs } = await supabase
           .from('products')
-          .select('*')
+          .select('*, manufacturers(manufacturer_title)')
           .or(filters.join(','))
           .not('product_id', 'in', `(${Array.from(seenIds).join(',')})`)
           .limit(10);
@@ -75,10 +76,10 @@ export default function Overview() {
     if (!customer) return <div>No customer data found.</div>;
 
   return (
-    <div className="flex flex-1 flex-col">
-        <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-                <div className="container mx-auto px-4 py-8 space-y-4">
+  <div className="flex flex-1 flex-col">
+    <div className="@container/main flex flex-1 flex-col gap-2">
+      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+          <div className="container mx-auto px-4 py-8 space-y-4">
       {/* User Profile Section */}
       <Card className="space-y-4">
         <CardContent className="flex items-center gap-4 py-6">
@@ -122,7 +123,7 @@ export default function Overview() {
         <CardContent className="py-4">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-semibold text-lg">My Orders</h3>
-            <Button variant="link" className="text-xs px-0 h-auto">View All</Button>
+            <Link to="/my-orders" className="text-xs px-0 h-auto">View All</Link>
           </div>
           <div className="grid grid-cols-4 gap-4 text-center text-sm text-muted-foreground">
             <div className="flex flex-col items-center">
@@ -163,26 +164,48 @@ export default function Overview() {
       </Card>
 
       {/* Recommended Products Section */}
-      <div className="space-y-2">
-        <h3 className="font-semibold text-lg">Recommended for you</h3>
-        <ScrollArea className="w-full whitespace-nowrap">
-          <div className="flex space-x-4 pb-4">
+      <div className="mt-12">
+        <h3 className="text-xl font-bold text-gray-700 mb-4">Recommended for you</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {recommended.length === 0 ? (
               <p className="text-muted-foreground">No recommendations yet.</p>
             ) : (
               recommended.map((item, index) => (
-                <Card key={index} className="min-w-[160px]">
-                  <img src={`/products/${item.product_img1 || 'default.png'}`} alt={item.product_title} className="w-full h-28 object-contain p-2" />
-                  <CardContent className="space-y-1 py-2 text-sm">
-                    <p className="line-clamp-2">{item.product_title}</p>
-                    <p className="font-semibold text-primary">₦{item.product_price?.toLocaleString()}</p>
+                <Card key={index}  className="bg-gray-800 p-4 rounded-lg shadow-md">
+                  <CardHeader>
+                    <CardTitle className="text-orange-400 text-center">
+                      <Link to={`/products/${item.product_id}`} className="hover:underline">
+                        {item.product_title}
+                      </Link>
+                    </CardTitle>
+                    <Badge className="bg-black text-xs text-white">
+                      {item.manufacturers?.manufacturer_title}
+                    </Badge>
+                  </CardHeader>
+
+                  <CardContent>
+                    <img
+                     src={`/products/${item.product_img1 || 'default.png'}`} 
+                     alt={item.product_title} 
+                     className="w-full h-32 object-contain rounded-md mb-2"
+                    />                    
+                    <p className="text-gray-300">
+                      <s className="text-gray-500">{item.product_psp_price && `₦${item.product_psp_price}`}</s>{""}
+                      ₦{item.product_price}
+                    </p>
                     <p className="text-xs text-muted-foreground">Suggested for you</p>
                   </CardContent>
+                  <CardFooter>
+                    <Link to={`/products/${item.product_id}`}>
+                      <Button variant="outline" className="w-full text-sm hover:bg-orange-400">
+                        View Details
+                      </Button>
+                    </Link>
+                  </CardFooter>
                 </Card>
               ))
             )}
           </div>
-        </ScrollArea>
       </div>
                     
                 </div>

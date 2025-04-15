@@ -92,7 +92,7 @@ export default function RelatedProducts({
                 </Link>
             </CardTitle>
             <Badge className="bg-black text-xs text-white">
-            {product.manufacturers.manufacturer_title}
+            {product.manufacturers?.manufacturer_title}
             </Badge>
           </CardHeader>
           <CardContent>
