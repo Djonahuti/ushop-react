@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
-import { Heart, Search, ShoppingCart, User } from "lucide-react";
+import { Heart, Search, Send, ShoppingCart, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import ThemeToggle from "../ThemeToggle";
 import supabase from "@/lib/supabaseClient";
@@ -77,6 +77,9 @@ const Navbar = () => {
         <Link to="/cart">
           <ShoppingCart size={18} />
           <span className="bg-green-500 text-white rounded-full px-2 text-xs">{cartCount}</span>
+        </Link>
+        <Link to="/contact">
+          <Send size={18} />
         </Link>
         </>
     )}
