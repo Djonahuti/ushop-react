@@ -126,8 +126,8 @@ const navData = {
     },
     {
       imgURL: ClipboardListIcon,
-      route: "#",
-      label: "Reports",
+      route: "/feeds",
+      label: "Feedbacks",
     },
     {
       imgURL: FileIcon,
