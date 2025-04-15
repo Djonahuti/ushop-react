@@ -128,9 +128,9 @@ const filteredProducts = products.filter((product) => {
       <div className="flex items-center gap-4">
       </div>
 
-    <div className="bg-[#222F3D] h-10 flex items-center text-white text-sm pl-4">
+    <div className="sticky top-0 z-50 w-full bg-[#232F3E] text-white text-sm px-4 py-2 overflow-x-auto whitespace-nowrap flex items-center gap-4 shadow-md">
         <div
-          className="flex items-center gap-1 border border-transparent p-2 hover:border-white cursor-pointer"
+          className="flex items-center gap-1 cursor-pointer hover:underline"
           onClick={() => {
           setSelectedManufacturer(null)
           setSelectedCat(null)
@@ -140,17 +140,19 @@ const filteredProducts = products.filter((product) => {
         >
         <Button
           variant="ghost"
+          className="text-white hover:bg-[#37475A] px-2 py-1"
         >
           <FilterIcon size={24} />
         </Button>
             <p className="font-bold">All</p>
         </div>
 
-        <ul className="flex items-center">
+
     {/* Category Filter */}          
-            <li className="border border-transparent p-2 hover:border-white">
+            <div className="flex items-center gap-1">
+              <span>Filter by:</span>
               <Select onValueChange={(value) => setSelectedCat(Number(value))}>
-                <SelectTrigger className="w-[150px] mt-1 bg-white text-black">
+                <SelectTrigger className="w-[150px] h-8 bg-[#37475A] border-none text-white hover:bg-[#485769]">
                   <SelectValue placeholder="Select Category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -161,12 +163,13 @@ const filteredProducts = products.filter((product) => {
                   ))}
                 </SelectContent>
               </Select>              
-            </li>
+            </div>
 
     {/* Brand Filter */}            
-            <li className="border border-transparent p-2 hover:border-white">
+            <div className="flex items-center gap-1">
+            <span>Brands:</span>
               <Select onValueChange={(value) => setSelectedManufacturer(Number(value))}>
-                <SelectTrigger className="w-[150px] mt-1 bg-white text-black">
+                <SelectTrigger className="w-[150px] h-8 bg-[#37475A] border-none text-white hover:bg-[#485769]">
                   <SelectValue placeholder="Select Brand" />
                 </SelectTrigger>
                 <SelectContent>
@@ -177,12 +180,13 @@ const filteredProducts = products.filter((product) => {
                   ))}
                 </SelectContent>
               </Select>              
-            </li>
+            </div>
 
     {/* Product Category Filter */}            
-            <li className="border border-transparent p-2 hover:border-white">
+            <div className="flex items-center gap-1">
+            <span>Categories:</span>
               <Select onValueChange={(value) => setSelectedPCat(Number(value))}>
-                <SelectTrigger className="w-[150px] mt-1 bg-white text-black">
+                <SelectTrigger className="w-[150px] h-8 bg-[#37475A] border-none text-white hover:bg-[#485769]">
                   <SelectValue placeholder="Select Subcategory" />
                 </SelectTrigger>
                 <SelectContent>
@@ -193,17 +197,21 @@ const filteredProducts = products.filter((product) => {
                   ))}
                 </SelectContent>
               </Select>              
-            </li>
-        </ul>
-        <div className="flex-grow max-w-xl relative">
+            </div>
+
+    {/* Search Input */}
+        <div className="ml-auto relative w-[200px]">
           <Input 
             type="text"
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none"
+            className="w-full h-8 pl-3 pr-10 rounded bg-white text-black placeholder:text-gray-500 text-sm"
             placeholder="Search products..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <Button className="absolute right-2 top-1/2 -translate-y-1/2" variant="ghost">
+          <Button
+           className="absolute right-0 top-0 h-8 px-2 text-black" 
+           variant="ghost"
+          >
             <Search size={20} />
           </Button>
         </div>
