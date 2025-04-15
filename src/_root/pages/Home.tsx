@@ -1,6 +1,7 @@
 import ProductCard from "@/components/shared/ProductCard"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuth } from "@/context/AuthContext"
 import supabase from "@/lib/supabaseClient"
 import { Category, Manufacturer, Product, ProductCategory } from "@/types"
@@ -128,7 +129,15 @@ const filteredProducts = products.filter((product) => {
       </div>
 
     <div className="bg-[#222F3D] h-10 flex items-center text-white text-sm pl-4">
-        <div className="flex items-center gap-1 border border-transparent p-2 hover:border-white">
+        <div
+          className="flex items-center gap-1 border border-transparent p-2 hover:border-white cursor-pointer"
+          onClick={() => {
+          setSelectedManufacturer(null)
+          setSelectedCat(null)
+          setSelectedPCat(null)
+          setSearch('')
+        }}
+        >
         <Button
           variant="ghost"
         >
@@ -138,11 +147,53 @@ const filteredProducts = products.filter((product) => {
         </div>
 
         <ul className="flex items-center">
-            <li className="border border-transparent p-2 hover:border-white">Today's Deals</li>
-            <li className="border border-transparent p-2 hover:border-white">Customer Service</li>
-            <li className="border border-transparent p-2 hover:border-white">Registry</li>
-            <li className="border border-transparent p-2 hover:border-white">Gift Cards</li>
-            <li className="border border-transparent p-2 hover:border-white">Sell</li>
+    {/* Category Filter */}          
+            <li className="border border-transparent p-2 hover:border-white">
+              <Select onValueChange={(value) => setSelectedCat(Number(value))}>
+                <SelectTrigger className="w-[150px] mt-1 bg-white text-black">
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.cat_id} value={String(cat.cat_id)}>
+                      {cat.cat_title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>              
+            </li>
+
+    {/* Brand Filter */}            
+            <li className="border border-transparent p-2 hover:border-white">
+              <Select onValueChange={(value) => setSelectedManufacturer(Number(value))}>
+                <SelectTrigger className="w-[150px] mt-1 bg-white text-black">
+                  <SelectValue placeholder="Select Brand" />
+                </SelectTrigger>
+                <SelectContent>
+                  {manufacturers.map((man) => (
+                    <SelectItem key={man.manufacturer_id} value={String(man.manufacturer_id)}>
+                      {man.manufacturer_title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>              
+            </li>
+
+    {/* Product Category Filter */}            
+            <li className="border border-transparent p-2 hover:border-white">
+              <Select onValueChange={(value) => setSelectedPCat(Number(value))}>
+                <SelectTrigger className="w-[150px] mt-1 bg-white text-black">
+                  <SelectValue placeholder="Select Subcategory" />
+                </SelectTrigger>
+                <SelectContent>
+                  {pCategories.map((pCat) => (
+                    <SelectItem key={pCat.p_cat_id} value={String(pCat.p_cat_id)}>
+                      {pCat.p_cat_title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>              
+            </li>
         </ul>
         <div className="flex-grow max-w-xl relative">
           <Input 
@@ -160,62 +211,6 @@ const filteredProducts = products.filter((product) => {
     <section className="bg-pink-500 text-white text-center py-10">
       <h2 className="text-4xl font-bold">UP TO 80% OFF</h2>
       <p className="mt-2">Sale Ends: Mar 27, 07:59 (GMT+1)</p>
-    </section>
-
-{/* Filter By Section */}
-<section className="p-4">
-  <h3 className="text-accent-foreground font-bold mb-4">Filter By</h3>
-  <div className="grid grid-cols-5 md:grid-cols-9 gap-4">
-    {categories.map((cat) => (
-    <div key={cat.cat_id}
-    className={`myBox p-4 rounded-lg shadow-md justify-items-center cursor-pointer ${selectedCat === cat.cat_id ? 'border-2 border-pink-500' : ''}`}
-    onClick={() => setSelectedCat(cat.cat_id === selectedCat ? null : cat.cat_id)} 
-    title={cat.cat_title}
-    >
-    <img
-     src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${cat.cat_image}`} 
-     alt={cat.cat_title}
-     className="rounded-lg h-12 w-12" />
-    </div>
-    ))}
-  </div>
-</section>
-
-    {/* Manufacturers Section */}
-    <section className="p-4">
-      <h3 className="text-accent-foreground font-bold mb-4">Brands</h3>
-      <div className="grid grid-cols-5 md:grid-cols-9 gap-4">
-        {manufacturers.map((manufacturer) => (
-        <div key={manufacturer.manufacturer_id}
-        className={`myBox p-4 rounded-lg shadow-md justify-items-center cursor-pointer ${selectedManufacturer === manufacturer.manufacturer_id ? 'border-2 border-pink-500' : ''}`}
-        onClick={() => setSelectedManufacturer(manufacturer.manufacturer_id === selectedManufacturer ? null : manufacturer.manufacturer_id)} 
-        title={manufacturer.manufacturer_title}
-        >
-        <img
-         src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${manufacturer.manufacturer_image}`} 
-         alt={manufacturer.manufacturer_title}
-         className="rounded-lg h-12 w-12" />
-        </div>
-        ))}
-      </div>
-    </section>
-
-    {/* Categories Section */}
-    <section className="p-4">
-      <h3 className="text-accent-foreground font-bold mb-4">Categories</h3>
-      <div className="grid grid-cols-5 md:grid-cols-9 gap-4">
-        {pCategories.map((pCat) => (
-        <div key={pCat.p_cat_id}
-        className={`myBox p-4 rounded-lg shadow-md justify-items-center cursor-pointer ${selectedPCat === pCat.p_cat_id ? 'border-2 border-pink-500' : ''}`}
-        onClick={() => setSelectedPCat(pCat.p_cat_id === selectedPCat ? null : pCat.p_cat_id)} 
-        title={pCat.p_cat_title}>
-        <img
-         src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${pCat.p_cat_image}`} 
-         alt={pCat.p_cat_title} 
-         className="rounded-lg h-12 w-12" />
-        </div>
-        ))}
-      </div>
     </section>
 
     <section className="p-5">
