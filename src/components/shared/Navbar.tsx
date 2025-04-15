@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
-import { Heart, Search, Send, ShoppingCart, User } from "lucide-react";
+import { Heart, LogOut, Search, Send, ShoppingCart } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ThemeToggle from "../ThemeToggle";
 import supabase from "@/lib/supabaseClient";
-import Logout from "./Logout";
 import useCustomerData from "@/hooks/hooks";
 import { Product } from "@/types";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 const Navbar = () => {
   const { customer } = useCustomerData();
@@ -93,8 +93,13 @@ const Navbar = () => {
     setFilteredSuggestions([]);
   };  
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    window.location.href = "/login"
+  }  
+
   return (
-    <nav className="nav-bg shadow-md px-4 py-3 flex items-center justify-between">
+    <nav className="my-nav shadow-md px-4 py-3 flex items-center justify-between sticky top-0 z-50">
     <Link to="/" className="w-24 h-10 mt-2">
       <img
         src="/src/assets/ushop.svg"
@@ -136,34 +141,47 @@ const Navbar = () => {
       </div>
 
       <div className="flex items-center space-x-4">
-      {customer && (
-        <>
-        <Link to="/wishlist">
-          <Heart size={18} />
-          <span className="bg-red-500 text-white rounded-full px-2 text-xs">{wishlistCount}</span>
-        </Link>
-        <Link to="/cart">
-          <ShoppingCart size={18} />
-          <span className="bg-green-500 text-white rounded-full px-2 text-xs">{cartCount}</span>
-        </Link>
-        <Link to="/contact">
-          <Send size={18} />
-        </Link>
-        </>
-    )}
         {/* User Profile */}
         <Link to="/overview" className="rounded-full">
+        <Avatar className="h-10 w-10 rounded-lg">
         {customer && customer.customer_image ? (
-          <img
+          <AvatarImage
             src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
             alt={customer.customer_name}
             className="w-10 h-10 rounded-full border-gray-300"
           />
         ) : (
-          <User size={24} /> // Placeholder for no image
+          <AvatarFallback className="rounded-lg">CN</AvatarFallback> // Placeholder for no image
         )}
+        </Avatar>
+        </Link>        
+      {customer && (
+        <>
+        <Link
+         to="/wishlist" 
+         className="flex items-center space-x-1 relative">
+          <Heart size={23} />
+          <span className="bg-red-500 text-white rounded-full px-2 text-xs">{wishlistCount}</span>
         </Link>
-        <Logout />
+        <Link
+         to="/cart"
+         className="flex items-center space-x-1 relative" 
+         >
+          <ShoppingCart size={23} />
+          <span className="bg-green-500 text-white rounded-full px-2 text-xs">{cartCount}</span>
+        </Link>
+        <Link to="/contact">
+          <Send size={23} />
+        </Link>
+        </>
+    )}
+
+        <button
+           onClick={handleLogout}
+           className="flex space-x-0 w-full text-left cursor-pointer"
+        >
+            <LogOut size={24} />
+        </button>
         <ThemeToggle />
       </div>
     </nav>

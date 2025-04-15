@@ -10,14 +10,17 @@ const RootLayout = () => {
     
     <div className="min-h-screen">
       <div className="md:hidden"><Topbar /></div>
-      <div className="hidden md:block"><Navbar /></div>
+      <div className="hidden md:sticky md:top-0 md:z-50 md:block">
+        <Navbar />
+      </div>
+
 
       <section>
         <Outlet />
         <Toaster />
       </section>
 
-      <Bottombar />
+      <div className="md:hidden"><Bottombar /></div>
     </div>
     </>
   );

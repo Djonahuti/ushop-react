@@ -128,7 +128,7 @@ const filteredProducts = products.filter((product) => {
       <div className="flex items-center gap-4">
       </div>
 
-    <div className="sticky top-0 z-50 w-full bg-[#232F3E] text-white text-sm px-4 py-2 overflow-x-auto whitespace-nowrap flex items-center gap-4 shadow-md">
+    <div className="sticky top-16 z-40 w-full bg-[#232F3E] text-white text-sm px-4 py-2 overflow-x-auto whitespace-nowrap flex items-center gap-4 shadow-md">
         <div
           className="flex items-center gap-1 cursor-pointer hover:underline"
           onClick={() => {
