@@ -37,6 +37,7 @@ import MailLayout from "./components/shared/Mail/MailLayout"
 import Inbox from "./components/shared/Mail/Inbox"
 import Overview from "./components/shared/Overview"
 import FeedbackPage from "./_root/pages/FeedbackPage"
+import Contact from "./_root/pages/Contact"
 
 
 function App() {
@@ -154,6 +155,15 @@ function App() {
           element={
             <StrictRoute>
               <FeedbackPage />
+            </StrictRoute>
+          }
+        />
+
+        <Route
+          path="/contact"
+          element={
+            <StrictRoute>
+              <Contact />
             </StrictRoute>
           }
         />

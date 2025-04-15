@@ -1,5 +1,3 @@
-//It's not storing the order_id in the feedback database table. So I updated the code to this
-// FeedbackPage.tsx
 
 'use client'
 

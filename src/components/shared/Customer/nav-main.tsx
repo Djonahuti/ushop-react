@@ -1,6 +1,6 @@
 "use client"
 
-import { Binoculars, MailIcon, type LucideIcon } from "lucide-react"
+import { Binoculars, Send, type LucideIcon } from "lucide-react"
 
 import {
   SidebarGroup,
@@ -9,7 +9,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
+//import { Button } from "@/components/ui/button"
+import { Link } from "react-router-dom"
 
 export function NavMain({
   items,
@@ -34,14 +35,13 @@ export function NavMain({
               <Binoculars />
               <a href="/overview"><span>Overview</span></a>
             </SidebarMenuButton>
-            <Button
-              size="icon"
+            <Link
               className="h-9 w-9 shrink-0 group-data-[collapsible=icon]:opacity-0"
-              variant="outline"
+              to="/contact"
             >
-              <MailIcon />
-              <span className="sr-only">Inbox</span>
-            </Button>
+              <Send />
+              <span className="sr-only">Contact us</span>
+            </Link>
           </SidebarMenuItem>
         </SidebarMenu>        
         <SidebarMenu>
