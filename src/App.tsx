@@ -40,6 +40,7 @@ import FeedbackPage from "./_root/pages/FeedbackPage"
 import Contact from "./_root/pages/Contact"
 import SeeFeedbacks from "./_root/pages/SeeFeedbacks"
 import AllFeedbacks from "./admin/pages/AllFeedbacks"
+import SearchResults from "./routes/SearchResults"
 
 
 function App() {
@@ -94,6 +95,7 @@ function App() {
         <Route element={<RootLayout />}>
           <Route index element={<Home />} />
           <Route path="/products/:productId" element={<ProductDetails />} />
+          <Route path="/search" element={<SearchResults />} />
         <Route
           path="/cart"
           element={
