@@ -39,7 +39,6 @@ import Overview from "./components/shared/Overview"
 import FeedbackPage from "./_root/pages/FeedbackPage"
 import Contact from "./_root/pages/Contact"
 import SeeFeedbacks from "./_root/pages/SeeFeedbacks"
-import UserPayments from "./_root/pages/UserPayments"
 
 
 function App() {
@@ -145,10 +144,10 @@ function App() {
         />
 
         <Route
-          path="/my-payments"
+          path="/my-cart"
           element={
             <StrictRoute>
-              <UserPayments />
+              <Cart />
             </StrictRoute>
           }
         />

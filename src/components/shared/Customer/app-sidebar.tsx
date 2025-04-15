@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import {
-  HandCoins,
+  ShoppingCart,
   Heart,
   MapPinned,
   MessageCircleMore,
@@ -42,9 +42,9 @@ const data = {
       toolTip: "My Wishlist",
     },
     {
-      title: "Payments",
-      url: "/my-payments",
-      icon: HandCoins,
+      title: "Cart",
+      url: "/my-cart",
+      icon: ShoppingCart,
       toolTip: "Payment",
     },
     {
