@@ -103,7 +103,7 @@ export default function ProductCard({ products, itemsPerPage = 8 }: Props) {
 
   return (
 
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 justify-items-center">
       {paginatedProducts.length === 0 ? (
           <div className="p-4 text-center text-red-500 flex items-center justify-center gap-2">
               <AlertCircle className="h-10 w-10" />
@@ -146,7 +146,7 @@ export default function ProductCard({ products, itemsPerPage = 8 }: Props) {
           </div>
 
           {/* Pagination */}
-          <Pagination className="mt-8 justify-center">
+          <Pagination className="mt-8 justify-center pb-10">
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious

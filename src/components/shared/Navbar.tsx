@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
-import { BellIcon, CreditCardIcon, Heart, LogInIcon, LogOut, LogOutIcon, Search, Send, ShoppingCart, UserCircleIcon } from "lucide-react";
+import { BellIcon, CreditCardIcon, Heart, LogOutIcon, Search, Send, ShoppingCart, UserCircleIcon } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ThemeToggle from "../ThemeToggle";
 import supabase from "@/lib/supabaseClient";
@@ -101,7 +101,7 @@ const Navbar = () => {
 
   return (
     <nav className="my-nav shadow-md px-4 py-3 flex items-center justify-between sticky top-0 z-50">
-    <Link to="/" className="w-24 h-10 mt-2">
+    <Link to="/" className="w-24 h-10 mt-2 space-x-3 pl-2">
       <img
         src="/src/assets/ushop.svg"
         alt="logo"
@@ -246,19 +246,6 @@ const Navbar = () => {
         </Link>
         </>
     )}
-
-      {customer && customer.customer_id ? (
-          <button
-            onClick={handleLogout}
-            className="flex w-full text-left cursor-pointer"
-          >
-            <LogOut size={24} />
-          </button>
-        ) : (
-              <Link to="/login" className="p-2 space-x-1">
-                <LogInIcon size={24}/>
-              </Link>
-      )}
         <ThemeToggle />
       </div>
     </nav>
