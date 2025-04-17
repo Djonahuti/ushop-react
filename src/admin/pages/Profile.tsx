@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
+import { Admin } from "@/types";
 
 const schema = z.object({
   admin_name: z.string().min(1, 'Name is required'),
@@ -26,7 +27,7 @@ const Profile: React.FC = () => {
     resolver: zodResolver(schema),
   });
 
-  const [admin, setAdmin] = useState<any>(null);
+  const [admin, setAdmin] = useState<Admin | null>(null);
   const [loading, setLoading] = useState(true);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
@@ -85,7 +86,7 @@ const Profile: React.FC = () => {
     // Update Admin function
     const onSubmit = async (data: FormData) => {
       // Handle image upload
-      let imagePath = admin.admin_image; // Keep the existing image if no new image is uploaded
+      let imagePath = admin?.admin_image; // Keep the existing image if no new image is uploaded
       if (imageFile) {
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('media') // Replace with your storage bucket name
@@ -110,7 +111,7 @@ const Profile: React.FC = () => {
           admin_about: data.admin_about,
           admin_image: imagePath,
         })
-        .eq('admin_email', admin.admin_email);
+        .eq('admin_email', admin?.admin_email);
   
       if (error) {
         console.error('Error updating admin data:', error.message);
@@ -157,8 +158,16 @@ const Profile: React.FC = () => {
       }
     };
   
-    if (loading) {
-      return <div>Loading...</div>;
+    if (loading){
+      return(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
+          <img
+            src="/src/assets/ushop.svg"
+            alt="logo"
+            className="w-[250px] h-[70px] animate-pulse"
+          />
+        </div>      
+      )
     }
   
     if (!admin) {
