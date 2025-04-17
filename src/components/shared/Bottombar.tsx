@@ -22,13 +22,12 @@ const Bottombar = () => {
 
         if (error) {
           console.error('Error fetching customer data:', error.message);
-          toast.error('Error fetching customer data');
+          toast.success('Welcome guest');
         } else {
           setCustomer(data);
         }
       } else if (userError) {
         console.error('Error getting user:', userError.message);
-        toast.error('Error getting user');
       }
     };
 

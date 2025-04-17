@@ -1,11 +1,11 @@
 
-import { Heart, LogOut, ShoppingCart } from "lucide-react";
+import { Heart, LogInIcon, LogOut, ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Customer } from "@/types";
 import { useEffect, useState } from "react";
 import supabase from "@/lib/supabaseClient";
-import { toast } from "sonner";
+import ThemeToggle from "../ThemeToggle";
 
 
 const Topbar = () => {
@@ -26,13 +26,11 @@ const Topbar = () => {
 
         if (error) {
           console.error('Error fetching customer data:', error.message);
-          toast.error('Error fetching customer data');
         } else {
           setCustomer(data);
         }
       } else if (userError) {
         console.error('Error getting user:', userError.message);
-        toast.error('Error getting user');
       }
     };
 
@@ -87,37 +85,56 @@ const Topbar = () => {
         </Link>
 
         <div className="flex items-center border border-transparent p-1">
+        {customer?.customer_image ? (
           <Link to="/profile">
-            <Avatar className="h-8 w-8 rounded-lg">
-              {customer?.customer_image ? (
+            <Avatar className="h-9 w-10 rounded-full">
               <AvatarImage
                src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
                alt={customer.customer_name}
                className="rounded-full w-10 h-9" 
                />
-              ):(
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
-              )}
             </Avatar>
-          </Link>          
+          </Link> 
+        ):(
+          <Link to="/login" className="rounded-full">
+            <Avatar className="h-9 w-10 rounded-full">
+              <AvatarFallback className="rounded-full">CN</AvatarFallback>
+            </Avatar>        
+          </Link>
+        )}   
+      
           <Link
            to="/cart" 
            className="p-2 flex items-center space-x-1 relative">
             <ShoppingCart size={24} />
+          {customer && (
             <span className="bg-green-500 text-white rounded-full px-2 text-xs">{cartCount}</span>
+          )}
           </Link>
           <Link
            to="/wishlist" 
            className="p-2 flex items-center space-x-1 relative">
             <Heart size={24} />
+            {customer && (
             <span className="bg-red-500 text-white rounded-full px-2 text-xs">{wishlistCount}</span>
+          )}
           </Link>
-          <button
-           onClick={handleLogout}
-           className="flex w-full text-left cursor-pointer"
-          >
-            <LogOut size={24} />
-          </button>
+
+          {customer && customer.customer_id ? (
+            <button
+              onClick={handleLogout}
+              className="flex w-full text-left cursor-pointer"
+            >
+              <LogOut size={24} />
+            </button>
+          ) : (
+            <Link to="/login" className="p-2 space-x-1">
+              <LogInIcon size={24}/>
+            </Link>
+          )}
+
+        <ThemeToggle />
+
         </div>
 
     </nav>

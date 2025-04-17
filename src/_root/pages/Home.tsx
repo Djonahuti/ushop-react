@@ -2,7 +2,6 @@ import ProductCard from "@/components/shared/ProductCard"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useAuth } from "@/context/AuthContext"
 import supabase from "@/lib/supabaseClient"
 import { Category, Manufacturer, Product, ProductCategory } from "@/types"
 import { FilterIcon, Search } from "lucide-react"
@@ -10,9 +9,8 @@ import { useEffect, useState } from "react"
 
 
 const Home = () => {
-  //const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
   //const [error, setError] = useState<string | null>(null);
-    const { user } = useAuth();
     const [categories, setCategories] = useState<Category[]>([]);
     const [pCategories, setPCategories] = useState<ProductCategory[]>([]);
     const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
@@ -60,6 +58,9 @@ const filteredProducts = products.filter((product) => {
         } else {
           setProducts(data || []);
         }
+
+        //Final load complete
+        setLoading(false);
       };
       fetchProducts();
     }, []);
@@ -75,6 +76,9 @@ const filteredProducts = products.filter((product) => {
         } else {
           setCategories(data || []);
         }
+
+        //Final load complete
+        setLoading(false);        
       };
 
       fetchCategories();
@@ -91,6 +95,9 @@ const filteredProducts = products.filter((product) => {
         } else {
           setManufacturers(data || []);
         }
+
+        //Final load complete
+        setLoading(false);        
       };
 
       fetchManufacturers();
@@ -107,6 +114,9 @@ const filteredProducts = products.filter((product) => {
         } else {
           setPCategories(data || []);
         }
+
+        //Final load complete
+        setLoading(false);        
       };
 
       fetchPCategories();
@@ -118,6 +128,18 @@ const filteredProducts = products.filter((product) => {
         <p className="text-red-500">{error}</p>
       </div>
     );
+  }
+
+  if (loading){
+    return(
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
+        <img
+          src="/src/assets/ushop.svg"
+          alt="logo"
+          className="w-[250px] h-[70px] animate-pulse"
+        />
+      </div>      
+    )
   }
     return (
     <>
@@ -216,23 +238,20 @@ const filteredProducts = products.filter((product) => {
           </Button>
         </div>
     </div>
+    
+    {/* Banner Desktop */}    
     <section className="bg-pink-500 text-white text-center py-10">
-      <h2 className="text-4xl font-bold">UP TO 80% OFF</h2>
-      <p className="mt-2">Sale Ends: Mar 27, 07:59 (GMT+1)</p>
-    </section>
+      <div className="pt-8 md:pt-1">
+        <h2 className="md:text-4xl text-2xl md:font-bold font-medium">UP TO 80% OFF</h2>
+        <p className="md:mt-2 mt-1">Sale Ends: Mar 27, 07:59 (GMT+1)</p>
+      </div>
+    </section>    
 
-    <section className="p-5">
+    <section className="p-1">
       <div><ProductCard products={filteredProducts} /></div>
       </section>
     
     </div>
-      <div>
-        {user ? (
-          <h1>Welcome {user.email}</h1>
-        ) : (
-          <p>Please login</p>
-        )}
-      </div>
     </>
     )
 }

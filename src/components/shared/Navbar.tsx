@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
-import { Heart, LogOut, Search, Send, ShoppingCart } from "lucide-react";
+import { BellIcon, CreditCardIcon, Heart, LogInIcon, LogOut, LogOutIcon, Search, Send, ShoppingCart, UserCircleIcon } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ThemeToggle from "../ThemeToggle";
 import supabase from "@/lib/supabaseClient";
 import useCustomerData from "@/hooks/hooks";
 import { Product } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
 const Navbar = () => {
   const { customer } = useCustomerData();
@@ -151,19 +152,80 @@ const Navbar = () => {
 
       <div className="flex items-center space-x-4">
         {/* User Profile */}
-        <Link to="/overview" className="rounded-full">
-        <Avatar className="h-10 w-10 rounded-full">
         {customer && customer.customer_image ? (
-          <AvatarImage
+      <DropdownMenu>
+        <DropdownMenuTrigger>
+            <Avatar className="h-10 w-10 rounded-lg">
+            {customer.customer_image ? (
+            <AvatarImage
             src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
             alt={customer.customer_name}
-            className="w-10 h-10 rounded-full border-gray-300"
-          />
-        ) : (
-          <AvatarFallback className="rounded-full">CN</AvatarFallback> // Placeholder for no image
-        )}
-        </Avatar>
-        </Link>        
+            className="w-10 h-10 rounded-full border-gray-300" 
+            />
+            ):(
+                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+            )}
+            </Avatar>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+          align="end"
+          sideOffset={4}
+        >
+          <DropdownMenuLabel className="p-0 font-normal">
+            <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+              <Avatar className="h-8 w-8 rounded-full grayscale">
+            {customer.customer_image ? (
+                <AvatarImage
+                  src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`} 
+                  alt={customer.customer_name}
+                  className="rounded-full" 
+                />
+                ):(
+                    <AvatarFallback className="rounded-full">CN</AvatarFallback>
+                )}
+              </Avatar>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-medium">{customer.customer_name}</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                  {customer.customer_email}
+                  </span>
+                </div>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuItem>
+              <Link to="/overview" className="flex justify-between gap-2">
+                <UserCircleIcon />Account
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <CreditCardIcon />
+              Billing
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <BellIcon />
+              Notifications
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem>
+            <button onClick={handleLogout} className="flex space-x-0 w-full text-left cursor-pointer">
+              <LogOutIcon />
+              Log out
+            </button>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ) : (
+        <Link to="/login" className="rounded-full">
+          <Avatar className="h-10 w-10 rounded-full">
+            <AvatarFallback className="rounded-full">CN</AvatarFallback>
+          </Avatar>        
+        </Link>
+
+  )}
       {customer && (
         <>
         <Link
@@ -185,12 +247,18 @@ const Navbar = () => {
         </>
     )}
 
-        <button
-           onClick={handleLogout}
-           className="flex space-x-0 w-full text-left cursor-pointer"
-        >
+      {customer && customer.customer_id ? (
+          <button
+            onClick={handleLogout}
+            className="flex w-full text-left cursor-pointer"
+          >
             <LogOut size={24} />
-        </button>
+          </button>
+        ) : (
+              <Link to="/login" className="p-2 space-x-1">
+                <LogInIcon size={24}/>
+              </Link>
+      )}
         <ThemeToggle />
       </div>
     </nav>
