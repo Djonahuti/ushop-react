@@ -57,6 +57,23 @@ export default function ConfirmPay() {
     await supabase.from('orders').update({ order_status: 'Paid' }).eq('invoice_no', invoice_no);
     await supabase.from('pending_orders').update({ order_status: 'Paid' }).eq('invoice_no', invoice_no);
 
+    // Log the status update in order_status_history
+    const { data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .select('order_id')
+      .eq('invoice_no', invoice_no)
+      .single();
+
+    if (orderError || !orderData) {
+      alert('Failed to find order.');
+      setIsPending(false);
+      return;
+    }
+
+    await supabase
+      .from('order_status_history')
+      .insert([{ order_id: orderData.order_id, status: 'Paid' }]);    
+
     alert('Your payment confirmation has been submitted!');
     navigate('/my-orders');
     setIsPending(false);

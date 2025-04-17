@@ -89,6 +89,7 @@ export default function Checkout() {
           customer_id: customer.customer_id,
           due_amount: total,
           invoice_no,
+          product_id: item.product_id,
           qty: item.qty,
           size: item.size,
           order_date: new Date().toISOString(),
@@ -115,6 +116,22 @@ export default function Checkout() {
           toast.error("Failed to create pending order.");
           return;
         }
+          // Log the status update in order_status_history
+          const { data: orderData, error: orderFetchError } = await supabase
+            .from('orders')
+            .select('order_id')
+            .eq('invoice_no', invoice_no)
+            .single();
+
+          if (orderFetchError || !orderData) {
+            console.error("Failed to fetch order ID:", orderFetchError);
+            toast.error("Failed to log order status.");
+            return;
+          }
+
+          await supabase
+            .from('order_status_history')
+            .insert([{ order_id: orderData.order_id, status: 'Pending' }]);        
       }
 
       await supabase.from('cart').delete().eq('customer_id', customer.customer_id);

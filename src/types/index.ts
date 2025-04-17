@@ -88,6 +88,7 @@ export type Order = {
     qty: number;
     size: string;
     order_status: string;
+    submitted_at: string;
     customer_id: number;
     customers: {
         customer_name: string;
@@ -205,4 +206,14 @@ export type Feedback = {
         product_title: string;
         product_img1: string;
     };
+}
+
+export type OrderStatusHistory = {
+    id: number;
+    order_id: number;
+    status: string;
+    updated_at: string;
+    orders?:{
+        invoice_no: number;
+    }
 }

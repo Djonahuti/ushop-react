@@ -34,6 +34,19 @@ const CustomerOrders = () => {
   const [customer, setCustomer] = useState<{ customer_id: string } | null>(null);    
 
   const handleReceive = async (invoice_no: number) => {
+    const { data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .select('order_id')
+      .eq('invoice_no', invoice_no)
+      .single();
+
+    if (orderError || !orderData) {
+      toast.error('Failed to find order.');
+      return;
+    }
+
+    const orderId = orderData.order_id;
+
     await supabase
       .from('orders')
       .update({ order_status: 'COMPLETED' })
@@ -44,9 +57,14 @@ const CustomerOrders = () => {
       .update({ order_status: 'RECEIVED' })
       .eq('invoice_no', invoice_no);
 
-      toast.success('RECEIVED!');
+    // Log the status update in order_status_history
+    await supabase
+      .from('order_status_history')
+      .insert([{ order_id: orderId, status: 'COMPLETED' }]);
+
+    toast.success('RECEIVED!');
     setOrders(order.filter(o => o.invoice_no !== invoice_no));
-  };
+};
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -160,7 +178,13 @@ const CustomerOrders = () => {
                       </div>
                       <div className="space-x-2 text-sm">
                         <span>Order ID: <span className="text-blue-500">{order.invoice_no}</span></span>
-                        <Button variant="link" className="p-0 h-auto text-sm">Order details</Button>
+                        <Link
+                         to="/order" 
+                         className="p-0 h-auto text-sm"
+                         state={{ order_id: order.order_id }}
+                        >
+                          See Status History
+                        </Link>
                       </div>
                     </div>
 
@@ -192,11 +216,11 @@ const CustomerOrders = () => {
                       <DeliveryTimeline status={order.order_status} />
                     </div>
                     <div className="relative flex justify-between items-center mt-2">
-                      <p className="px-2 py-1">
+                      <div className="px-2 py-1">
                         {/* Feedback section */}
                         {orderFeedback ? (
                           <div className="mt-4 border-top space-y-2">
-                            <p className="text-sm text-muted-foreground">{orderFeedback.feedtype?.feedback_type}</p>
+                            <Label className="text-sm text-muted-foreground">{orderFeedback.feedtype?.feedback_type}</Label>
                             <p className="text-yellow-500 text-xl">
                               {'★'.repeat(orderFeedback.rating)}{'☆'.repeat(5 - orderFeedback.rating)}
                             </p>
@@ -213,7 +237,7 @@ const CustomerOrders = () => {
                             </Link>
                           )
                         )}                        
-                      </p>
+                      </div>
                       <p className="text-right text-base font-medium">
                         {order.order_status === 'Pending' && (
                           <Button onClick={() => navigate(`/confirm-pay/${order.invoice_no}`)} className="mt-2" title="Mark as paid">

@@ -41,6 +41,7 @@ import Contact from "./_root/pages/Contact"
 import SeeFeedbacks from "./_root/pages/SeeFeedbacks"
 import AllFeedbacks from "./admin/pages/AllFeedbacks"
 import SearchResults from "./routes/SearchResults"
+import OrderStatus from "./_root/pages/OrderStatus"
 
 
 function App() {
@@ -161,6 +162,12 @@ function App() {
             <StrictRoute>
               <CustomerOrders />
             </StrictRoute>
+          }
+        />
+        <Route
+          path="/order"
+          element={
+            <StrictRoute><OrderStatus /></StrictRoute>
           }
         />
 

@@ -8,6 +8,7 @@ import { Customer, PendingOrder, Payment, Order } from "@/types";
 import { toast } from "sonner";
 import { BanknoteX, Handshake, PackageCheck, Truck } from "lucide-react";
 import { IconCashRegister, IconPackageExport, IconTrolleyFilled } from '@tabler/icons-react';
+import { formatDistanceToNow } from 'date-fns';
 
 
 export const Database = () => {
@@ -193,7 +194,12 @@ export const Database = () => {
       cell: ({ row }) => row.original.customers?.customer_name || "Unknown",
      },
     { accessorKey: "invoice_no", header: "Invoice No" },
-    { accessorKey: "order_date", header: "Order Date" },
+    { accessorKey: "order_date", header: "Order Date",
+      cell: ({ row }) => {
+        const date = new Date(row.original.order_date);
+        return formatDistanceToNow(date, { addSuffix: true });
+      },
+     },
     { accessorKey: "order_status", header: "Status" },
     { accessorKey: "qty", header: "Quantity" },
     { accessorKey: "due_amount", header: "Total Price" },
@@ -251,7 +257,12 @@ export const Database = () => {
     { accessorKey: "order_status", header: "Status" },
     { accessorKey: "qty", header: "Qty" },
     { accessorKey: "size", header: "Size" },
-    { accessorKey: "created_at", header: "Order Date" },
+    { accessorKey: "created_at", header: "Order Date",
+      cell: ({ row }) => {
+        const date = new Date(row.original.created_at);
+        return formatDistanceToNow(date, { addSuffix: true });
+      },
+     },
     {
       accessorKey: "actions",
       header: "Actions",

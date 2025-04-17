@@ -50,6 +50,17 @@ export default function AdminPendingOrders() {
   }, [search, tab, orders]);  
 
   const handleConfirm = async (invoice_no: number) => {
+    const { data: orderData, error: orderError } = await supabase
+    .from('orders')
+    .select('order_id')
+    .eq('invoice_no', invoice_no)
+    .single();
+
+    if (orderError || !orderData) {
+      alert('Failed to find order.');
+      return;
+    }
+
     await supabase
       .from('orders')
       .update({ order_status: 'Payment confirmed' })
@@ -59,12 +70,28 @@ export default function AdminPendingOrders() {
       .from('pending_orders')
       .update({ order_status: 'Payment confirmed' })
       .eq('invoice_no', invoice_no);
+
+    // Log the status update in order_status_history
+    await supabase
+      .from('order_status_history')
+      .insert([{ order_id: orderData.order_id, status: 'Payment confirmed' }]);      
 
     alert('Payment confirmed!');
     setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
 
   const handleShipped = async (invoice_no: number) => {
+    const { data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .select('order_id')
+      .eq('invoice_no', invoice_no)
+      .single();
+
+    if (orderError || !orderData) {
+      alert('Failed to find order.');
+      return;
+    }
+
     await supabase
       .from('orders')
       .update({ order_status: 'SHIPPED' })
@@ -74,12 +101,28 @@ export default function AdminPendingOrders() {
       .from('pending_orders')
       .update({ order_status: 'SHIPPED' })
       .eq('invoice_no', invoice_no);
+
+    // Log the status update in order_status_history
+    await supabase
+      .from('order_status_history')
+      .insert([{ order_id: orderData.order_id, status: 'Shipped' }]);      
 
     alert('SHIPPED!');
     setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
 
   const handleWaiting = async (invoice_no: number) => {
+    const { data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .select('order_id')
+      .eq('invoice_no', invoice_no)
+      .single();
+
+    if (orderError || !orderData) {
+      alert('Failed to find order.');
+      return;
+    } 
+
     await supabase
       .from('orders')
       .update({ order_status: 'WAITING TO BE SHIPPED' })
@@ -89,12 +132,27 @@ export default function AdminPendingOrders() {
       .from('pending_orders')
       .update({ order_status: 'WAITING TO BE SHIPPED' })
       .eq('invoice_no', invoice_no);
+
+    // Log the status update in order_status_history
+    await supabase
+      .from('order_status_history')
+      .insert([{ order_id: orderData.order_id, status: 'Waiting to be Shipped' }]);      
 
     alert('WAITING TO BE SHIPPED!');
     setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
 
   const handleOutForDelivery = async (invoice_no: number) => {
+    const { data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .select('order_id')
+      .eq('invoice_no', invoice_no)
+      .single();
+
+    if (orderError || !orderData) {
+      alert('Failed to find order.');
+      return;
+    }    
     await supabase
       .from('orders')
       .update({ order_status: 'OUT FOR DELIVERY' })
@@ -104,12 +162,28 @@ export default function AdminPendingOrders() {
       .from('pending_orders')
       .update({ order_status: 'OUT FOR DELIVERY' })
       .eq('invoice_no', invoice_no);
+
+    // Log the status update in order_status_history
+    await supabase
+      .from('order_status_history')
+      .insert([{ order_id: orderData.order_id, status: 'Out for delivery' }]);      
 
     alert('OUT FOR DELIVERY!');
     setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
 
   const handleDelivered = async (invoice_no: number) => {
+    const { data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .select('order_id')
+      .eq('invoice_no', invoice_no)
+      .single();
+
+    if (orderError || !orderData) {
+      alert('Failed to find order.');
+      return;
+    }    
+    
     await supabase
       .from('orders')
       .update({ order_status: 'DELIVERED' })
@@ -119,6 +193,11 @@ export default function AdminPendingOrders() {
       .from('pending_orders')
       .update({ order_status: 'DELIVERED' })
       .eq('invoice_no', invoice_no);
+
+    // Log the status update in order_status_history
+    await supabase
+      .from('order_status_history')
+      .insert([{ order_id: orderData.order_id, status: 'Delivered' }]);      
 
     alert('DELIVERED!');
     setOrders(orders.filter(o => o.invoice_no !== invoice_no));
