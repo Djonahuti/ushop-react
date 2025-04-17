@@ -160,7 +160,7 @@ const Profile: React.FC = () => {
   
     if (loading){
       return(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center my-nav">
           <img
             src="/src/assets/ushop.svg"
             alt="logo"

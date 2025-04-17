@@ -128,17 +128,17 @@ export function PopRight() {
     fetchAdminData();
   }, []);
 
-  if (loading){
-    return(
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
-        <img
-          src="/src/assets/ushop.svg"
-          alt="logo"
-          className="w-[250px] h-[70px] animate-pulse"
-        />
-      </div>      
-    )
-  }
+    if (loading){
+      return(
+        <div className="fixed inset-0 z-50 flex items-center justify-center my-nav">
+          <img
+            src="/src/assets/ushop.svg"
+            alt="logo"
+            className="w-[250px] h-[70px] animate-pulse"
+          />
+        </div>      
+      )
+    }
 
   if (!admin) {
     return <div>No admin data found.</div>;
