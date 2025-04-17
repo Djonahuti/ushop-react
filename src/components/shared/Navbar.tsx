@@ -126,14 +126,23 @@ const Navbar = () => {
         </Button>
 
         {filteredSuggestions.length > 0 && (
-          <ul className="absolute z-50 mt-1 w-full bg-white border rounded shadow max-h-60 overflow-y-auto">
+          <ul className="my-nav absolute z-50 mt-1 w-full border rounded shadow max-h-60 overflow-y-auto">
             {filteredSuggestions.slice(0, 5).map((product) => (
               <li
                 key={product.product_id}
-                className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                className="px-4 py-2 hover:bg-gray-700 cursor-pointer text-sm"
                 onClick={() => handleSuggestionClick(product)}
               >
-                {product.product_title}
+                <div className="flex justify-between items-center space-x-2 pb-2">
+                  <Avatar className="w-10 h-10">
+                    <AvatarImage
+                     src={`/products/${product.product_img1}`} 
+                     alt={product.product_title} 
+                     className="w-10 h-10" 
+                    />
+                  </Avatar>
+                <p className="text-right text-base font-medium">{product.product_title}</p>
+                </div>
               </li>
             ))}
           </ul>
@@ -143,7 +152,7 @@ const Navbar = () => {
       <div className="flex items-center space-x-4">
         {/* User Profile */}
         <Link to="/overview" className="rounded-full">
-        <Avatar className="h-10 w-10 rounded-lg">
+        <Avatar className="h-10 w-10 rounded-full">
         {customer && customer.customer_image ? (
           <AvatarImage
             src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
@@ -151,7 +160,7 @@ const Navbar = () => {
             className="w-10 h-10 rounded-full border-gray-300"
           />
         ) : (
-          <AvatarFallback className="rounded-lg">CN</AvatarFallback> // Placeholder for no image
+          <AvatarFallback className="rounded-full">CN</AvatarFallback> // Placeholder for no image
         )}
         </Avatar>
         </Link>        

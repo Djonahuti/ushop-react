@@ -10,6 +10,8 @@ import { toast } from "sonner";
 
 const Topbar = () => {
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const [wishlistCount, setWishlistCount] = useState(0);
+  const [cartCount, setCartCount] = useState(0);  
 
   useEffect(() => {
     const fetchCustomerData = async () => {
@@ -37,6 +39,36 @@ const Topbar = () => {
     fetchCustomerData();
   }, []);
 
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const { data: customer, error } = await supabase
+        .from('customers')
+        .select('customer_id')
+        .eq('customer_email', user.email)
+        .single();
+
+      if (error || !customer) return;
+
+      const { count: cCount } = await supabase
+        .from('cart')
+        .select('*', { count: 'exact', head: true })
+        .eq('customer_id', customer.customer_id);
+
+      const { count: wCount } = await supabase
+        .from('wishlist')
+        .select('*', { count: 'exact', head: true })
+        .eq('customer_id', customer.customer_id);
+  
+      setWishlistCount(wCount || 0);
+      setCartCount(cCount || 0);
+    };
+  
+    fetchCounts();
+  }, []);  
+
     const handleLogout = async () => {
       await supabase.auth.signOut()
       window.location.href = "/login"
@@ -44,7 +76,7 @@ const Topbar = () => {
   //const navigate = useNavigate();
   return (
     <>
-    <nav className="fixed top-0 left-0 my-nav w-full h-19 flex justify-between items-center text-sm z-50 space-x-2">
+    <nav className="fixed top-0 left-0 my-nav w-full h-16 flex justify-between items-center text-sm z-50 space-x-2">
         <Link to="/" className="w-24 h-10 mt-2">
           <img
             src="/src/assets/ushop.svg"
@@ -68,11 +100,17 @@ const Topbar = () => {
               )}
             </Avatar>
           </Link>          
-          <Link to="/cart" className="p-2">
+          <Link
+           to="/cart" 
+           className="p-2 flex items-center space-x-1 relative">
             <ShoppingCart size={24} />
+            <span className="bg-green-500 text-white rounded-full px-2 text-xs">{cartCount}</span>
           </Link>
-          <Link to="/wishlist" className="p-2">
+          <Link
+           to="/wishlist" 
+           className="p-2 flex items-center space-x-1 relative">
             <Heart size={24} />
+            <span className="bg-red-500 text-white rounded-full px-2 text-xs">{wishlistCount}</span>
           </Link>
           <button
            onClick={handleLogout}
