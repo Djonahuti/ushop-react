@@ -140,11 +140,6 @@ const CustomerOrders = () => {
         <TabsList className="flex flex-wrap gap-2 mb-4">
           <TabsTrigger value="all">View all</TabsTrigger>
           <TabsTrigger value="Pending">To Pay</TabsTrigger>
-          <TabsTrigger value="Paid">Paid</TabsTrigger>
-          <TabsTrigger value="Payment confirmed">Payment Confirmed</TabsTrigger>
-          <TabsTrigger value="WAITING TO BE SHIPPED">To Ship</TabsTrigger>
-          <TabsTrigger value="SHIPPED">Shipped</TabsTrigger>
-          <TabsTrigger value="OUT FOR DELIVERY">Out for delivery</TabsTrigger>
           <TabsTrigger value="DELIVERED">Arrived</TabsTrigger>
           <TabsTrigger value="COMPLETED">Completed</TabsTrigger>
         </TabsList>
