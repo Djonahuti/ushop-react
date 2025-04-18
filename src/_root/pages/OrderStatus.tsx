@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react';
+import { JSX, useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
 import { OrderStatusHistory } from '@/types'; // Define this type according to your needs
 import { useLocation } from 'react-router-dom';
-import { Clock } from 'lucide-react';
+import { CircleDollarSign, Clock, Handshake, Hourglass, Package, PackageCheck, ShieldCheck, Truck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { motion } from 'framer-motion';
+import { IconTruckDelivery } from '@tabler/icons-react';
 
 const OrderStatus = () => {
   const [statusHistory, setStatusHistory] = useState<OrderStatusHistory[]>([]);
@@ -24,6 +25,18 @@ const OrderStatus = () => {
     'DELIVERED': 'bg-purple-500',
     'COMPLETED': 'bg-emerald-600',
   };
+
+  const statusIcons: { [key: string]: JSX.Element } = {
+    'Pending': <Hourglass className="w-4 h-4 text-gray-500 mr-2" />,
+    'Paid': <CircleDollarSign className="w-4 h-4 text-yellow-500 mr-2" />,
+    'Payment confirmed': <ShieldCheck className="w-4 h-4 text-green-500 mr-2" />,
+    'WAITING TO BE SHIPPED': <Package className="w-4 h-4 text-blue-300 mr-2" />,
+    'SHIPPED': <Truck className="w-4 h-4 text-blue-500 mr-2" />,
+    'OUT FOR DELIVERY': <IconTruckDelivery className="w-4 h-4 text-indigo-500 mr-2" />,
+    'DELIVERED': <Handshake className="w-4 h-4 text-purple-500 mr-2" />,
+    'COMPLETED': <PackageCheck className="w-4 h-4 text-emerald-600 mr-2" />,
+  };
+  
 
   const statusMap: { [key: string]: string } = {
     'Pending': 'Pending',
@@ -94,7 +107,11 @@ const OrderStatus = () => {
                 <span
                   className={`absolute w-4 h-4 ${color} rounded-full -left-[10px] border-2 border-white`}
                 />
-                <h3 className="text-md font-semibold text-gray-800">{label}</h3>
+                <h3 className="text-md font-semibold text-gray-800 flex items-center">
+                  {statusIcons[status]}
+                  {label}
+                </h3>
+
                 <time className="block mb-1 text-sm text-gray-500">
                   <Clock className="inline w-4 h-4 mr-1" />
                   {formatDistanceToNow(new Date(history.updated_at), { addSuffix: true })}
