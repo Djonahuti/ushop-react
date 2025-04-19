@@ -10,8 +10,9 @@ import { Outlet } from "react-router-dom"
 
 export default function CustomerLayout() {
   return (
+    <div className="min-h-screen">
     <SidebarProvider>
-      <AppSidebar />
+      <div className="hidden md:block"><AppSidebar /></div>
       <SidebarInset>
         <CustomerHeader />
       <main>
@@ -20,5 +21,6 @@ export default function CustomerLayout() {
       </main>  
       </SidebarInset>
     </SidebarProvider>
+    </div>
   )
 }

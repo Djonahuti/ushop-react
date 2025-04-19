@@ -122,8 +122,9 @@ const CustomerProfile: React.FC = () => {
   // Change Password function
   const changePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
     // Sign in with the current password to verify it
-    const { error: signInError } = await supabase.auth.signIn({
-      email: supabase.auth.user()?.email || '', // Get the current user's email
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user?.email || '', // Get the current user's email
       password: currentPassword,
     });
   
@@ -133,7 +134,7 @@ const CustomerProfile: React.FC = () => {
     }
   
     // If sign in is successful, update the password
-    const { error: updateError } = await supabase.auth.update({
+    const { error: updateError } = await supabase.auth.updateUser({
       password: newPassword,
     });
   
@@ -146,12 +147,26 @@ const CustomerProfile: React.FC = () => {
 
 // Delete Account function
   const deleteAccount = async (): Promise<void> => {
-    const { error } = await supabase.auth.delete();
-  
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      console.error('Error getting user:', userError?.message);
+      return;
+    }
+
+    // You need to implement a secure backend function to delete a user.
+    // For demonstration, we'll just remove the customer record from the 'customers' table.
+    // WARNING: This does NOT delete the user from Supabase Auth!
+    const { error } = await supabase
+      .from('customers')
+      .delete()
+      .eq('customer_email', user.email);
+
     if (error) {
-      console.error('Error deleting account:', error.message);
+      console.error('Error deleting customer data:', error.message);
     } else {
-      console.log('Account deleted successfully');
+      console.log('Customer data deleted successfully');
+      // Optionally, sign out the user
+      await supabase.auth.signOut();
       // Optionally, redirect the user or show a success message
     }
   };
@@ -178,7 +193,7 @@ const CustomerProfile: React.FC = () => {
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
     <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Profile Section */}
-      <Card className="col-span-1">
+      <Card>
         <CardHeader>
           <CardTitle>{customer.customer_name}</CardTitle>
         </CardHeader>
@@ -192,7 +207,7 @@ const CustomerProfile: React.FC = () => {
           <Avatar className="w-24 h-24" />
         )}
           </Avatar>
-          <div className="space-y-2">
+          <div className="mt-2">
           <Label>{customer.customer_email}</Label>
           </div>
         </CardContent>
@@ -200,7 +215,7 @@ const CustomerProfile: React.FC = () => {
 
       <form onSubmit={handleSubmit(onSubmit)}>
       {/* Account Details */}
-      <Card className="col-span-1">
+      <Card>
         <CardHeader>
           <CardTitle>Account Details</CardTitle>
         </CardHeader>
