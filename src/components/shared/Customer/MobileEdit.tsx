@@ -200,8 +200,9 @@ export function MobileEdit() {
                 </CardTitle>
             </CardHeader>
             <CardContent className='text-center'>
-            <div>
-             <Avatar className="rounded-full w-32 h-32 mx-auto border-4 border-indigo-800 mb-4 transition-transform duration-300 hover:scale-105 ring ring-gray-300">
+            <div className="relative flex flex-col items-center">            
+            <Label htmlFor="customer_image" className='cursor-pointer relative group'>
+             <Avatar className="rounded-full w-32 h-32 mx-auto border-4 border-orange-700 mb-4 transition-transform duration-300 hover:scale-105 ring ring-gray-300">
               {customer.customer_image ? (
                 <AvatarImage 
                   src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
@@ -210,13 +211,21 @@ export function MobileEdit() {
                   <Avatar className="w-31 h-31" />
                 )}
               </Avatar>
-              <Input
+
+              {/* Camera icon overlay */}
+              <div className="absolute bottom-2 right-2 bg-white p-1 rounded-full shadow-md group-hover:scale-110 transition">
+                <CameraIcon  className='w-5 h-5 text-orange-700'/>
+              </div>                       
+            </Label>
+
+            {/* Hidden file input */}
+            <Input
                type='file' 
                id="customer_image" 
                onChange={handleImageChange}
-               hidden required 
-              /> 
-              <Label className="inline-flex items-center"><CameraIcon /></Label>                       
+               className='hidden'
+               accept="image/*" 
+              />             
             </div>
             <Button className='px-4 py-2'>Change Profile Picture</Button> 
             </CardContent>
