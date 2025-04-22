@@ -152,7 +152,7 @@ const Navbar = () => {
 
       <div className="flex items-center space-x-4">
         {/* User Profile */}
-        {customer && customer.customer_image ? (
+        {customer && customer.customer_id ? (
       <DropdownMenu>
         <DropdownMenuTrigger>
             <Avatar className="h-10 w-10 rounded-lg">
