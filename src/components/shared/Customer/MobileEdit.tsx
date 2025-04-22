@@ -196,7 +196,7 @@ export function MobileEdit() {
            <Card className='flex flex-col md:flex-row justify-between mb-5 items-start'>
             <CardHeader>
                 <CardTitle>
-                <h2 className="mb-5 text-4xl font-bold text-blue-900">Update Profile</h2>                    
+                <h2 className="mb-5 text-4xl font-bold">Update Profile</h2>                    
                 </CardTitle>
             </CardHeader>
             <CardContent className='text-center'>
