@@ -55,7 +55,7 @@ export function LoginForm({
       } else {
         // If no admin found, check if it's a customer
         const { error: customerError } = await supabase
-          .from('customer')
+          .from('customers')
           .select('*')
           .eq('customer_email', data.customer_email)
           .single();
