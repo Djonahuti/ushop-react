@@ -10,6 +10,8 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Pencil } from 'lucide-react';
+import { Category, Manufacturer, ProductCategory } from '@/types';
+import { useParams } from 'react-router-dom';
 
 // Validation schema
 const schema = z.object({
@@ -33,7 +35,8 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-const EditProduct: React.FC<{ productId: number }> = ({ productId }) => {
+const EditProduct: React.FC = () => {
+  const { productId } = useParams<{ productId: string }>();
   const { register, handleSubmit, control, setValue } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
@@ -43,31 +46,36 @@ const EditProduct: React.FC<{ productId: number }> = ({ productId }) => {
     name: 'product_features',
   });
 
-  const [categories, setCategories] = useState<any[]>([]);
-  const [manufacturers, setManufacturers] = useState<any[]>([]);
-  const [productCategories, setProductCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
+  const [productCategories, setProductCategories] = useState<ProductCategory[]>([]);
   const [product, setProduct] = useState<FormData | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       // Fetch categories
       const { data: categoriesData } = await supabase.from('categories').select('*');
-      setCategories(categoriesData);
+      setCategories(categoriesData ?? []);
 
       // Fetch manufacturers
       const { data: manufacturersData } = await supabase.from('manufacturers').select('*');
-      setManufacturers(manufacturersData);
+      setManufacturers(manufacturersData ?? []);
 
       // Fetch product categories
       const { data: productCategoriesData } = await supabase.from('product_categories').select('*');
-      setProductCategories(productCategoriesData);
+      setProductCategories(productCategoriesData ?? []);
 
       // Fetch product details
-      const { data: productData } = await supabase
+      const { data: productData, error: productError } = await supabase
         .from('products')
         .select('*')
         .eq('product_id', productId)
         .single();
+
+        if (productError) {
+          console.error('Error fetching product:', productError.message);
+          return;
+        }        
 
       if (productData) {
         setProduct(productData);
@@ -123,7 +131,7 @@ const EditProduct: React.FC<{ productId: number }> = ({ productId }) => {
 
   return (
     <Card className="p-6">
-        <CardHeader className="flex items-center gap-2 self-center font-medium">
+        <CardHeader className="flex items-center gap-2 font-medium justify-center">
             <CardTitle className="flex items-center justify-center"><Pencil />Edit Product</CardTitle>
         </CardHeader>
         <CardContent>
@@ -232,7 +240,7 @@ const EditProduct: React.FC<{ productId: number }> = ({ productId }) => {
             control={control}
             name="cat_id"
             render={({ field }) => (
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value !== undefined ? String(field.value) : undefined}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
@@ -252,7 +260,7 @@ const EditProduct: React.FC<{ productId: number }> = ({ productId }) => {
             control={control}
             name="manufacturer_id"
             render={({ field }) => (
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value !== undefined ? String(field.value) : undefined}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a manufacturer" />
                 </SelectTrigger>
@@ -272,7 +280,7 @@ const EditProduct: React.FC<{ productId: number }> = ({ productId }) => {
             control={control}
             name="p_cat_id"
             render={({ field }) => (
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value !== undefined ? String(field.value) : undefined}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a product category" />
                 </SelectTrigger>

@@ -34,7 +34,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-const PostForm: React.FC = () => {
+const SellProduct: React.FC = () => {
   const { register, handleSubmit, formState: { errors }, control} = useForm<FormData>({
     resolver: zodResolver(schema),
   });
@@ -48,6 +48,7 @@ const PostForm: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
   const [productCategories, setProductCategories] = useState<ProductCategory[]>([]);
+  const [sellerId, setSellerId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -63,6 +64,28 @@ const PostForm: React.FC = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const fetchSellerId = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: sellerData, error: sellerError } = await supabase
+        .from('sellers')
+        .select('seller_id')
+        .eq('seller_email', user.email)
+        .single();
+
+      if (sellerError || !sellerData) {
+        console.error('Error fetching seller ID:', sellerError?.message);
+        return;
+      }
+
+      setSellerId(sellerData.seller_id); // Set the seller ID
+    };
+
+    fetchSellerId();
+  }, []);  
+
   const onSubmit = async (data: FormData) => {
     setIsPending(true);
     try {
@@ -72,6 +95,7 @@ const PostForm: React.FC = () => {
         product_img2: data.product_img2?.[0]?.name || null,
         product_img3: data.product_img3?.[0]?.name || null,
         product_video: data.product_video?.[0]?.name || null,
+        seller_id: sellerId,
       };
 
       const { error } = await supabase.from('products').insert([formData]);
@@ -291,4 +315,4 @@ const PostForm: React.FC = () => {
   );
 };
 
-export default PostForm;
+export default SellProduct;

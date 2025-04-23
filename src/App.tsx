@@ -42,6 +42,14 @@ import SeeFeedbacks from "./_root/pages/SeeFeedbacks"
 import AllFeedbacks from "./admin/pages/AllFeedbacks"
 import SearchResults from "./routes/SearchResults"
 import OrderStatus from "./_root/pages/OrderStatus"
+import SellerLayout from "./seller/SellerLayout"
+import SellerRoute from "./seller/SellerRoute"
+import SellerDashboard from "./seller/pages/SellerDashboard"
+import MainContent from "./seller/pages/DashboardContent"
+import Personalize from "./seller/pages/Personalize"
+import SellerPendingOrders from "./seller/pages/SellerPendingOrders"
+import MyProducts from "./seller/pages/MyProducts"
+import SellProduct from "./seller/forms/SellProduct"
 
 
 function App() {
@@ -83,10 +91,29 @@ function App() {
           <Route
             path="/edit/:productId"
             element={
-              <EditProduct productId={parseInt(window.location.pathname.split("/edit/")[1], 10)} />
+              <EditProduct />
             }
           />
         </Route>
+
+        {/* Admin routes */}
+        <Route element={<SellerLayout />}>
+          <Route path="/seller-dashboard" element={<SellerRoute><SellerDashboard /></SellerRoute>} />
+          <Route path="/sell-product" element={<SellerRoute><SellProduct /></SellerRoute>} />
+          <Route path="/dashboard2" element={<SellerRoute><MainContent /></SellerRoute>} />
+          <Route path="/personalize" element={<SellerRoute><Personalize /></SellerRoute>} />
+          <Route path="/database" element={<SellerRoute><Database /></SellerRoute>} />
+          <Route path="/users" element={<SellerRoute><Database /></SellerRoute>} />
+          <Route path="/my-products" element={<SellerRoute><MyProducts /></SellerRoute>} />
+          <Route path="/orders-me" element={<SellerRoute><SellerPendingOrders /></SellerRoute>} />
+          <Route path="/feeds" element={<SellerRoute><AllFeedbacks /></SellerRoute>} />
+          <Route
+            path="/update/:productId"
+            element={
+              <EditProduct />
+            }
+          />
+        </Route>        
 
         <Route element={<MailLayout />}>
           <Route path="/inbox" element={<AdminRoute><Inbox /></AdminRoute>} />

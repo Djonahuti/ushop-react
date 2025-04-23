@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useState } from "react"
 import { Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
 const schema = z.object({
   customer_email: z.string().email('Invalid email address'),
@@ -39,31 +40,45 @@ export function LoginForm({
       console.error('Error logging in:', error.message);
     } else {
       console.log('Login successful');
+      toast.success('Login Successful')
 
-      // Check if the user is an admin or a customer
+      // Check if the user is an admin
       const { error: userError } = await supabase
         .from('admins')
         .select('*')
         .eq('admin_email', data.customer_email)
         .single();
 
-      if (userError) {
+      if (!userError) {
+        // Redirect to admin dashboard
+        navigate('/admin-dashboard');
+      } else {
         // If no admin found, check if it's a customer
         const { error: customerError } = await supabase
-          .from('customers')
+          .from('customer')
           .select('*')
           .eq('customer_email', data.customer_email)
           .single();
-
-        if (customerError) {
-          console.error('Error finding customer:', customerError.message);
+        if (!customerError) {
+          //Redirect to customer dashboard
+          navigate('/overview');
         } else {
-          // Redirect to customer dashboard
-          navigate('/');
+          // If no customer found, check if it's a seller
+          const { error: sellerError } = await supabase
+            .from('sellers')
+            .select('*')
+            .eq('seller_email', data.customer_email)
+            .single();
+
+          if (!sellerError) {
+            // Redirect to seller dashboard
+            navigate('/seller-dashboard');
+          } else {
+            console.error('Error finding user:', customerError.message);
+            toast.error('Error finding user')
+          }
         }
-      } else {
-        // Redirect to admin dashboard
-        navigate('/admin-dashboard');
+
       }
     }
     setIsPending(false); // Hide loader

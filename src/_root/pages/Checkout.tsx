@@ -102,6 +102,20 @@ export default function Checkout() {
           return;
         }
 
+        // Retrieve the seller_id from the product
+        const { data: productData, error: productError } = await supabase
+          .from('products')
+          .select('seller_id')
+          .eq('product_id', item.product_id)
+          .single();
+  
+        if (productError || !productData) {
+          console.error("Failed to fetch product data:", productError?.message);
+          toast.error("Failed to retrieve product information.");
+          return;
+        }        
+
+        // Insert into pending_orders with seller_id        
         const { error: pendingError } = await supabase.from('pending_orders').insert({
           customer_id: customer.customer_id,
           invoice_no,
@@ -109,6 +123,7 @@ export default function Checkout() {
           qty: item.qty,
           size: item.size,
           order_status: 'Pending',
+          seller_id: productData.seller_id,
         });
 
         if (pendingError) {

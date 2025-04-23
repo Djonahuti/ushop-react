@@ -14,6 +14,7 @@ export type Product = {
     manufacturer_id: number;
     p_cat_id: number;
     cat_id: number;
+    seller_id: number;
     manufacturers: {
         manufacturer_title: string;
     } | null;
@@ -23,6 +24,9 @@ export type Product = {
     product_categories: {
       p_cat_title: string;
     } | null;
+    sellers: {
+        business_name: string;
+    }
 };
 
 export type Category ={
@@ -67,6 +71,20 @@ export type Admin = {
     admin_job: string;
 };
 
+export type Seller = {
+    seller_id: number;
+    seller_email: string;
+    seller_name: string;
+    seller_contact: string;
+    business_name: string;
+    shop_address: string;
+    shop_city: string;
+    shop_country: string;
+    seller_pass?: string;
+    seller_image?: string;
+    cac_no: string;
+};
+
 export type Customer = {
     customer_id: number;
     customer_email: string;
@@ -102,6 +120,10 @@ export type Order = {
         p_cat_id: number;
         cat_id: number;
         manufacturer_id: number;
+        seller_id: number;
+        sellers: {
+            business_name: string;
+        };
     } | null;
 };
 
@@ -138,6 +160,10 @@ export type PendingOrder = {
         product_title: string;
         product_img1: string;
         product_price: number;
+        seller_id: number;
+        sellers: {
+            business_name: string;
+        };
     };
     customers?: {
         customer_name: string;
@@ -205,6 +231,10 @@ export type Feedback = {
     products?:{
         product_title: string;
         product_img1: string;
+        seller_id: number;
+        sellers: {
+            business_name: string;
+        };
     };
 }
 
