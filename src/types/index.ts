@@ -125,6 +125,14 @@ export type Order = {
             business_name: string;
         };
     } | null;
+    order_items:{
+        qty: number;
+        products:{
+            product_title: string;
+            product_img1: string;
+            product_price: number;
+        } | null;
+    }
 };
 
 export type OrderItem = {
@@ -202,6 +210,14 @@ export type PendingOrder = {
         customer_image: string;
     };
     created_at: string;
+    pending_order_items:{
+        qty: number;
+        products:{
+            product_title: string;
+            product_img1: string;
+            product_price: number;
+        } | null;
+    }    
 };
 
 export type PendingOrderItems ={
@@ -213,6 +229,7 @@ export type PendingOrderItems ={
     seller_id: string;
     products: {
         product_title: string;
+        product_img1: string;
         product_price: string;
         seller_id: number;
         sellers: {

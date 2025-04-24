@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
-import { Bank, Feedback, Order } from '@/types'
+import { Bank, Feedback, Order, OrderItem } from '@/types'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { generateInvoicePDF } from '@/utils/generateInvoicePDF'
@@ -82,7 +82,7 @@ const CustomerOrders = () => {
 
       const { data: orderData, error } = await supabase
         .from('orders')
-        .select('*, products(product_title, product_img1, product_price), customers(customer_name, customer_email)')
+        .select(`*, order_items(*, qty, products(product_title, product_img1, product_price)), customers(customer_name, customer_email)`)
         .eq('customer_id', customerData.customer_id)
         .order('created_at', { ascending: false });
 
@@ -114,7 +114,7 @@ const CustomerOrders = () => {
       const matchStatus = tab === 'all' || o.order_status === tab;
       const matchSearch = search.trim().length === 0 || (
         o.invoice_no.toString().includes(search) ||
-        o.products?.product_title?.toLowerCase().includes(search.toLowerCase()) ||
+        Array.isArray(o.order_items) && o.order_items.some((item: OrderItem) => item.products?.product_title?.toLowerCase().includes(search.toLowerCase())) ||
         o.customers?.customer_name?.toLowerCase().includes(search.toLowerCase())
       );
       return matchStatus && matchSearch;
@@ -185,9 +185,10 @@ const CustomerOrders = () => {
 
                     <Separator className="my-2" />
 
-                    <div className="flex gap-4">
+            {Array.isArray(order.order_items) && order.order_items.map((item: OrderItem) => (
+                    <div key={item.order_item_id} className="flex gap-4">
                       <img
-                        src={`/products/${order.products?.product_img1 || 'default.png'}`}
+                        src={`/products/${item.products?.product_img1 || 'default.png'}`}
                         alt=""
                         className="w-20 h-20 object-cover rounded"
                       />
@@ -196,13 +197,13 @@ const CustomerOrders = () => {
                           <Label className="font-medium text-sm text-orange-600">
                             {order.customers?.customer_name || 'Your Order'}
                           </Label>
-                          <p className="font-medium text-sm mt-1">{order.products?.product_title}</p>
+                          <p className="font-medium text-sm mt-1">{item.products?.product_title}</p>
                           <p className="text-sm text-muted-foreground mt-1">
-                            ₦{order.products?.product_price?.toLocaleString()} × {order.qty} = ₦{order.due_amount?.toLocaleString()}
+                            ₦{item.products?.product_price?.toLocaleString()} × {item.qty}
                           </p>
                         </div>
                       </div>
-                    </div>
+                    </div>))}
 
                     <Separator className="my-2" />
 

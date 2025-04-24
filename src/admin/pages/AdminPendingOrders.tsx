@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
-import { PendingOrder } from '@/types';
+import { PendingOrder, PendingOrderItems } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,7 +21,7 @@ export default function AdminPendingOrders() {
     const fetchPending = async () => {
       const { data, error } = await supabase
         .from('pending_orders')
-        .select('*, products(product_title, product_price, product_img1), customers(customer_name)')
+        .select(`*, pending_order_items(qty, products(product_title, product_price, product_img1)), customers(customer_name)`)
 
         if (error) {
             console.error('Failed to fetch orders', error.message);
@@ -40,7 +40,7 @@ export default function AdminPendingOrders() {
       const matchStatus = tab === 'all' || order.order_status === tab;
       const matchSearch = search.trim().length === 0 || (
         order.invoice_no.toString().includes(search) ||
-        order.products?.product_title?.toLowerCase().includes(search.toLowerCase()) ||
+         Array.isArray(order.pending_order_items) && order.pending_order_items.some((item: PendingOrderItems) => item.products?.product_title?.toLowerCase().includes(search.toLowerCase())) ||
         order.customers?.customer_name?.toLowerCase().includes(search.toLowerCase())
       );
       return matchStatus && matchSearch;
@@ -247,10 +247,10 @@ export default function AdminPendingOrders() {
                     </div>
 
                     <Separator className="my-2" />
-
-                    <div className="flex gap-4">
+{Array.isArray(order.pending_order_items) && order.pending_order_items.map((item: PendingOrderItems) => (
+                    <div key={item.pending_order_item_id} className="flex gap-4">
                       <img
-                        src={`/products/${order.products?.product_img1 || 'default.png'}`}
+                        src={`/products/${item.products?.product_img1 || 'default.png'}`}
                         alt=""
                         className="w-20 h-20 object-cover rounded"
                       />
@@ -259,13 +259,14 @@ export default function AdminPendingOrders() {
                           <Label className="font-medium text-sm text-orange-600">
                             {order.customers?.customer_name || 'Your Order'}
                           </Label>
-                          <p className="font-medium text-sm mt-1">{order.products?.product_title}</p>
+                          <p className="font-medium text-sm mt-1">{item.products?.product_title}</p>
                           <p className="text-sm text-muted-foreground mt-1">
-                            ₦{order.products?.product_price?.toLocaleString()} × {order.qty}
+                            ₦{item.products?.product_price?.toLocaleString()} × {item.qty}
                           </p>
                         </div>
                       </div>
                     </div>
+                  ))}
 
                     <Separator className="my-2" />
 
