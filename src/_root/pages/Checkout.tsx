@@ -79,76 +79,139 @@ export default function Checkout() {
         toast.error("Customer not found. Please log in again.");
         return;
       }
-      
-    const invoice_no = Math.floor(Math.random() * 900000000000) + 100000000000; // 6-digit invoice
+
+      let invoice_no;
+      let isUnique = false;
+
+      // Generate a unique invoice number
+      while (!isUnique) {
+        invoice_no = Math.floor(Math.random() * 900000000000) + 100000000000; // Generate a random invoice number
+  
+        // Check if the invoice number already exists in both tables
+        const { data: existingOrder } = await supabase
+          .from('orders')
+          .select('invoice_no')
+          .eq('invoice_no', invoice_no)
+          .single();
+  
+        const { data: existingPendingOrder } = await supabase
+          .from('pending_orders')
+          .select('invoice_no')
+          .eq('invoice_no', invoice_no)
+          .single();
+  
+        // If no existing invoice found in both tables, we have a unique invoice number
+        isUnique = !existingOrder && !existingPendingOrder;
+      }
 
     // Save to orders
     try {
-      for (const item of cart) {
-        const { error: orderError } = await supabase.from('orders').insert({
+      // First, insert the order into the orders table
+      const { error: orderInsertError } = await supabase.from('orders').insert({
+        customer_id: customer.customer_id,
+        due_amount: total,
+        invoice_no,
+        order_date: new Date().toISOString(),
+        order_status: 'Pending',
+      });
+
+      if (orderInsertError) {
+        console.error("Order insert error:", orderInsertError);
+        toast.error("Failed to place order.");
+        return;
+      }
+
+      // Retrieve the order ID of the newly created order
+      const { data: orderData, error: orderFetchError } = await supabase
+        .from('orders')
+        .select('order_id')
+        .eq('invoice_no', invoice_no)
+        .single();
+
+      if (orderFetchError || !orderData) {
+        console.error("Failed to fetch order ID:", orderFetchError);
+        toast.error("Failed to log order status.");
+        return;
+      }
+
+        // Now insert each product into the pending_orders and pending_order_items
+        const { error: pendingOrderError } = await supabase.from('pending_orders').insert({
           customer_id: customer.customer_id,
-          due_amount: total,
-          invoice_no,
-          product_id: item.product_id,
-          qty: item.qty,
-          size: item.size,
-          order_date: new Date().toISOString(),
+          invoice_no, // Use the same invoice_no for all products
           order_status: 'Pending',
         });
-
-        if (orderError) {
-          console.error("Order insert error:", orderError);
-          toast.error("Failed to place order.");
-          return;
-        }
-
-        // Retrieve the seller_id from the product
-        const { data: productData, error: productError } = await supabase
-          .from('products')
-          .select('seller_id')
-          .eq('product_id', item.product_id)
-          .single();
   
-        if (productError || !productData) {
-          console.error("Failed to fetch product data:", productError?.message);
-          toast.error("Failed to retrieve product information.");
-          return;
-        }        
-
-        // Insert into pending_orders with seller_id        
-        const { error: pendingError } = await supabase.from('pending_orders').insert({
-          customer_id: customer.customer_id,
-          invoice_no,
-          product_id: item.product_id,
-          qty: item.qty,
-          size: item.size,
-          order_status: 'Pending',
-          seller_id: productData.seller_id,
-        });
-
-        if (pendingError) {
-          console.error("Pending order insert error:", pendingError);
+        if (pendingOrderError) {
+          console.error("Pending order insert error:", pendingOrderError);
           toast.error("Failed to create pending order.");
           return;
         }
-          // Log the status update in order_status_history
-          const { data: orderData, error: orderFetchError } = await supabase
-            .from('orders')
-            .select('order_id')
-            .eq('invoice_no', invoice_no)
-            .single();
+  
+        // Retrieve the pending order ID
+        const { data: pendingOrderData, error: pendingOrderFetchError } = await supabase
+          .from('pending_orders')
+          .select('p_order_id')
+          .eq('invoice_no', invoice_no)
+          .single();
+  
+        if (pendingOrderFetchError || !pendingOrderData) {
+          console.error("Failed to fetch pending order ID:", pendingOrderFetchError);
+          toast.error("Failed to log pending order status.");
+          return;
+        }      
 
-          if (orderFetchError || !orderData) {
-            console.error("Failed to fetch order ID:", orderFetchError);
-            toast.error("Failed to log order status.");
+        // Insert each product into the order_items and pending_order_items table
+        for (const item of cart) {
+          // Retrieve the seller_id from the product
+          const { data: productData, error: productError } = await supabase
+            .from('products')
+            .select('seller_id')
+            .eq('product_id', item.product_id)
+            .single();
+  
+          if (productError || !productData) {
+            console.error("Failed to fetch product data:", productError?.message);
+            toast.error("Failed to retrieve product information.");
             return;
           }
 
-          await supabase
-            .from('order_status_history')
-            .insert([{ order_id: orderData.order_id, status: 'Pending' }]);        
-      }
+          // Insert into pending_order_items
+          const { error: pendingOrderItemError } = await supabase.from('pending_order_items').insert({
+            pending_order_id: pendingOrderData.p_order_id, // Use the pending order ID
+            product_id: item.product_id,
+            qty: item.qty,
+            size: item.size,
+            seller_id: productData.seller_id, // Include seller_id
+          });
+  
+          if (pendingOrderItemError) {
+            console.error("Pending order item insert error:", pendingOrderItemError);
+            toast.error("Failed to add product to pending order.");
+            return;
+          }          
+  
+          // Insert into order_items
+          const { error: orderItemError } = await supabase.from('order_items').insert({
+            order_id: orderData.order_id, // Use the order ID from the orders table
+            product_id: item.product_id,
+            qty: item.qty,
+            size: item.size,
+          });
+  
+          if (orderItemError) {
+            console.error("Order item insert error:", orderItemError);
+            toast.error("Failed to add product to order.");
+            return;
+          }
+  
+        }
 
+      // Log the status update in order_status_history
+      await supabase
+        .from('order_status_history')
+        .insert([{ order_id: orderData.order_id, status: 'Pending' }]);        
+
+      // Clear the cart after successful order placement
       await supabase.from('cart').delete().eq('customer_id', customer.customer_id);
 
       alert(`Your order has been submitted! Invoice No: ${invoice_no}. Please pay to the following bank accounts...`);
