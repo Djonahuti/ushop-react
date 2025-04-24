@@ -127,6 +127,38 @@ export type Order = {
     } | null;
 };
 
+export type OrderItem = {
+    order_item_id: number;
+    order_id: number;
+    product_id: number;
+    qty: number;
+    size: string;
+    orders:{
+        order_date: string;
+        due_amount: number;
+        invoice_no: number;
+        order_status: string;
+        submitted_at: string;
+        customer_id: number;
+        customers: {
+            customer_name: string;
+            customer_email: string;
+        } | null;     
+    };
+    products: {
+        product_title: string;
+        product_img1: string;
+        product_price: number;
+        p_cat_id: number;
+        cat_id: number;
+        manufacturer_id: number;
+        seller_id: number;
+        sellers: {
+            business_name: string;
+        };
+    } | null;    
+};
+
 export type WishlistItem = {
     wishlist_id: number;
     product_id: number;
@@ -170,7 +202,33 @@ export type PendingOrder = {
         customer_image: string;
     };
     created_at: string;
-}
+};
+
+export type PendingOrderItems ={
+    pending_order_item_id: number;
+    pending_order_id: number;
+    product_id: number;
+    qty: number;
+    size: string;
+    seller_id: string;
+    products: {
+        product_title: string;
+        product_price: string;
+        seller_id: number;
+        sellers: {
+            business_name: string;
+        } | null;
+    } | null;
+    pending_orders:{
+        order_status: string;
+        invoice_no: number;
+        customers?: {
+            customer_name: string;
+            customer_image: string;
+        };
+        created_at: string;
+    } | null;
+};
 
 export type Bank = {
     bank_id: number;
