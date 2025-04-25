@@ -207,15 +207,15 @@ export default function AdminPendingOrders() {
     <div className="max-w-4xl mx-auto p-4">
       <Tabs defaultValue="all" onValueChange={setTab}>
         <TabsList className="flex flex-wrap gap-2 mb-4">
-          <TabsTrigger value="all">View all</TabsTrigger>
-          <TabsTrigger value="Pending">To Pay</TabsTrigger>
-          <TabsTrigger value="Paid">Paid</TabsTrigger>
-          <TabsTrigger value="Payment confirmed">Payment Confirmed</TabsTrigger>
-          <TabsTrigger value="WAITING TO BE SHIPPED">To Ship</TabsTrigger>
-          <TabsTrigger value="SHIPPED">Shipped</TabsTrigger>
-          <TabsTrigger value="OUT FOR DELIVERY">Out for delivery</TabsTrigger>
-          <TabsTrigger value="DELIVERED">Arrived</TabsTrigger>
-          <TabsTrigger value="RECEIVED">Completed</TabsTrigger>
+          <TabsTrigger value="all" className="text-base md:text-sm sm:text-xs">View all</TabsTrigger>
+          <TabsTrigger value="Pending" className="text-base md:text-sm sm:text-xs">To Pay</TabsTrigger>
+          <TabsTrigger value="Paid" className="text-base md:text-sm sm:text-xs">Paid</TabsTrigger>
+          <TabsTrigger value="Payment confirmed" className="text-base md:text-sm sm:text-xs">Payment Confirmed</TabsTrigger>
+          <TabsTrigger value="WAITING TO BE SHIPPED" className="text-base md:text-sm sm:text-xs">To Ship</TabsTrigger>
+          <TabsTrigger value="SHIPPED" className="text-base md:text-sm sm:text-xs">Shipped</TabsTrigger>
+          <TabsTrigger value="OUT FOR DELIVERY" className="text-base md:text-sm sm:text-xs">Out for delivery</TabsTrigger>
+          <TabsTrigger value="DELIVERED" className="text-base md:text-sm sm:text-xs">Arrived</TabsTrigger>
+          <TabsTrigger value="RECEIVED" className="text-base md:text-sm sm:text-xs">Completed</TabsTrigger>
         </TabsList>
 
         <div className="flex gap-2 items-center mb-6">
@@ -247,7 +247,8 @@ export default function AdminPendingOrders() {
                     </div>
 
                     <Separator className="my-2" />
-{Array.isArray(order.pending_order_items) && order.pending_order_items.map((item: PendingOrderItems) => (
+
+            {Array.isArray(order.pending_order_items) && order.pending_order_items.map((item: PendingOrderItems) => (
                     <div key={item.pending_order_item_id} className="flex gap-4">
                       <img
                         src={`/products/${item.products?.product_img1 || 'default.png'}`}
