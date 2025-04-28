@@ -1,3 +1,4 @@
+import GetBundle from "@/components/shared/GetBundle"
 import ProductCard from "@/components/shared/ProductCard"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -248,6 +249,7 @@ const filteredProducts = products.filter((product) => {
     </section>    
 
     <section className="p-1">
+      <div><GetBundle /></div>      
       <div><ProductCard products={filteredProducts} /></div>
       </section>
     

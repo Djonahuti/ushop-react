@@ -322,3 +322,34 @@ export type OrderStatusHistory = {
         invoice_no: number;
     }
 }
+
+export type BundleProduct = {
+    bundle_product_id: number;
+    bundle_id: number;
+    product_id: number;
+    original_price: number;
+    discounted_price: number;
+    products:{
+        product_title: string;
+        product_img1: string;
+    }    
+};
+
+export type Bundle = {
+    bundle_id: number;
+    seller_id: number;
+    bundle_title: string;
+    bundle_description?: string;
+    total_price: number;
+    created_at: string;
+    product_id: number;
+    bundle_product:{
+        products:{
+            product_title: string;
+            product_img1: string;
+        }
+        original_price: number;
+        discounted_price: number;
+    }
+  };
+  

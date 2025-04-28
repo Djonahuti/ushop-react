@@ -50,6 +50,7 @@ import Personalize from "./seller/pages/Personalize"
 import SellerPendingOrders from "./seller/pages/SellerPendingOrders"
 import MyProducts from "./seller/pages/MyProducts"
 import SellProduct from "./seller/forms/SellProduct"
+import AddBundle from "./components/shared/Forms/AddBundle"
 
 
 function App() {
@@ -88,6 +89,7 @@ function App() {
           <Route path="/view-products" element={<AdminRoute><ProductList /></AdminRoute>} />
           <Route path="/view-orders" element={<AdminRoute><AdminPendingOrders /></AdminRoute>} />
           <Route path="/feeds" element={<AdminRoute><AllFeedbacks /></AdminRoute>} />
+          <Route path="/add-bundle" element={<AdminRoute><AddBundle /></AdminRoute>} />
           <Route
             path="/edit/:productId"
             element={

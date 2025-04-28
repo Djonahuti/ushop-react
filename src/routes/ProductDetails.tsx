@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import RelatedProducts from '@/components/shared/RelatedProducts';
 import { Product } from '@/types';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 export default function ProductDetails() {
@@ -52,11 +53,13 @@ export default function ProductDetails() {
         {product.product_features && (
           <div className="mt-6">
             <h2 className="text-lg font-bold text-gray-800">Features:</h2>
+            <ScrollArea className="h-42 rounded-md border p-4">
             <ul className="list-disc list-inside text-gray-600 mt-2 space-y-2">
               {product.product_features.map((feature, index) => (
                 <li key={index}>{feature}</li>
               ))}
             </ul>
+            </ScrollArea>
           </div>
         )}
       </div>
