@@ -109,7 +109,7 @@ export default function Checkout() {
       // First, insert the order into the orders table
       const { error: orderInsertError } = await supabase.from('orders').insert({
         customer_id: customer.customer_id,
-        due_amount: total,
+        due_amount: Math.round(total),
         invoice_no,
         order_date: new Date().toISOString(),
         order_status: 'Pending',
@@ -209,7 +209,22 @@ export default function Checkout() {
       // Log the status update in order_status_history
       await supabase
         .from('order_status_history')
-        .insert([{ order_id: orderData.order_id, status: 'Pending' }]);        
+        .insert([{ order_id: orderData.order_id, status: 'Pending' }]);
+
+    // After successfully placing the order, check for bundles in the cart
+    for (const item of cart) {
+      const { data: bundle } = await supabase
+        .from('choices')
+        .select('*')
+        .eq('choice_id', item.product_id) // Assuming product_id is used to identify bundles
+        .single();
+
+      if (bundle) {
+        // Delete from choices and choice_products
+        await supabase.from('choice_products').delete().eq('choice_id', bundle.choice_id);
+        await supabase.from('choices').delete().eq('choice_id', bundle.choice_id);
+      }
+    }                
 
       // Clear the cart after successful order placement
       await supabase.from('cart').delete().eq('customer_id', customer.customer_id);

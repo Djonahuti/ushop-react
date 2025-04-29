@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
+import { ShoppingCart } from 'lucide-react';
 
 interface BundleProduct {
   product_id: number;
@@ -44,6 +46,30 @@ export default function GetBundle() {
 
     fetchBundles();
   }, []);
+
+  const handleAddToCart = async (bundle: Bundle) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: customer } = await supabase
+      .from('customers')
+      .select('customer_id')
+      .eq('customer_email', user.email)
+      .single();
+
+    if (customer) {
+      // Add each product in the bundle to the cart
+      for (const product of bundle.products) {
+        await supabase.from('cart').insert({
+          customer_id: customer.customer_id,
+          product_id: product.product_id,
+          qty: 1, // Default quantity
+          p_price: product.discounted_price,
+          size: 'default', // You can modify this based on your requirements
+        });
+      }
+    }
+  };  
 
   return (
     <div className="p-2 max-w-7xl mx-auto">
@@ -95,6 +121,12 @@ export default function GetBundle() {
                   </div>
                 </div>
               ))}
+                <div>
+                  <Button variant="ghost" className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition" onClick={() => handleAddToCart(bundle)}>
+                    {/* Add to Cart icon */}
+                    <ShoppingCart className="h-2 w-2 text-gray-600" />
+                  </Button>
+                </div>
           </CardContent>
         </Card>
       ))}

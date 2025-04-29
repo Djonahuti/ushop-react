@@ -51,6 +51,7 @@ import SellerPendingOrders from "./seller/pages/SellerPendingOrders"
 import MyProducts from "./seller/pages/MyProducts"
 import SellProduct from "./seller/forms/SellProduct"
 import AddBundle from "./components/shared/Forms/AddBundle"
+import Bundle from "./_root/pages/Bundles"
 
 
 function App() {
@@ -126,6 +127,7 @@ function App() {
           <Route index element={<Home />} />
           <Route path="/products/:productId" element={<ProductDetails />} />
           <Route path="/search" element={<SearchResults />} />
+          <Route path="/bundle" element={<Bundle />} />          
         <Route
           path="/cart"
           element={
