@@ -4,8 +4,10 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import supabase from "@/lib/supabaseClient"
 import { Category, Manufacturer, Product, ProductCategory } from "@/types"
-import { FilterIcon, Search } from "lucide-react"
-import { useEffect, useState } from "react"
+import { IconGiftFilled } from "@tabler/icons-react"
+import { CheckCircle, Edit, FilterIcon, History, Search, Ticket } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { useNavigate } from "react-router-dom"
 
 
 const Choices = () => {
@@ -18,9 +20,20 @@ const Choices = () => {
     const [search, setSearch] = useState('');
     const [selectedManufacturer, setSelectedManufacturer] = useState<number | null>(null);
     const [selectedPCat, setSelectedPCat] = useState<number | null>(null);
-    const [selectedCat, setSelectedCat] = useState<number | null>(null);    
-
+    const [selectedCat, setSelectedCat] = useState<number | null>(null);
+    const selectedProductsRef = useRef<Product[]>([]);
+    const [showPopup, setShowPopup] = useState(false);    
+    const navigate = useNavigate();
     const [error, setError] = useState<string | null>(null);
+
+    const handleSelectedProductsUpdate = (products: Product[]) => {
+      selectedProductsRef.current = products;
+      setSelectedCount(products.length);
+    };    
+
+    const [selectedCount, setSelectedCount] = useState(0);
+    const progress = Math.min((selectedCount / 3) * 100, 100);
+    const qualifies = selectedCount === 3;    
 
 //Add search + filter logic:  
 const filteredProducts = products.filter((product) => {
@@ -237,11 +250,67 @@ const filteredProducts = products.filter((product) => {
             <Search size={20} />
           </Button>
         </div>
-    </div>    
+    </div>
+
+{/* Free Shipping Banner Progress */}
+<div className="sticky top-30 z-40 w-full flex items-center justify-between px-4 py-2 mt-0 mb-2 bg-orange-100 border-l-4 border-orange-500 shadow-md rounded">
+  <div className="flex items-center space-x-2">
+    <CheckCircle className={`w-5 h-5 ${qualifies ? 'text-green-600' : 'text-gray-400'}`} />
+    <p className="text-sm font-medium text-gray-800">
+      {qualifies
+        ? "You have selected 3 items which qualifies you for free shipping"
+        : "You must select 3 items to qualify for free shipping"}
+    </p>
+  </div>
+
+  <Button
+    className="text-white bg-[#F4623A] hover:bg-[#e4572e] h-8 px-4"
+    onClick={() => setShowPopup(true)}
+  >
+    View
+  </Button>
+
+  {/* Progress Bar */}
+  <div className="absolute bottom-0 left-0 right-0 h-1 bg-orange-200">
+    <div
+      className="h-full bg-[#F4623A] transition-all duration-500 ease-in-out"
+      style={{ width: `${progress}%` }}
+    />
+  </div>
+</div>
+
 
     <section className="p-1">
-      <div><Items items={filteredProducts} /></div>      
+      <div><Items
+       items={filteredProducts}
+       onSelectedUpdate={handleSelectedProductsUpdate}
+       showPopup={showPopup}
+       setShowPopup={setShowPopup}        
+      /></div>      
       </section>
+
+      {/* Sticky Side Tools */}
+      <div className="fixed top-1/3 right-2 z-50 flex flex-col items-center space-y-2 my-nav">
+        <button className="p-2 rounded shadow hover:bg-orange-100 hover:text-gray-700">
+          <Ticket />
+        </button>
+        <button className="p-2 rounded shadow hover:bg-orange-100 hover:text-gray-700">
+          <History />
+        </button>
+        <button
+         className="p-2 rounded shadow hover:bg-orange-100 hover:text-gray-700"
+          onClick={() => navigate('/bundle')}
+        >
+          <IconGiftFilled />
+        </button>
+        <button
+         className="p-2 rounded shadow hover:bg-orange-100 hover:text-gray-700"
+          onClick={() => navigate('/contact')}
+        >
+          <Edit />
+        </button>
+      </div>
+
     
     </div>
     </>

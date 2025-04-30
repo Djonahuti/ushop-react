@@ -1,28 +1,28 @@
-// Items.tsx
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Trash2 } from "lucide-react";
 import { Product } from "@/types";
 import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from "../ui/pagination";
-import { useState } from "react";
-import { IconShoppingBagPlus } from "@tabler/icons-react";
+import { useEffect, useState } from "react";
+import { IconArrowsMinimize, IconShoppingBagPlus, IconTruck } from "@tabler/icons-react";
 import { toast } from "sonner";
 import supabase from "@/lib/supabaseClient";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 
 type Props = {
   items: Product[];
   itemsPerPage?: number;
+  onSelectedUpdate?: (products: Product[]) => void;
+  showPopup?: boolean;
+  setShowPopup?: (value: boolean) => void;  
 }
 
-export default function Items({ items, itemsPerPage = 10 } : Props) {
+export default function Items({ items, itemsPerPage = 10, onSelectedUpdate, showPopup, setShowPopup, } : Props) {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
-  const [showPopup, setShowPopup] = useState(false);
   const [totalPrice, setTotalPrice] = useState(0);
   const navigate = useNavigate();
   
@@ -34,6 +34,10 @@ export default function Items({ items, itemsPerPage = 10 } : Props) {
     currentPage * itemsPerPage
   );
 
+  useEffect(() => {
+    if (setShowPopup) setShowPopup(showPopup ?? false);
+  }, [showPopup, setShowPopup]);   
+
   const handleAddToChoices = async (product: Product) => {
     if (selectedProducts.some(p => p.product_id === product.product_id)) {
       return toast.error("This product is already selected.");
@@ -44,6 +48,7 @@ export default function Items({ items, itemsPerPage = 10 } : Props) {
   
     const updated = [...selectedProducts, product];
     setSelectedProducts(updated);
+    if (onSelectedUpdate) onSelectedUpdate(updated);
   
     if (updated.length < 3) {
       toast.error("Minimum of 3 items required.");
@@ -51,7 +56,7 @@ export default function Items({ items, itemsPerPage = 10 } : Props) {
       // exactly 3 → calculate total & show popup
       const total = updated.reduce((sum, p) => sum + p.product_price * 0.7, 0);
       setTotalPrice(total);
-      setShowPopup(true);
+      if (setShowPopup) setShowPopup(true);
 
       await saveToChoices(updated); // Save to choices and choice_products tables
     }
@@ -60,6 +65,7 @@ export default function Items({ items, itemsPerPage = 10 } : Props) {
   const handleRemoveFromPopup = (productId: number) => {
     const updated = selectedProducts.filter(p => p.product_id !== productId);
     setSelectedProducts(updated);
+    if (onSelectedUpdate) onSelectedUpdate(updated);    
   
     if (updated.length === 3) {
       const total = updated.reduce((sum, p) => sum + p.product_price * 0.7, 0);
@@ -142,9 +148,11 @@ export default function Items({ items, itemsPerPage = 10 } : Props) {
   };
 
   const handleContinueShopping = () => {
-    setShowPopup(false);
+    if (setShowPopup) setShowPopup(false);
     setSelectedProducts([]);
-  };  
+    if (onSelectedUpdate) onSelectedUpdate([]);    
+  };
+   
 
   if (!items.length) {
     return(
@@ -159,9 +167,9 @@ export default function Items({ items, itemsPerPage = 10 } : Props) {
     <div className="container mx-auto px-4 py-12 sm:py-12 md:py-5 xl:py-5 justify-items-center">
       <h2 className="text-2xl font-bold mb-2 text-center">Choice Deals</h2>
 {showPopup && (
-  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-    <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
-      <h3 className="text-lg font-bold mb-4">Your Bundle</h3>
+  <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/30">
+    <div className="myBox p-6 rounded-lg shadow-lg max-w-sm w-full relative">
+      <h3 className="text-lg font-bold mb-4">Choice Cart</h3>
 
       {/* list selected */}
       {selectedProducts.map(p => (
@@ -170,8 +178,8 @@ export default function Items({ items, itemsPerPage = 10 } : Props) {
           <span className="flex-1 text-sm">{p.product_title}</span>
           <button
             onClick={() => handleRemoveFromPopup(p.product_id)}
-            className="text-red-500 hover:underline text-xs"
-          >Remove</button>
+            className="text-red-500 hover:scale-120 text-xs"
+          ><Trash2 /></button>
         </div>
       ))}
 
@@ -187,17 +195,17 @@ export default function Items({ items, itemsPerPage = 10 } : Props) {
       {/* actions */}
       <div className="flex justify-end space-x-2">
         {selectedProducts.length === 3 && (
-          <Button onClick={handleViewCart} className="bg-blue-600 text-white">
+          <Button onClick={handleViewCart} className="bg-[#F4623A] text-white">
             View
           </Button>
         )}
-        <Button onClick={handleContinueShopping} className="bg-gray-200">
+        <Button variant="outline" onClick={handleContinueShopping}>
           Continue Shopping
         </Button>
         <button
-          onClick={() => setShowPopup(false)}
-          className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
-        >&times;</button>
+          onClick={() => setShowPopup?.(false)}
+          className="absolute top-2 right-2 text-red-400 hover:text-red-600"
+        ><IconArrowsMinimize stroke={2} /></button>
       </div>
     </div>
   </div>
@@ -212,15 +220,17 @@ export default function Items({ items, itemsPerPage = 10 } : Props) {
             <>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-4">
             {paginatedItems.map((item) => (
-        <Card key={item.product_id} className="flex flex-col rounded-md overflow-hidden shadow-sm">
+        <div key={item.product_id} className="flex flex-col rounded-md overflow-hidden shadow-sm bg-gray-600">
           <div className="relative">
-            <AspectRatio ratio={1 / 1.25}>
+            <AspectRatio ratio={1 / 1.25} className="myBox">
               <img
                 src={`/products/${item.product_img1}`}
                 alt={item.product_title}
                 className="object-cover w-full h-full"
               />
             </AspectRatio>
+            <Badge variant="secondary" className="absolute top-2 left-2 text-[10px] px-2 py-0.5 mb-1 bg-[#F4623A] text-white">Choice</Badge>
+            <Badge className="absolute top-2 right-2 text-[9px] text-muted-foreground"><IconTruck stroke={2} />Free Shipping</Badge>
             <Button
               size="icon"
               variant="outline"
@@ -229,24 +239,20 @@ export default function Items({ items, itemsPerPage = 10 } : Props) {
             >
               <IconShoppingBagPlus stroke={2} className="w-3.5 h-3.5" />
             </Button>
+            <Badge className="absolute bottom-2 left-2 text-sm font-bold">
+              ₦{item.product_price.toLocaleString()}
+            </Badge>            
           </div>
 
-          <CardContent className="px-2 pt-0 pb-0">
-            <Badge variant="secondary" className="text-[10px] px-2 py-0.5 mb-1 bg-[#F4623A] text-white">Choice</Badge>
-            <h3 className="text-xs font-semibold leading-tight line-clamp-2">{item.product_title}</h3>
-            <p className="text-[10px] text-muted-foreground mt-1">Free Shipping</p>
-            <div className="flex items-center text-[10px] gap-1 mt-1 text-muted-foreground">
-              <span>{item.sold_count || 0} sold</span>
-              <Separator orientation="vertical" className="h-3" />
-              <span>⭐ 4.1</span>
+          <div className="px-2 pt-0 pb-0">
+            <Link to={`/products/${item.product_id}`} className="text-xs font-semibold leading-tight line-clamp-2 text-orange-500">{item.product_title}</Link>
+            <div className="flex justify-between items-center text-[12px] gap-1 mt-1 text-muted-foreground relative space-x-3">
+              <span className="left-2 font-bold">⭐ 4.1</span>
+              <Separator orientation="vertical" className="h-5" />
+              <span className="right-2 font-bold">{item.sold_count || 0} sold</span>
             </div>
-          </CardContent>
-          <CardFooter className="px-2 pt-0 pb-0">
-            <div className="text-sm font-bold">
-              ₦{item.product_price.toLocaleString()}
-            </div>
-          </CardFooter>
-        </Card>
+          </div>
+        </div>
       ))}   
             </div>
 

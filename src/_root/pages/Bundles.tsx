@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import supabase from "@/lib/supabaseClient"
 import { Category, Manufacturer, Product, ProductCategory } from "@/types"
-import { FilterIcon, Search } from "lucide-react"
+import { IconDiscountFilled } from "@tabler/icons-react"
+import { Edit, FilterIcon, History, Search, Ticket } from "lucide-react"
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 
 
 const Bundle = () => {
@@ -20,7 +22,7 @@ const Bundle = () => {
     const [selectedManufacturer, setSelectedManufacturer] = useState<number | null>(null);
     const [selectedPCat, setSelectedPCat] = useState<number | null>(null);
     const [selectedCat, setSelectedCat] = useState<number | null>(null);    
-
+    const navigate = useNavigate();
     const [error, setError] = useState<string | null>(null);
 
 //Add search + filter logic:  
@@ -249,6 +251,28 @@ const filteredProducts = products.filter((product) => {
         />
       </div>   
       </section>
+
+      {/* Sticky Side Tools */}
+      <div className="fixed top-1/3 right-2 z-50 flex flex-col items-center space-y-2 my-nav">
+        <button className="p-2 rounded shadow hover:bg-orange-100 hover:text-gray-700">
+          <Ticket />
+        </button>
+        <button className="p-2 rounded shadow hover:bg-orange-100 hover:text-gray-700">
+          <History />
+        </button>
+        <button
+         className="p-2 rounded shadow hover:bg-orange-100 hover:text-gray-700"
+          onClick={() => navigate('/choice')}
+        >
+          <IconDiscountFilled />
+        </button>
+        <button
+         className="p-2 rounded shadow hover:bg-orange-100 hover:text-gray-700"
+          onClick={() => navigate('/contact')}
+        >
+          <Edit />
+        </button>
+      </div>      
     
     </div>
     </>

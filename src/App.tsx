@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext"
 import AuthLayout from "./_auth/AuthLayout"
 import RootLayout from "./_root/RootLayout"
 import Home from "./_root/pages/Home"
-import { ProtectedRoute } from "./components/ProtectedRoute"
+//import { ProtectedRoute } from "./components/ProtectedRoute"
 import { AdminLogin } from "./_auth/forms/AdminLogin"
 import AdminLayout from "./admin/AdminLayout"
 import AdminRoute from "./admin/AdminRoute"
@@ -66,14 +66,6 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Navigate to={user ? "/" : "/login"} />} />
-        <Route
-          path="/aba"
-          element={
-            <ProtectedRoute>
-              <AddImages />
-            </ProtectedRoute>
-          }
-        />
         <Route path="*" element={<NotFound />} />
         
         {/* Admin routes */}
@@ -129,7 +121,8 @@ function App() {
           <Route path="/products/:productId" element={<ProductDetails />} />
           <Route path="/search" element={<SearchResults />} />
           <Route path="/bundle" element={<Bundle />} />
-          <Route path="/choice" element={<Choices />} />          
+          <Route path="/choice" element={<Choices />} /> 
+          <Route path="/aba" element={<AddImages />} />          
         <Route
           path="/cart"
           element={

@@ -131,13 +131,13 @@ export default function ProductCard({ products, itemsPerPage = 8 }: Props) {
                         <p className="text-lg font-bold">₦{product.product_price}</p>
                       </div>
                   <div className="flex justify-center gap-4 mt-3">
-                    <Button variant="ghost" className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition" onClick={() => handleAddWishlist(product)}>
+                    <Button size="icon" variant="outline" className="p-2 rounded-full my-nav backdrop-blur-sm hover:text-[#F05F42] hover:scale-120 transition-transform duration-200 ease-in-out" onClick={() => handleAddWishlist(product)}>
                       {/* Add to Wishlist icon */}
-                      <Heart className="h-5 w-5 text-gray-600" />
+                      <Heart className="h-5 w-5" />
                     </Button>
-                    <Button variant="ghost" className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition" onClick={() => handleAddToCart(product)}>
+                    <Button size="icon" variant="outline" className="p-2 rounded-full my-nav backdrop-blur-sm hover:text-[#F05F42] hover:scale-120 transition-transform duration-200 ease-in-out" onClick={() => handleAddToCart(product)}>
                     {/* Add to Cart icon */}
-                      <ShoppingCart className="h-5 w-5 text-gray-600" />
+                      <ShoppingCart className="h-5 w-5" />
                     </Button>
                   </div>
                 </CardContent>
