@@ -1,4 +1,4 @@
-import ProductCard from "@/components/shared/ProductCard"
+import Items from "@/components/shared/Items"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -8,7 +8,7 @@ import { FilterIcon, Search } from "lucide-react"
 import { useEffect, useState } from "react"
 
 
-const Home = () => {
+const Choices = () => {
     const [loading, setLoading] = useState(true);
   //const [error, setError] = useState<string | null>(null);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -237,18 +237,10 @@ const filteredProducts = products.filter((product) => {
             <Search size={20} />
           </Button>
         </div>
-    </div>
-    
-    {/* Banner Info */}    
-    <section className="bg-pink-500 text-white text-center py py-3 sm:py-7 md:py-8 lg:py-10 mt mt-16 sm:mt-12 md:mt-0 lg:mt-0">
-      <div>
-        <h2 className="md:text-4xl text-2xl md:font-bold font-medium">UP TO 80% OFF</h2>
-        <p className="md:mt-2 mt-1">Sale Ends: Mar 27, 07:59 (GMT+1)</p>
-      </div>
-    </section>    
+    </div>    
 
-    <section className="p-1">      
-      <div><ProductCard products={filteredProducts} /></div>
+    <section className="p-1">
+      <div><Items items={filteredProducts} /></div>      
       </section>
     
     </div>
@@ -256,5 +248,5 @@ const filteredProducts = products.filter((product) => {
     )
 }
 
-export default Home
+export default Choices
 

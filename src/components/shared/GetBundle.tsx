@@ -1,10 +1,11 @@
-// GetBundle.tsx
+
 import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { ShoppingCart } from 'lucide-react';
+import { Label } from '../ui/label';
 
 interface BundleProduct {
   product_id: number;
@@ -13,6 +14,9 @@ interface BundleProduct {
   products: {
     product_title: string;
     product_img1: string;
+    manufacturer_id: number;
+    p_cat_id: number;
+    cat_id: number;
   };
 }
 
@@ -24,7 +28,13 @@ interface Bundle {
   products: BundleProduct[];
 }
 
-export default function GetBundle() {
+interface GetBundleProps {
+  selectedManufacturer: number | null;
+  selectedPCat: number | null;
+  selectedCat: number | null;
+}
+
+export default function GetBundle({selectedManufacturer, selectedPCat, selectedCat}: GetBundleProps) {
   const [bundles, setBundles] = useState<Bundle[]>([]);
 
   useEffect(() => {
@@ -46,6 +56,17 @@ export default function GetBundle() {
 
     fetchBundles();
   }, []);
+
+  // Filter bundles based on selected filters
+  const filteredBundles = bundles.filter(bundle => {
+    return bundle.products.some(product => {
+      const matchesManufacturer = selectedManufacturer ? product.products.manufacturer_id === selectedManufacturer : true;
+      const matchesPCat = selectedPCat ? product.products.p_cat_id === selectedPCat : true;
+      const matchesCat = selectedCat ? product.products.cat_id === selectedCat : true;
+
+      return matchesManufacturer && matchesPCat && matchesCat;
+    });
+  });  
 
   const handleAddToCart = async (bundle: Bundle) => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -72,26 +93,26 @@ export default function GetBundle() {
   };  
 
   return (
-    <div className="p-2 max-w-7xl mx-auto">
+    <div className="container mx-auto px-4 py-12 sm:py-12 md:py-5 xl:py-5 justify-items-center">
         <h2 className="text-2xl font-bold mb-2 text-center">Bundle Deals</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-items-center">
-      {bundles.map(bundle => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 px-4 justify-items-center">
+      {filteredBundles.map(bundle => (
         <Card key={bundle.bundle_id} className="w-[280px] rounded-lg shadow-md overflow-hidden border">
-          <CardHeader className="flex flex-col items-start space-y-1 p-3">
-            <CardTitle className="text-base">{bundle.bundle_title}</CardTitle>
-              {bundle.products.length > 2 && (
-                <Badge variant="secondary" className="text-[10px] px-2 py-1">Buy {bundle.products.length} Items</Badge>
+          <div className="flex flex-col items-center space-y-0.5 p-0.5">
+            <Label className="text-base">{bundle.bundle_title}</Label>
+              {bundle.products.length > 1 && (
+                <Badge variant="secondary" className="text-[10px] px-2 py-1 bg-[#F05F42] text-white">Buy {bundle.products.length} Items</Badge>
               )}            
               <div className="text-green-700 font-bold text-sm">
                 Total: ₦{bundle.total_price.toFixed(2)}
               </div>
-          </CardHeader>
+          </div>
 
-          <CardContent className="grid grid-cols-2 gap-2 p-2">
+          <CardContent className="grid grid-cols-2 gap-2 p-2 pt-0 pb-0">
           {bundle.products.map((item: BundleProduct) => (
                 <div key={item.product_id} className="flex flex-col">
                   {/* Product Image */}
-                  <div className="w-full h-24 bg-gray-100 rounded-md overflow-hidden mb-1">
+                  <div className="w-full h-24 bg-gray-100 rounded-md overflow-hidden mb-1 mt-0">
                     <img
                       src={`/products/${item.products.product_img1}`}
                       alt={item.products.product_title}
@@ -121,10 +142,10 @@ export default function GetBundle() {
                   </div>
                 </div>
               ))}
-                <div>
-                  <Button variant="ghost" className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition" onClick={() => handleAddToCart(bundle)}>
+                <div className='items-center justify-center'>
+                  <Button className="w-full" onClick={() => handleAddToCart(bundle)}>
                     {/* Add to Cart icon */}
-                    <ShoppingCart className="h-2 w-2 text-gray-600" />
+                    <ShoppingCart className="h-2 w-2" /> Add to Cart
                   </Button>
                 </div>
           </CardContent>

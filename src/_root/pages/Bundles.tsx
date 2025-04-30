@@ -1,5 +1,5 @@
 
-import Items from "@/components/shared/Items"
+import GetBundle from "@/components/shared/GetBundle"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -241,7 +241,13 @@ const filteredProducts = products.filter((product) => {
     </div>    
 
     <section className="p-1">
-      <div><Items items={filteredProducts} /></div>      
+      <div>
+        <GetBundle 
+          selectedManufacturer={selectedManufacturer}
+          selectedPCat={selectedPCat}
+          selectedCat={selectedCat}
+        />
+      </div>   
       </section>
     
     </div>

@@ -134,6 +134,7 @@ export default function Items({ items, itemsPerPage = 10 } : Props) {
           customer_id: customer.customer_id,
           product_id: product.product_id,
           qty: 1,
+          size: 'default',
           p_price: product.product_price * 0.8, // Use discounted price
         });
       }
@@ -155,7 +156,8 @@ export default function Items({ items, itemsPerPage = 10 } : Props) {
   }  
   
   return (
-    <div className="container mx-auto px-4 py-8 justify-items-center">
+    <div className="container mx-auto px-4 py-12 sm:py-12 md:py-5 xl:py-5 justify-items-center">
+      <h2 className="text-2xl font-bold mb-2 text-center">Choice Deals</h2>
 {showPopup && (
   <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
     <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
