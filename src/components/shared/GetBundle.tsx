@@ -1,11 +1,13 @@
 
 import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '../ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+//import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { ShoppingCart } from 'lucide-react';
-import { Label } from '../ui/label';
+//import { Label } from '../ui/label';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '../ui/carousel';
+import { Badge } from '../ui/badge';
 
 interface BundleProduct {
   product_id: number;
@@ -92,66 +94,102 @@ export default function GetBundle({selectedManufacturer, selectedPCat, selectedC
     }
   };  
 
+  const getDiscount = (originalPrice: number, discountedPrice: number) => {
+    if (!originalPrice) return 0;
+    return Math.round(((originalPrice - discountedPrice) / originalPrice) * 100);
+  };  
+
   return (
-    <div className="container mx-auto px-4 py-12 sm:py-12 md:py-5 xl:py-5 justify-items-center">
-        <h2 className="text-2xl font-bold mb-2 text-center">Bundle Deals</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 px-4 justify-items-center">
-      {filteredBundles.map(bundle => (
-        <Card key={bundle.bundle_id} className="w-[280px] rounded-lg shadow-md overflow-hidden border">
-          <div className="flex flex-col items-center space-y-0.5 p-0.5">
-            <Label className="text-base">{bundle.bundle_title}</Label>
-              {bundle.products.length > 1 && (
-                <Badge variant="secondary" className="text-[10px] px-2 py-1 bg-[#F05F42] text-white">Buy {bundle.products.length} Items</Badge>
-              )}            
-              <div className="text-green-700 font-bold text-sm">
-                Total: ₦{bundle.total_price.toFixed(2)}
-              </div>
-          </div>
-
-          <CardContent className="grid grid-cols-2 gap-2 p-2 pt-0 pb-0">
-          {bundle.products.map((item: BundleProduct) => (
-                <div key={item.product_id} className="flex flex-col">
-                  {/* Product Image */}
-                  <div className="w-full h-24 bg-gray-100 rounded-md overflow-hidden mb-1 mt-0">
-                    <img
-                      src={`/products/${item.products.product_img1}`}
-                      alt={item.products.product_title}
-                      className="object-contain w-full h-full"
-                    />
-                  </div>
-
-                  {/* Product Info */}
-                  <div className="flex-1 flex flex-col justify-between">
-                    <p className="text-xs font-medium truncate-2-lines">{item.products.product_title}</p>
-
-                    <div className="mt-1">
-                      <p className="text-red-600 font-bold text-xs">
-                        ₦{item.discounted_price.toFixed(2)}
-                      </p>
-                      <p className="text-gray-400 text-[10px] line-through">
-                        ₦{item.original_price.toFixed(2)}
-                      </p>
-
-                      {/* Discount % */}
-                      {item.original_price && (
-                        <Badge variant="destructive" className="mt-1 text-[10px] px-1 py-0.5">
-                          -{Math.round(((item.original_price - item.discounted_price) / item.original_price) * 100)}%
-                        </Badge>
-                      )}
+    <div className="container mx-auto px-4 py-8">
+    <h2 className="text-2xl font-bold mb-6 text-center">Bundle Deals</h2>
+    <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+        {filteredBundles.map((bundle) => (
+            <div key={bundle.bundle_id} className="mb-8 rounded-lg shadow-md overflow-hidden border">
+                {bundle.products.length > 1 ? (
+                    <Carousel
+                        className="w-full"
+                        opts={{
+                            align: "start",
+                        }}
+                    >
+                        <CarouselContent>
+                            {bundle.products.map((item: BundleProduct) => (
+                                 <CarouselItem key={item.product_id} className="pl-4 md:basis-1/2 lg:basis-1/2">
+                                    <div className="p-1">
+                                        <div className="shadow-md hover:shadow-lg transition-shadow myBox">
+                                            <div>
+                                                <div className="relative w-full aspect-square">
+                                                    <img
+                                                        src={`/products/${item.products.product_img1}`}
+                                                        alt={item.products.product_title}
+                                                        className="absolute inset-0 w-full h-full object-contain rounded-t-lg"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="p-4">
+                                                <div className="text-xs font-semibold leading-tight line-clamp-2 text-orange-500">
+                                                    {item.products.product_title}
+                                                </div>
+                                                <div className="flex justify-between items-center text-[12px] gap-1 mt-1 text-muted-foreground relative space-x-3">
+                                                    <p className="text-red-500 line-through left-2">
+                                                      ₦{item.original_price.toFixed(2)}
+                                                    </p>
+                                                    <Badge className="font-bold rounded-md p-1 text-center right-2">
+                                                      ₦{item.discounted_price.toFixed(2)}
+                                                    </Badge>                                                    
+                                                </div>
+                                                <div className="text-xs">
+                                                    You save <span className='text-green-500'>{getDiscount(item.original_price, item.discounted_price)}%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CarouselItem>
+                            ))}
+                        </CarouselContent>
+                        <CarouselPrevious className="left-4 top-1/2 -translate-y-1/2" />
+                        <CarouselNext className="right-4 top-1/2 -translate-y-1/2" />
+                    </Carousel>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                        {bundle.products.map((item: BundleProduct) => (
+                            <Card key={item.product_id} className="border-gray-200 shadow-md hover:shadow-lg transition-shadow">
+                                <CardHeader>
+                                    <div className="relative w-full aspect-square">
+                                        <img
+                                            src={`/products/${item.products.product_img1}`}
+                                            alt={item.products.product_title}
+                                            className="absolute inset-0 w-full h-full object-contain rounded-t-lg"
+                                        />
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="p-4">
+                                    <CardTitle className="text-sm font-semibold text-gray-800 line-clamp-2">
+                                        {item.products.product_title}
+                                    </CardTitle>
+                                    <CardDescription className="text-xs text-gray-500 line-through">
+                                        ₦{item.original_price.toFixed(2)}
+                                    </CardDescription>
+                                    <p className="text-lg font-bold text-red-500">
+                                        ₦{item.discounted_price.toFixed(2)}
+                                    </p>
+                                    <p className="text-xs text-green-500">
+                                        You save {getDiscount(item.original_price, item.discounted_price)}%
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        ))}
                     </div>
-                  </div>
+                )}
+                <div className='mt-2 mb-3 flex items-center justify-center'>
+                    <Button className="w-full sm:w-auto" onClick={() => handleAddToCart(bundle)}>
+                        {/* Add to Cart icon */}
+                        <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+                    </Button>
                 </div>
-              ))}
-                <div className='items-center justify-center'>
-                  <Button className="w-full" onClick={() => handleAddToCart(bundle)}>
-                    {/* Add to Cart icon */}
-                    <ShoppingCart className="h-2 w-2" /> Add to Cart
-                  </Button>
-                </div>
-          </CardContent>
-        </Card>
-      ))}
-      </div>
+            </div>
+        ))}
     </div>
+</div>
   );
 }
