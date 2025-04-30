@@ -206,16 +206,16 @@ export default function AdminPendingOrders() {
   return (
     <div className="max-w-4xl mx-auto p-4">
       <Tabs defaultValue="all" onValueChange={setTab}>
-        <TabsList className="flex flex-wrap gap-2 mb-4">
-          <TabsTrigger value="all" className="text-base md:text-sm sm:text-xs">View all</TabsTrigger>
-          <TabsTrigger value="Pending" className="text-base md:text-sm sm:text-xs">To Pay</TabsTrigger>
-          <TabsTrigger value="Paid" className="text-base md:text-sm sm:text-xs">Paid</TabsTrigger>
-          <TabsTrigger value="Payment confirmed" className="text-base md:text-sm sm:text-xs">Payment Confirmed</TabsTrigger>
-          <TabsTrigger value="WAITING TO BE SHIPPED" className="text-base md:text-sm sm:text-xs">To Ship</TabsTrigger>
-          <TabsTrigger value="SHIPPED" className="text-base md:text-sm sm:text-xs">Shipped</TabsTrigger>
-          <TabsTrigger value="OUT FOR DELIVERY" className="text-base md:text-sm sm:text-xs">Out for delivery</TabsTrigger>
-          <TabsTrigger value="DELIVERED" className="text-base md:text-sm sm:text-xs">Arrived</TabsTrigger>
-          <TabsTrigger value="RECEIVED" className="text-base md:text-sm sm:text-xs">Completed</TabsTrigger>
+        <TabsList className="flex flex-wrap gap-1 mb-4">
+          <TabsTrigger value="all" className="text-[10px] md:text-xs sm:text-xs">View all</TabsTrigger>
+          <TabsTrigger value="Pending" className="text-[10px] md:text-xs sm:text-xs">To Pay</TabsTrigger>
+          <TabsTrigger value="Paid" className="text-[10px] md:text-xs sm:text-xs">Paid</TabsTrigger>
+          <TabsTrigger value="Payment confirmed" className="text-[10px] md:text-xs sm:text-xs">Confirmed</TabsTrigger>
+          <TabsTrigger value="WAITING TO BE SHIPPED" className="text-[10px] md:text-xs sm:text-xs">To Ship</TabsTrigger>
+          <TabsTrigger value="SHIPPED" className="text-[10px] md:text-xs sm:text-xs">Shipped</TabsTrigger>
+          <TabsTrigger value="OUT FOR DELIVERY" className="text-[10px] md:text-xs sm:text-xs">Out for delivery</TabsTrigger>
+          <TabsTrigger value="DELIVERED" className="text-[10px] md:text-xs sm:text-xs">Arrived</TabsTrigger>
+          <TabsTrigger value="RECEIVED" className="text-[10px] md:text-xs sm:text-xs">Completed</TabsTrigger>
         </TabsList>
 
         <div className="flex gap-2 items-center mb-6">
@@ -248,8 +248,8 @@ export default function AdminPendingOrders() {
 
                     <Separator className="my-2" />
 
-            {Array.isArray(order.pending_order_items) && order.pending_order_items.map((item: PendingOrderItems) => (
-                    <div key={item.pending_order_item_id} className="flex gap-4">
+            {Array.isArray(order.pending_order_items) && order.pending_order_items.map((item: PendingOrderItems, index) => (
+                    <div key={`${item.pending_order_item_id}-${index}`} className="flex gap-4">
                       <img
                         src={`/products/${item.products?.product_img1 || 'default.png'}`}
                         alt=""
