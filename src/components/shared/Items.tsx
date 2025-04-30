@@ -210,7 +210,7 @@ export default function Items({ items, itemsPerPage = 10 } : Props) {
         </div>
         ) : (
             <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-4">
             {paginatedItems.map((item) => (
         <Card key={item.product_id} className="flex flex-col rounded-md overflow-hidden shadow-sm">
           <div className="relative">
@@ -236,7 +236,7 @@ export default function Items({ items, itemsPerPage = 10 } : Props) {
             <h3 className="text-xs font-semibold leading-tight line-clamp-2">{item.product_title}</h3>
             <p className="text-[10px] text-muted-foreground mt-1">Free Shipping</p>
             <div className="flex items-center text-[10px] gap-1 mt-1 text-muted-foreground">
-              <span>1000 sold</span>
+              <span>{item.sold_count || 0} sold</span>
               <Separator orientation="vertical" className="h-3" />
               <span>⭐ 4.1</span>
             </div>

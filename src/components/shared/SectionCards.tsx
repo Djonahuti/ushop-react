@@ -38,10 +38,10 @@ export function SectionCards() {
       // Net Worth (product_price * 10)
       const { data: products, error: productsError } = await supabase
         .from("products")
-        .select("product_price")
+        .select("product_price, item_qty")
 
       if (!productsError && products) {
-        const worth = products.reduce((acc, p) => acc + (p.product_price || 0) * 10, 0)
+        const worth = products.reduce((acc, p) => acc + (p.product_price || 0) * (p.item_qty || 0), 0)
         setNetWorth(worth)
       }
 

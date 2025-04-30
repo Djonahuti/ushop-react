@@ -11,6 +11,7 @@ export type Product = {
     product_img2: string;
     product_img3: string;
     product_video: string;
+    sold_count: number;
     manufacturer_id: number;
     p_cat_id: number;
     cat_id: number;
