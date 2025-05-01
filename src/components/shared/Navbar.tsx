@@ -8,6 +8,8 @@ import useCustomerData from "@/hooks/hooks";
 import { Product } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import Modal from "./Modal";
+import Contact from "@/_root/pages/Contact";
 
 const Navbar = () => {
   const { customer } = useCustomerData();
@@ -17,6 +19,7 @@ const Navbar = () => {
   const [filteredSuggestions, setFilteredSuggestions] = useState<Product[]>([])
   const [wishlistCount, setWishlistCount] = useState(0);
   const [cartCount, setCartCount] = useState(0);
+  const [isContactModalOpen, setContactModalOpen] = useState(false); // State for modal
 
   useEffect(() => {
     const fetchCounts = async () => {
@@ -100,6 +103,7 @@ const Navbar = () => {
   }  
 
   return (
+    <>
     <nav className="my-nav shadow-md px-4 py-3 flex items-center justify-between sticky top-0 z-50">
     <Link to="/" className="w-24 h-10 mt-2 space-x-3 pl-2">
       <img
@@ -241,14 +245,23 @@ const Navbar = () => {
           <ShoppingCart size={23} />
           <span className="bg-green-500 text-white rounded-full px-2 text-xs">{cartCount}</span>
         </Link>
-        <Link to="/contact">
+        <Button
+         variant="ghost"
+         className="rounded-full flex items-center space-x-1 relative"
+         onClick={() => setContactModalOpen(true)} // Open modal
+        >
           <Send size={23} />
-        </Link>
+        </Button>
         </>
     )}
         <ThemeToggle />
       </div>
     </nav>
+      {/* Contact Modal */}
+      <Modal isOpen={isContactModalOpen} onClose={() => setContactModalOpen(false)}>
+        <Contact />
+      </Modal>    
+    </>
   );
 };
 

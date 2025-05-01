@@ -3,9 +3,12 @@ import { Button } from "../ui/button";
 import { Edit, Gem, Ticket, X } from "lucide-react";
 import { IconDiscountFilled, IconGiftFilled } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
+import Modal from "./Modal";
+import Contact from "@/_root/pages/Contact";
 
 const StickyTools = () => {
     const navigate = useNavigate();
+    const [isContactModalOpen, setContactModalOpen] = useState(false); // State for modal
     const [showTools, setShowTools] = useState(false); // State to toggle visibility
   return (
     <div className="space-y-1">
@@ -47,13 +50,17 @@ const StickyTools = () => {
             </button>
             <button
               className="p-2 rounded shadow hover:bg-orange-200 hover:text-gray-700 bg-orange-100 text-black"
-              onClick={() => navigate('/contact')}
+              onClick={() => setContactModalOpen(true)} // Open modal
             >
               <Edit />
             </button>
           </div>        
       )}
-      </div>        
+      </div>
+      {/* Contact Modal */}
+      <Modal isOpen={isContactModalOpen} onClose={() => setContactModalOpen(false)}>
+        <Contact />
+      </Modal>              
     </div>
   )
 }
