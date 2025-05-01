@@ -50,7 +50,7 @@ export default function Wishlist() {
     <div className="container mx-auto space-y-2 px-4">
 <div className="mt mt-20 sm:mt-15 md:mt-10 lg:mt-8">
 <h2 className="text-xl font-bold text-gray-700 mb-4 text-center">Your Wishlist</h2>
-<div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-18">
+<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-18">
   {items.map((item) => (
     <Card key={item.wishlist_id} className="bg-gray-800 p-4 rounded-lg shadow-md">
     <CardHeader>
@@ -74,7 +74,7 @@ export default function Wishlist() {
         ₦{item.products.product_price}
       </p>
     </CardContent>
-    <CardFooter className='flex item-center'>
+    <CardFooter className='flex item-center justify-between'>
       <Link to={`/products/${item.product_id}`}>
         <Button variant="outline" className="w-full text-sm hover:bg-orange-400">
           View Details
@@ -84,7 +84,7 @@ export default function Wishlist() {
         variant="ghost"
         type="button"
         size="sm"
-        className="mt-2 bg-red-500 rounded-full hover:bg-red-600 transition duration-200 text-white"
+        className="mt-2 bg-red-500 rounded-full hover:bg-red-600 transition duration-200 text-white p-2"
         onClick={() => handleRemove(item.wishlist_id)} 
         >
           <Trash2 size={16} />

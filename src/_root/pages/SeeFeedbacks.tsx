@@ -44,7 +44,7 @@ const SeeFeedbacks = () => {
     <div className="container mx-auto space-y-2 px-4">
         <div>
             <h3 className="text-xl font-bold text-gray-700 mb-4 text-center">Feedbacks</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {feedbacks.map((item) => (
                     <Card key={item.feedback_id} className="bg-gray-800 p-4 rounded-lg shadow-md">
                         <CardHeader>

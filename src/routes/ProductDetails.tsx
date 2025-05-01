@@ -43,7 +43,7 @@ export default function ProductDetails() {
   if (!product) return <div className="p-6 text-center">Loading product...</div>;
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 mb-16">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Product Image */}
         <div>
