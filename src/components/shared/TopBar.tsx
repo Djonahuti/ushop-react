@@ -1,5 +1,5 @@
 
-import { BellIcon, CreditCardIcon, Heart, LogOutIcon, ShoppingCart, UserCircleIcon } from "lucide-react";
+import { BellIcon, CreditCardIcon, LogOutIcon, UserCircleIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Customer } from "@/types";
@@ -9,9 +9,7 @@ import ThemeToggle from "../ThemeToggle";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
 const Topbar = () => {
-  const [customer, setCustomer] = useState<Customer | null>(null);
-  const [wishlistCount, setWishlistCount] = useState(0);
-  const [cartCount, setCartCount] = useState(0);  
+  const [customer, setCustomer] = useState<Customer | null>(null); 
 
   useEffect(() => {
     const fetchCustomerData = async () => {
@@ -35,37 +33,7 @@ const Topbar = () => {
     };
 
     fetchCustomerData();
-  }, []);
-
-  useEffect(() => {
-    const fetchCounts = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      
-      const { data: customer, error } = await supabase
-        .from('customers')
-        .select('customer_id')
-        .eq('customer_email', user.email)
-        .single();
-
-      if (error || !customer) return;
-
-      const { count: cCount } = await supabase
-        .from('cart')
-        .select('*', { count: 'exact', head: true })
-        .eq('customer_id', customer.customer_id);
-
-      const { count: wCount } = await supabase
-        .from('wishlist')
-        .select('*', { count: 'exact', head: true })
-        .eq('customer_id', customer.customer_id);
-  
-      setWishlistCount(wCount || 0);
-      setCartCount(cCount || 0);
-    };
-  
-    fetchCounts();
-  }, []);  
+  }, []); 
 
     const handleLogout = async () => {
       await supabase.auth.signOut()
@@ -158,24 +126,7 @@ const Topbar = () => {
           </Avatar>        
         </Link>
 
-  )}   
-      
-          <Link
-           to="/cart" 
-           className="p-2 flex items-center space-x-1 relative">
-            <ShoppingCart size={24} />
-          {customer && (
-            <span className="bg-green-500 text-white rounded-full px-2 text-xs">{cartCount}</span>
-          )}
-          </Link>
-          <Link
-           to="/wishlist" 
-           className="p-2 flex items-center space-x-1 relative">
-            <Heart size={24} />
-            {customer && (
-            <span className="bg-red-500 text-white rounded-full px-2 text-xs">{wishlistCount}</span>
-          )}
-          </Link>
+  )}
 
 
         <ThemeToggle />

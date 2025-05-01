@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import supabase from "@/lib/supabaseClient"
 import { Category, Manufacturer, Product, ProductCategory } from "@/types"
 import { IconDiscountFilled } from "@tabler/icons-react"
-import { Edit, FilterIcon, History, Search, Ticket } from "lucide-react"
+import { Edit, FilterIcon, ShoppingCart, Search, Ticket } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
@@ -257,8 +257,11 @@ const filteredProducts = products.filter((product) => {
         <button className="p-2 rounded shadow hover:bg-orange-100 hover:text-gray-700">
           <Ticket />
         </button>
-        <button className="p-2 rounded shadow hover:bg-orange-100 hover:text-gray-700">
-          <History />
+        <button
+         className="p-2 rounded shadow hover:bg-orange-100 hover:text-gray-700"
+          onClick={() => navigate('/cart')}
+        >
+          <ShoppingCart />
         </button>
         <button
          className="p-2 rounded shadow hover:bg-orange-100 hover:text-gray-700"
