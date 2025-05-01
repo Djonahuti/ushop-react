@@ -73,9 +73,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [contacts, setContacts] = React.useState<Contact[]>([]);
   const { setSelectedMail } = React.useContext(MailContext)
 
-  const handleSelectMail = (mail: Contact) => {
+  const handleSelectMail = async (mail: Contact) => {
     setOpen(true)
-    setSelectedMail(mail) // This now pushes it to Inbox.tsx
+    setSelectedMail(mail); // This now pushes it to Inbox.tsx
+
+    // Mark the contact as read
+    await supabase
+      .from('contacts')
+      .update({ is_read: true })
+      .eq('id', mail.id);
   }
   
   React.useEffect(() => {
@@ -83,6 +89,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const { data } = await supabase
         .from('contacts')
         .select('*, customers(customer_name, customer_email, customer_image), subject(subject)')
+        .order('submitted_at', { ascending: false }); // Optional: Order by submission date
 
       setContacts(data || []);
     };
@@ -115,8 +122,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const formatSubmittedAt = (timestamp: string): string => {
         const date = new Date(timestamp)
         return `${formatTime(date)} ${getRelativeTime(date)}`
-    }
+    };
       
+    const toggleStar = async (contact: Contact) => {
+      const newStarredStatus = !contact.is_starred;
+      await supabase
+        .from('contacts')
+        .update({ is_starred: newStarredStatus })
+        .eq('id', contact.id);
+      
+      // Update local state
+      setContacts((prevContacts) =>
+        prevContacts.map((c) =>
+          c.id === contact.id ? { ...c, is_starred: newStarredStatus } : c
+        )
+      );
+    };    
 
   return (
     <Sidebar
@@ -221,7 +242,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <span>{contact.customers?.customer_name}</span>{" "}
                     <span className="ml-auto text-xs">{formatSubmittedAt(contact.submitted_at)}</span>
                   </div>
-                  <span className="font-medium">{contact.subject?.subject}</span>
+                  <div className="flex justify-between space-x-8 items-center relative gap-1">
+                  <span className="font-medium right-2">{contact.subject?.subject}</span>
+                  <a
+                    href="#"
+                    key={contact.id}
+                    onClick={() => handleSelectMail(contact)}
+                    className="text-lg left-2 text-yellow-500 hover:text-yellow-600 item-end"
+                  >
+                      <button onClick={() => toggleStar(contact)}>
+                        {contact.is_starred ? '★' : '☆'} {/* Star icon */}
+                      </button>
+                  </a>                                      
+                  </div>
                   <span className="line-clamp-2 w-[260px] whitespace-break-spaces text-xs">
                     {String(contact.message)}
                   </span>

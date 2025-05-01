@@ -14,12 +14,23 @@ export default function ListView() {
   const [contacts, setContacts] = useState<Contact[]>([])
   const { setSelectedMail } = useContext(MailContext)
 
+  const handleSelectMail = async (mail: Contact) => {
+    setSelectedMail(mail); // This now pushes it to Inbox.tsx
+
+    // Mark the contact as read
+    await supabase
+      .from('contacts')
+      .update({ is_read: true })
+      .eq('id', mail.id);
+  };
+
   // Fetch messages
   useEffect(() => {
     const fetchContacts = async () => {
       const { data, error } = await supabase
         .from('contacts')
         .select('*, customers(customer_name, customer_email, customer_image), subject(subject)')
+        .order('submitted_at', { ascending: false });
       if (error) {
         console.error('Error loading contacts:', error)
       } else {
@@ -50,7 +61,22 @@ export default function ListView() {
   const formatSubmittedAt = (timestamp: string): string => {
     const date = new Date(timestamp)
     return `${formatTime(date)} · ${getRelativeTime(date)}`
-  }
+  };
+
+  const toggleStar = async (contact: Contact) => {
+    const newStarredStatus = !contact.is_starred;
+    await supabase
+      .from('contacts')
+      .update({ is_starred: newStarredStatus })
+      .eq('id', contact.id);
+    
+    // Update local state
+    setContacts((prevContacts) =>
+      prevContacts.map((c) =>
+        c.id === contact.id ? { ...c, is_starred: newStarredStatus } : c
+      )
+    );
+  };  
 
   return (
     <div className="flex-1 overflow-y-auto bg-background">
@@ -77,7 +103,19 @@ export default function ListView() {
               {formatSubmittedAt(contact.submitted_at)}
             </span>
           </div>
+          <div className="flex flex-col justify-between space-x-8 items-center relative gap-1">
           <span className="text-sm font-semibold">{contact.subject?.subject}</span>
+          <a
+            href="#"
+            key={contact.id}
+            onClick={() => handleSelectMail(contact)}
+            className="text-lg left-2 text-yellow-500 hover:text-yellow-600"
+          >
+              <button onClick={() => toggleStar(contact)}>
+                {contact.is_starred ? '★' : '☆'} {/* Star icon */}
+              </button>
+          </a>                      
+          </div>
           <p className="text-xs text-muted-foreground line-clamp-2">
             {String(contact.message)}
           </p>

@@ -276,6 +276,8 @@ export type Contact = {
     subject_id: number;
     message: Text;
     submitted_at: string;
+    is_starred: boolean;
+    is_read: boolean;
     customers?: {
         customer_name: string;
         customer_email: string;
