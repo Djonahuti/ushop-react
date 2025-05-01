@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +7,7 @@ import { ShoppingCart } from 'lucide-react';
 //import { Label } from '../ui/label';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '../ui/carousel';
 import { Badge } from '../ui/badge';
+import { Link } from 'react-router-dom';
 
 interface BundleProduct {
   product_id: number;
@@ -100,7 +100,7 @@ export default function GetBundle({selectedManufacturer, selectedPCat, selectedC
   };  
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-12 sm:py-12 md:py-5 xl:py-5">
     <h2 className="text-2xl font-bold mb-6 text-center">Bundle Deals</h2>
     <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
         {filteredBundles.map((bundle) => (
@@ -127,9 +127,9 @@ export default function GetBundle({selectedManufacturer, selectedPCat, selectedC
                                                 </div>
                                             </div>
                                             <div className="p-4">
-                                                <div className="text-xs font-semibold leading-tight line-clamp-2 text-orange-500">
+                                                <Link to={`/products/${item.product_id}`} className="text-xs font-semibold leading-tight line-clamp-2 text-orange-500">
                                                     {item.products.product_title}
-                                                </div>
+                                                </Link>
                                                 <div className="flex justify-between items-center text-[12px] gap-1 mt-1 text-muted-foreground relative space-x-3">
                                                     <p className="text-red-500 line-through left-2">
                                                       ₦{item.original_price.toFixed(2)}

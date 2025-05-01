@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
-import { Card, CardContent } from '@/components/ui/card';
+//import { Card, CardContent } from '@/components/ui/card';
 //import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, Heart, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -8,6 +8,8 @@ import { Button } from '../ui/button';
 import { Product } from '@/types';
 import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from '../ui/pagination';
 import { toast } from 'sonner';
+import { Badge } from '../ui/badge';
+import { AspectRatio } from '../ui/aspect-ratio';
 
 type Props = {
   products: Product[];
@@ -111,9 +113,9 @@ export default function ProductCard({ products, itemsPerPage = 8 }: Props) {
           </div>
       ) :(
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {paginatedProducts.map((product) => (
-              <Card key={product.product_id} className="w-full max-w-xs shadow-lg rounded-xl p-4">
+              <div key={product.product_id} className="flex flex-col rounded-md overflow-hidden shadow-sm myBox">
                 <div className="relative">
                 <ImageSlider images={[product.product_img1, product.product_img2, product.product_img3].filter(Boolean)} />
                   <div></div>{product.manufacturers?.manufacturer_title && (
@@ -121,16 +123,17 @@ export default function ProductCard({ products, itemsPerPage = 8 }: Props) {
                             {product.manufacturers.manufacturer_title}
                           </span>
                       )}
+                      <>
+                        <Badge className="bg-green-700 text-white absolute bottom-1 left-2 text-xs">{product.product_label}</Badge>
+                        <Badge className="text-sm font-bold absolute bottom-1 right-2">₦{product.product_price}</Badge>
+                      </>
                 </div>
-                <CardContent className="mt-4 text-center">
-                      <Link to={`/products/${product.product_id}`} className="text-lg font-semibold ushop-primary hover:underline">
+                <div className="mt-1 text-center">
+                      <Link to={`/products/${product.product_id}`} className="text-sm font-semibold text-orange-500 hover:text-orange-700 transition-colors duration-200">
                         {product.product_title}
                       </Link>
-                      <div className="relative flex justify-between items-center mt-2">
-                        <p className="bg-green-700 text-white text-xs px-2 py-1 rounded">{product.product_label}</p>
-                        <p className="text-lg font-bold">₦{product.product_price}</p>
-                      </div>
-                  <div className="flex justify-center gap-4 mt-3">
+
+                  <div className="flex justify-center gap-4 mt-1 mb-1">
                     <Button size="icon" variant="outline" className="p-2 rounded-full my-nav backdrop-blur-sm hover:text-[#F05F42] hover:scale-120 transition-transform duration-200 ease-in-out" onClick={() => handleAddWishlist(product)}>
                       {/* Add to Wishlist icon */}
                       <Heart className="h-5 w-5" />
@@ -140,8 +143,8 @@ export default function ProductCard({ products, itemsPerPage = 8 }: Props) {
                       <ShoppingCart className="h-5 w-5" />
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
         ))}
           </div>
 
@@ -193,12 +196,12 @@ const ImageSlider = ({ images }: { images: string[] }) => {
   }, [images]);
 
   return (
-    <div className="w-full h-60 overflow-hidden rounded-md">
+    <AspectRatio ratio={1 / 1.25}>
       <img
         src={`/products/${images[currentIndex]}`}
         alt="Product"
         className="w-full h-full object-contain transition-opacity duration-500"
       />
-    </div>
+    </AspectRatio>
   );
 };
