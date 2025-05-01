@@ -35,6 +35,7 @@ import {
 import { Customer } from "@/types"
 import supabase from "@/lib/supabaseClient"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
+import ThemeToggle from "../ThemeToggle"
 
 const data = [
   [
@@ -225,6 +226,9 @@ export function NavPopUp() {
           </Sidebar>
         </PopoverContent>
       </Popover>
+      <div className="block md:hidden text-sm">
+          <ThemeToggle />
+        </div>      
     </div>
   )
 }

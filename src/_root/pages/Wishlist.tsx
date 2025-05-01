@@ -50,7 +50,7 @@ export default function Wishlist() {
     <div className="container mx-auto space-y-2 px-4">
 <div className="mt mt-20 sm:mt-15 md:mt-10 lg:mt-8">
 <h2 className="text-xl font-bold text-gray-700 mb-4 text-center">Your Wishlist</h2>
-<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+<div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-18">
   {items.map((item) => (
     <Card key={item.wishlist_id} className="bg-gray-800 p-4 rounded-lg shadow-md">
     <CardHeader>

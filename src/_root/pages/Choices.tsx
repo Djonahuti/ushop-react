@@ -4,15 +4,12 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import supabase from "@/lib/supabaseClient"
 import { Category, Manufacturer, Product, ProductCategory } from "@/types"
-import { IconGiftFilled } from "@tabler/icons-react"
-import { CheckCircle, Edit, FilterIcon, ShoppingCart, Search, Ticket } from "lucide-react"
+import { CheckCircle, FilterIcon, Search } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
-import { useNavigate } from "react-router-dom"
 
 
 const Choices = () => {
     const [loading, setLoading] = useState(true);
-  //const [error, setError] = useState<string | null>(null);
     const [categories, setCategories] = useState<Category[]>([]);
     const [pCategories, setPCategories] = useState<ProductCategory[]>([]);
     const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
@@ -23,7 +20,7 @@ const Choices = () => {
     const [selectedCat, setSelectedCat] = useState<number | null>(null);
     const selectedProductsRef = useRef<Product[]>([]);
     const [showPopup, setShowPopup] = useState(false);    
-    const navigate = useNavigate();
+
     const [error, setError] = useState<string | null>(null);
 
     const handleSelectedProductsUpdate = (products: Product[]) => {
@@ -289,30 +286,6 @@ const filteredProducts = products.filter((product) => {
       /></div>      
       </section>
 
-      {/* Sticky Side Tools */}
-      <div className="fixed top-1/3 right-2 z-50 flex flex-col items-center space-y-2 my-nav">
-        <button className="p-2 rounded shadow hover:bg-orange-100 hover:text-gray-700">
-          <Ticket />
-        </button>
-        <button
-         className="p-2 rounded shadow hover:bg-orange-100 hover:text-gray-700"
-          onClick={() => navigate('/cart')}
-        >
-          <ShoppingCart />
-        </button>
-        <button
-         className="p-2 rounded shadow hover:bg-orange-100 hover:text-gray-700"
-          onClick={() => navigate('/bundle')}
-        >
-          <IconGiftFilled />
-        </button>
-        <button
-         className="p-2 rounded shadow hover:bg-orange-100 hover:text-gray-700"
-          onClick={() => navigate('/contact')}
-        >
-          <Edit />
-        </button>
-      </div>
 
     
     </div>
