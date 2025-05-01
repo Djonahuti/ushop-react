@@ -34,7 +34,7 @@ const data = {
   navMain: [
     {
       title: "Inbox",
-      url: "#",
+      url: "/vmail",
       icon: Inbox,
       isActive: true,
     },

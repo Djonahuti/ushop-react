@@ -34,7 +34,6 @@ import CustomerOrders from "./_root/pages/CustomerOrder"
 import ConfirmPay from "./_root/pages/ConfirmPay"
 import CustomerLayout from "./_root/CustomerLayout"
 import MailLayout from "./components/shared/Mail/MailLayout"
-import Inbox from "./components/shared/Mail/Inbox"
 import Overview from "./components/shared/Overview"
 import FeedbackPage from "./_root/pages/FeedbackPage"
 import Contact from "./_root/pages/Contact"
@@ -54,6 +53,7 @@ import AddBundle from "./components/shared/Forms/AddBundle"
 import Bundle from "./_root/pages/Bundles"
 import Choices from "./_root/pages/Choices"
 import Mailbox from "./routes/Mailbox"
+import MailView from "./components/shared/Mail/MailView"
 
 
 function App() {
@@ -114,7 +114,7 @@ function App() {
         </Route>        
 
         <Route element={<MailLayout />}>
-          <Route path="/inbox" element={<AdminRoute><Inbox /></AdminRoute>} />
+          <Route path="/inbox" element={<AdminRoute><MailView /></AdminRoute>} />
         </Route>
         
         {/* public routes */}

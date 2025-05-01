@@ -4,6 +4,7 @@ import { useState, useEffect, useContext } from "react"
 import supabase from "@/lib/supabaseClient"
 import { Contact } from "@/types"
 import { MailContext } from "./MailContext"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 /**
  * ListView: a full-screen list of inbox messages for mobile.
@@ -60,13 +61,17 @@ export default function ListView() {
           className="w-full text-left flex flex-col gap-2 border-b p-4 hover:bg-accent"
         >
           <div className="flex items-center gap-2">
-            {contact.customers?.customer_image && (
-              <img
-                src={contact.customers.customer_image}
-                alt={contact.customers.customer_name}
-                className="w-8 h-8 rounded-full object-cover"
-              />
+            <Avatar>
+            {contact.customers?.customer_image ? (
+              <AvatarImage
+                src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${contact.customers?.customer_image}`}
+                alt={contact.customers?.customer_name}
+                className="w-6 h-6 rounded-full object-cover"
+              />                     
+            ):(
+              <AvatarFallback className="rounded-lg">{contact.customers?.customer_name.substring(0, 2).toUpperCase()}</AvatarFallback>
             )}
+            </Avatar>
             <span className="font-medium">{contact.customers?.customer_name}</span>
             <span className="ml-auto text-xs text-muted-foreground">
               {formatSubmittedAt(contact.submitted_at)}
