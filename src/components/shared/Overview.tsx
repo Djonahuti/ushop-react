@@ -17,7 +17,7 @@ export default function Overview() {
 
     useEffect(() => {
       const fetchCustomerData = async () => {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
   
         const { data: customerData, error } = await supabase
@@ -46,10 +46,12 @@ export default function Overview() {
   
         orders?.forEach((o) => {
           if (o.product_id) seenIds.add(o.product_id);
-          const p = o.products;
-          if (p?.cat_id) catIds.add(p.cat_id);
-          if (p?.p_cat_id) pCatIds.add(p.p_cat_id);
-          if (p?.manufacturer_id) manuIds.add(p.manufacturer_id);
+          const products = Array.isArray(o.products) ? o.products : [o.products];
+          products.forEach((p) => {
+            if (p?.cat_id) catIds.add(p.cat_id);
+            if (p?.p_cat_id) pCatIds.add(p.p_cat_id);
+            if (p?.manufacturer_id) manuIds.add(p.manufacturer_id);
+          });
         });
   
         const filters = [
@@ -97,20 +99,20 @@ export default function Overview() {
           <div className="flex-1">
             <h2 className="font-semibold text-lg">{customer.customer_name}</h2>
             <div className="grid grid-cols-4 gap-2 mt-2 text-center text-sm text-muted-foreground">
+              <Link to="/wishlists" className="flex flex-col items-center">
+                <Heart className="w-5 h-5 mb-1 text-orange-500" />
+                WishList
+              </Link>
               <div className="flex flex-col items-center">
-                <Heart className="w-5 h-5 mb-1" />
-                Wish List
-              </div>
-              <div className="flex flex-col items-center">
-                <Clock className="w-5 h-5 mb-1" />
+                <Clock className="w-5 h-5 mb-1 text-orange-500" />
                 Viewed
               </div>
               <div className="flex flex-col items-center">
-                <Ticket className="w-5 h-5 mb-1" />
+                <Ticket className="w-5 h-5 mb-1 text-orange-500" />
                 Coupons
               </div>
               <div className="flex flex-col items-center">
-                <CreditCard className="w-5 h-5 mb-1" />
+                <CreditCard className="w-5 h-5 mb-1 text-orange-500" />
                 Shopping Credit
               </div>
             </div>

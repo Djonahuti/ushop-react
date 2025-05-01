@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "../ui/breadcrumb";
 import { Separator } from "../ui/separator";
 import { SidebarTrigger } from "../ui/sidebar";
@@ -14,7 +15,17 @@ export function CustomerHeader() {
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbPage className="line-clamp-1">
-                  <h1 className="text-base font-medium">DashBoard</h1>
+                  <div className="block md:hidden text-sm h-16">
+                    <Link to="/" className="w-24 h-10 mt-2 p-2">
+                      <img
+                        src="/src/assets/ushop.svg"
+                        alt="logo"
+                        width={90}
+                        height={15}
+                      />
+                    </Link>                    
+                  </div>
+                  <h1 className="hidden md:block text-base font-medium">DashBoard</h1>
                 </BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>

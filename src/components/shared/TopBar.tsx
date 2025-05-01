@@ -43,7 +43,7 @@ const Topbar = () => {
   return (
     <>
     <nav className="fixed top-0 left-0 my-nav w-full h-16 flex justify-between items-center text-sm z-50 space-x-2">
-        <Link to="/" className="w-24 h-10 mt-2">
+        <Link to="/" className="w-24 h-10 mt-2 p-2">
           <img
             src="/src/assets/ushop.svg"
             alt="logo"

@@ -4,7 +4,7 @@ import {
   Bell,
   BriefcaseBusiness,
   CircleHelp,
-  Megaphone,
+  MessageCircleMore,
   MessageCircleQuestion,
   MoreHorizontal,
   PersonStanding,
@@ -13,6 +13,8 @@ import {
   ShieldCheck,
   ShoppingBag,
   LogOut,
+  ShoppingCart,
+  Heart,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -40,6 +42,16 @@ const data = [
       label: "Settings",
       icon: Cog,
       url: "/profile",
+    },
+    {
+      label: "Cart",
+      icon: ShoppingCart,
+      url: "/my-cart",
+    },
+    {
+      label: "Wishlist",
+      icon: Heart,
+      url: "/wishlists",
     },
     {
       label: "UShop Business",
@@ -71,9 +83,9 @@ const data = [
   ],
   [
     {
-      label: "Report IPR infringement",
-      icon: Megaphone,
-      url: "/contact",
+      label: "Feedbacks",
+      icon: MessageCircleMore,
+      url: "/feedbacks",
     },
     {
       label: "Accessibily",
