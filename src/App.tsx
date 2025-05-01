@@ -92,7 +92,7 @@ function App() {
           />
         </Route>
 
-        {/* Admin routes */}
+        {/* Seller routes */}
         <Route element={<SellerLayout />}>
           <Route path="/seller-dashboard" element={<SellerRoute><SellerDashboard /></SellerRoute>} />
           <Route path="/sell-product" element={<SellerRoute><SellProduct /></SellerRoute>} />
