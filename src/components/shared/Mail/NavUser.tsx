@@ -100,7 +100,7 @@ export function NavUser() {
                  src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${admin.admin_image}`}
                  alt={admin.admin_name} />
                 ):(
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">{admin.admin_name.substring(0, 2).toUpperCase()}</AvatarFallback>
                 )}
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -124,7 +124,7 @@ export function NavUser() {
                  src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${admin.admin_image}`} 
                  alt={admin.admin_name} />
                 ):(
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">{admin.admin_name.substring(0, 2).toUpperCase()}</AvatarFallback>
                 )}
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">

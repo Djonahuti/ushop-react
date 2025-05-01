@@ -53,6 +53,7 @@ import SellProduct from "./seller/forms/SellProduct"
 import AddBundle from "./components/shared/Forms/AddBundle"
 import Bundle from "./_root/pages/Bundles"
 import Choices from "./_root/pages/Choices"
+import Mailbox from "./routes/Mailbox"
 
 
 function App() {
@@ -67,6 +68,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Navigate to={user ? "/" : "/login"} />} />
         <Route path="*" element={<NotFound />} />
+        <Route path="/mail" element={<AdminRoute><Mailbox /></AdminRoute>} />
         
         {/* Admin routes */}
         <Route element={<AdminLayout />}>

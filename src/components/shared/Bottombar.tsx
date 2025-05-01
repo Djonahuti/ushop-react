@@ -49,14 +49,18 @@ const Bottombar = () => {
       )}      
 
 
-          {customer?.customer_image ? (
+          {customer?.customer_id ? (
       <Link to="/profile">
-        <Avatar className="h-9 w-9 rounded-full">            
+        <Avatar className="h-9 w-9 rounded-full">  
+          {customer.customer_image ? (
           <AvatarImage
-           src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
-           alt={customer.customer_name}
-           className="rounded-full w-9 h-9" 
-           />        
+          src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
+          alt={customer.customer_name}
+          className="rounded-full w-9 h-9" 
+          /> 
+          ):(
+            <AvatarFallback className="rounded-full">{customer.customer_name.split(" ").map((n) => n[0]).join("")}</AvatarFallback>
+          )}
         </Avatar>
       </Link>
           ):(

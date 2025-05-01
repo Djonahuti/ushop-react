@@ -22,6 +22,7 @@ import { NavUser } from "./NavUser"
 import { Contact } from "@/types"
 import supabase from "@/lib/supabaseClient"
 import { MailContext } from "./MailContext"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 // This is sample data
 const data = {
@@ -81,7 +82,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const fetchContact = async () => {
       const { data } = await supabase
         .from('contacts')
-        .select('*, customers(customer_name, customer_email), subject(subject)')
+        .select('*, customers(customer_name, customer_email, customer_image), subject(subject)')
 
       setContacts(data || []);
     };
@@ -182,7 +183,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       {/* This is the second sidebar */}
       {/* We disable collapsible and let it fill remaining space */}
-      <Sidebar collapsible="none" className="hidden flex-1 md:flex">
+      <Sidebar collapsible="none" className="hidden flex-1 md:flex flex-col">
         <SidebarHeader className="gap-3.5 border-b p-4">
           <div className="flex w-full items-center justify-between">
             <div className="text-base font-medium text-foreground">
@@ -203,9 +204,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   href="#"
                   key={contact.id}
                   onClick={() => handleSelectMail(contact)}
-                  className="flex flex-col items-start gap-2 whitespace-nowrap border-b p-4 text-sm leading-tight last:border-b-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  className="flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight last:border-b-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 >
                   <div className="flex w-full items-center gap-2">
+                  <Avatar>
+                  {contact.customers?.customer_image ? (
+                    <AvatarImage
+                      src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${contact.customers?.customer_image}`}
+                      alt={contact.customers?.customer_name}
+                      className="w-6 h-6 rounded-full object-cover"
+                    />                     
+                  ):(
+                    <AvatarFallback className="rounded-lg">{contact.customers?.customer_name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  )}
+                  </Avatar>
                     <span>{contact.customers?.customer_name}</span>{" "}
                     <span className="ml-auto text-xs">{formatSubmittedAt(contact.submitted_at)}</span>
                   </div>

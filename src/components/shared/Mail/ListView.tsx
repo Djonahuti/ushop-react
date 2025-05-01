@@ -1,0 +1,83 @@
+"use client"
+
+import { useState, useEffect, useContext } from "react"
+import supabase from "@/lib/supabaseClient"
+import { Contact } from "@/types"
+import { MailContext } from "./MailContext"
+
+/**
+ * ListView: a full-screen list of inbox messages for mobile.
+ * Fetches contacts from Supabase and calls setSelectedMail on tap.
+ */
+export default function ListView() {
+  const [contacts, setContacts] = useState<Contact[]>([])
+  const { setSelectedMail } = useContext(MailContext)
+
+  // Fetch messages
+  useEffect(() => {
+    const fetchContacts = async () => {
+      const { data, error } = await supabase
+        .from('contacts')
+        .select('*, customers(customer_name, customer_email, customer_image), subject(subject)')
+      if (error) {
+        console.error('Error loading contacts:', error)
+      } else {
+        setContacts(data || [])
+      }
+    }
+    fetchContacts()
+  }, [])
+
+  // Helpers for time formatting
+  const formatTime = (date: Date) =>
+    date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+
+  const getRelativeTime = (date: Date): string => {
+    const now = new Date()
+    const diff = Math.floor((now.getTime() - date.getTime()) / 1000)
+    const mins = Math.floor(diff / 60)
+    const hours = Math.floor(mins / 60)
+    const days = Math.floor(hours / 24)
+
+    if (diff < 60) return 'Just now'
+    if (mins < 60) return `${mins} min${mins !== 1 ? 's' : ''} ago`
+    if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`
+    if (days === 1) return 'A day ago'
+    return `${days} days ago`
+  }
+
+  const formatSubmittedAt = (timestamp: string): string => {
+    const date = new Date(timestamp)
+    return `${formatTime(date)} · ${getRelativeTime(date)}`
+  }
+
+  return (
+    <div className="flex-1 overflow-y-auto bg-background">
+      {contacts.map((contact) => (
+        <button
+          key={contact.id}
+          onClick={() => setSelectedMail(contact)}
+          className="w-full text-left flex flex-col gap-2 border-b p-4 hover:bg-accent"
+        >
+          <div className="flex items-center gap-2">
+            {contact.customers?.customer_image && (
+              <img
+                src={contact.customers.customer_image}
+                alt={contact.customers.customer_name}
+                className="w-8 h-8 rounded-full object-cover"
+              />
+            )}
+            <span className="font-medium">{contact.customers?.customer_name}</span>
+            <span className="ml-auto text-xs text-muted-foreground">
+              {formatSubmittedAt(contact.submitted_at)}
+            </span>
+          </div>
+          <span className="text-sm font-semibold">{contact.subject?.subject}</span>
+          <p className="text-xs text-muted-foreground line-clamp-2">
+            {String(contact.message)}
+          </p>
+        </button>
+      ))}
+    </div>
+  )
+}

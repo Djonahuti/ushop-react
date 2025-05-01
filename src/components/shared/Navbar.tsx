@@ -167,7 +167,7 @@ const Navbar = () => {
             className="w-10 h-10 rounded-full border-gray-300" 
             />
             ):(
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarFallback className="rounded-lg">{customer.customer_name.substring(0, 2).toUpperCase()}</AvatarFallback>
             )}
             </Avatar>
         </DropdownMenuTrigger>

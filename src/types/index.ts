@@ -279,6 +279,7 @@ export type Contact = {
     customers?: {
         customer_name: string;
         customer_email: string;
+        customer_image: string;
     };
     subject?: {
         subject: string;
