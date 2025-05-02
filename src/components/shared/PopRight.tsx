@@ -34,68 +34,75 @@ import { Admin } from "@/types"
 import supabase from "@/lib/supabaseClient"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import ThemeToggle from "../ThemeToggle"
+import { Badge } from "../ui/badge"
 
-const data = [
-  [
-    {
-      label: "Inbox",
-      icon: Inbox,
-      url: "/inbox",
-    },
-    {
-      label: "Customer Login",
-      icon: User2,
-      url: "/login",
-    },
-    {
-      label: "Seller Login",
-      icon: ShoppingBag,
-      url: "*",
-    },    
-  ],
-  [
-    {
-      label: "Product Management",
-      icon: Blocks,
-      url: "/view-products",
-    },
-    {
-      label: "Order Management",
-      icon: Truck,
-      url: "/view-orders",
-    },
-    {
-      label: "DBMS",
-      icon: Database,
-      url: "/database",
-    },    
-  ],
-  [
-    {
-      label: "Settings",
-      icon: Cog,
-      url: "/account",
-    },
-    {
-      label: "Accessibily",
-      icon: PersonStanding,
-      url: "/account",
-    },
-    {
-      label: "Penalties Information",
-      icon: Scale,
-      url: "*",
-    },
-    {
-      label: "Notifications",
-      icon: Bell,
-      url: "/inbox",
-    },   
-  ],
-]
+
 
 export function PopRight() {
   const [isOpen, setIsOpen] = React.useState(false)
+  const [unreadCount, setUnreadCount] = React.useState(0);
+  const [paidOrderCount, setPaidOrderCount] = React.useState(0);
+
+  const data = [
+    [
+      {
+        label: "Inbox",
+        icon: Inbox,
+        url: "/inbox",
+        count: unreadCount,
+      },
+      {
+        label: "Customer Login",
+        icon: User2,
+        url: "/login",
+      },
+      {
+        label: "Seller Login",
+        icon: ShoppingBag,
+        url: "*",
+      },    
+    ],
+    [
+      {
+        label: "Product Management",
+        icon: Blocks,
+        url: "/view-products",
+      },
+      {
+        label: "Order Management",
+        icon: Truck,
+        url: "/view-orders",
+        count: paidOrderCount,
+      },
+      {
+        label: "DBMS",
+        icon: Database,
+        url: "/database",
+      },    
+    ],
+    [
+      {
+        label: "Settings",
+        icon: Cog,
+        url: "/account",
+      },
+      {
+        label: "Accessibily",
+        icon: PersonStanding,
+        url: "/account",
+      },
+      {
+        label: "Penalties Information",
+        icon: Scale,
+        url: "*",
+      },
+      {
+        label: "Notifications",
+        icon: Bell,
+        url: "/inbox",
+      },   
+    ],
+  ]  
 
   React.useEffect(() => {
     setIsOpen(true)
@@ -128,6 +135,25 @@ export function PopRight() {
 
     fetchAdminData();
   }, []);
+
+  React.useEffect(() => {
+    const fetchCounts = async () => {
+      const { count: unreadCount } = await supabase
+        .from('contacts')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_read', false);
+  
+      const { count: paidOrderCount } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .eq('order_status', 'Paid');
+  
+      setUnreadCount(unreadCount || 0);
+      setPaidOrderCount(paidOrderCount || 0);
+    };
+  
+    fetchCounts();
+  }, []);  
 
     if (loading){
       return(
@@ -163,7 +189,7 @@ export function PopRight() {
          className="rounded-full" 
          />
         ):(
-          <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+          <AvatarFallback className="rounded-lg">{admin.admin_name.substring(0, 2).toUpperCase()}</AvatarFallback>
         )}
       </Avatar>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -191,6 +217,9 @@ export function PopRight() {
                           <SidebarMenuButton>
                           <a href={item.url} className="flex items-center gap-2">
                             <item.icon /> <span>{item.label}</span>
+                            {typeof item.count === "number" && item.count > 0 && (
+                              <Badge className="ml-auto text-xs bg-red-500 text-white rounded-full">{item.count}</Badge>
+                            )}
                           </a>
                           </SidebarMenuButton>
                         </SidebarMenuItem>

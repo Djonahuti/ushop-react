@@ -36,78 +36,131 @@ import { Customer } from "@/types"
 import supabase from "@/lib/supabaseClient"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import ThemeToggle from "../ThemeToggle"
-
-const data = [
-  [
-    {
-      label: "Settings",
-      icon: Cog,
-      url: "/profile",
-    },
-    {
-      label: "Cart",
-      icon: ShoppingCart,
-      url: "/my-cart",
-    },
-    {
-      label: "Wishlist",
-      icon: Heart,
-      url: "/wishlists",
-    },
-    {
-      label: "UShop Business",
-      icon: BriefcaseBusiness,
-      url: "*",
-    },
-  ],
-  [
-    {
-      label: "Seller Login",
-      icon: ShoppingBag,
-      url: "*",
-    },
-    {
-      label: "Buyer Protection",
-      icon: ShieldCheck,
-      url: "*",
-    },
-    {
-      label: "Help Center",
-      icon: CircleHelp,
-      url: "/contact",
-    },
-    {
-      label: "Disputes and Reports",
-      icon: MessageCircleQuestion,
-      url: "/contact",
-    },
-  ],
-  [
-    {
-      label: "Feedbacks",
-      icon: MessageCircleMore,
-      url: "/feedbacks",
-    },
-    {
-      label: "Accessibily",
-      icon: PersonStanding,
-      url: "/profile",
-    },
-    {
-      label: "Penalties Information",
-      icon: Scale,
-      url: "*",
-    },
-    {
-      label: "Notifications",
-      icon: Bell,
-      url: "/my-orders",
-    },
-  ],
-]
+import { Badge } from "../ui/badge"
 
 export function NavPopUp() {
-  const [isOpen, setIsOpen] = React.useState(false)
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  const [cartCount, setCartCount] = React.useState(0);
+  const [wishlistCount, setWishlistCount] = React.useState(0);
+  const [notificationCount, setNotificationCount] = React.useState(0);
+  
+  React.useEffect(() => {
+    const fetchCounts = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return; // Assuming user.id is the customer_id
+
+      const { data: customer, error } = await supabase
+        .from('customers')
+        .select('customer_id')
+        .eq('customer_email', user.email)
+        .single();
+
+      if (error || !customer) return;      
+  
+        // Count items in the cart
+        const { count: cartCount } = await supabase
+          .from('cart')
+          .select('*', { count: 'exact', head: true })
+          .eq('customer_id', customer.customer_id);
+  
+        // Count items in the wishlist
+        const { count: wishlistCount } = await supabase
+          .from('wishlist')
+          .select('*', { count: 'exact', head: true })
+          .eq('customer_id', customer.customer_id);
+
+  
+        // Count pending and delivered orders
+        const { count: notificationCount, error: notificationError } = await supabase
+          .from('orders')
+          .select('*', { count: 'exact', head: true })
+          .in('order_status', ['Pending', 'DELIVERED']) // Ensure you are using the correct column name
+          .eq('customer_id', customer.customer_id);
+  
+        if (notificationError) {
+          console.error('Error fetching notification count:', notificationError.message);
+        }
+  
+        setCartCount(cartCount || 0);
+        setWishlistCount(wishlistCount || 0);
+        setNotificationCount(notificationCount || 0);
+    };
+  
+    fetchCounts();
+  }, []);
+
+  const data = [
+    [
+      {
+        label: "Settings",
+        icon: Cog,
+        url: "/profile",
+      },
+      {
+        label: "Cart",
+        icon: ShoppingCart,
+        url: "/my-cart",
+        count: cartCount,
+      },
+      {
+        label: "Wishlist",
+        icon: Heart,
+        url: "/wishlists",
+        count: wishlistCount,
+      },
+      {
+        label: "UShop Business",
+        icon: BriefcaseBusiness,
+        url: "*",
+      },
+    ],
+    [
+      {
+        label: "Seller Login",
+        icon: ShoppingBag,
+        url: "*",
+      },
+      {
+        label: "Buyer Protection",
+        icon: ShieldCheck,
+        url: "*",
+      },
+      {
+        label: "Help Center",
+        icon: CircleHelp,
+        url: "/contact",
+      },
+      {
+        label: "Disputes and Reports",
+        icon: MessageCircleQuestion,
+        url: "/contact",
+      },
+    ],
+    [
+      {
+        label: "Feedbacks",
+        icon: MessageCircleMore,
+        url: "/feedbacks",
+      },
+      {
+        label: "Accessibily",
+        icon: PersonStanding,
+        url: "/profile",
+      },
+      {
+        label: "Penalties Information",
+        icon: Scale,
+        url: "*",
+      },
+      {
+        label: "Notifications",
+        icon: Bell,
+        url: "/my-orders",
+        count: notificationCount,
+      },
+    ],
+  ]  
 
   React.useEffect(() => {
     setIsOpen(true)
@@ -203,6 +256,9 @@ export function NavPopUp() {
                           <SidebarMenuButton>
                           <a href={item.url} className="flex items-center gap-2">
                             <item.icon /> <span>{item.label}</span>
+                            {typeof item.count === "number" && item.count > 0 && (
+                              <Badge className="ml-auto text-xs bg-red-500 text-white rounded-full">{item.count}</Badge>
+                            )}                            
                           </a>
                           </SidebarMenuButton>
                         </SidebarMenuItem>

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 //import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Heart, Ticket, CreditCard, Truck, Package, CheckCircle, Clock, Wallet } from "lucide-react"
-import { Customer, Product } from "@/types"
+import { Customer, Order, OrderItem, Product } from "@/types"
 import { useEffect, useState } from "react"
 import supabase from "@/lib/supabaseClient"
 import { toast } from "sonner"
@@ -34,25 +34,34 @@ export default function Overview() {
   
         setCustomer(customerData);
   
-        const { data: orders } = await supabase
+        const { data: orders, error: ordersError } = await supabase
           .from('orders')
-          .select('product_id, products(cat_id, p_cat_id, manufacturer_id)')
+          .select(`*, order_items(*, product_id, products(cat_id, p_cat_id, manufacturer_id))`)
           .eq('customer_id', customerData.customer_id);
+
+          if (ordersError) {
+            toast.error('Error fetching orders');
+            setLoading(false);
+            return;
+          }          
   
         const seenIds = new Set<number>();
         const catIds = new Set<number>();
         const pCatIds = new Set<number>();
         const manuIds = new Set<number>();
   
-        orders?.forEach((o) => {
-          if (o.product_id) seenIds.add(o.product_id);
-          const products = Array.isArray(o.products) ? o.products : [o.products];
-          products.forEach((p) => {
-            if (p?.cat_id) catIds.add(p.cat_id);
-            if (p?.p_cat_id) pCatIds.add(p.p_cat_id);
-            if (p?.manufacturer_id) manuIds.add(p.manufacturer_id);
-          });
-        });
+    // Loop through orders and extract product information
+
+    (orders as Order[])?.forEach((order: Order) => {
+      order.order_items.forEach((item: OrderItem) => {
+        if (item.product_id) seenIds.add(item.product_id);
+        if (item.products) {
+          if (item.products.cat_id) catIds.add(item.products.cat_id);
+          if (item.products.p_cat_id) pCatIds.add(item.products.p_cat_id);
+          if (item.products.manufacturer_id) manuIds.add(item.products.manufacturer_id);
+        }
+      });
+    });
   
         const filters = [
           ...Array.from(catIds).map(id => `cat_id.eq.${id}`),
@@ -60,14 +69,22 @@ export default function Overview() {
           ...Array.from(manuIds).map(id => `manufacturer_id.eq.${id}`)
         ];
   
-        const { data: recs } = await supabase
-          .from('products')
-          .select('*, manufacturers(manufacturer_title)')
-          .or(filters.join(','))
-          .not('product_id', 'in', `(${Array.from(seenIds).join(',')})`)
-          .limit(10);
-  
-        setRecommended(recs || []);
+        if (filters.length > 0) {
+          const { data: recs, error: recsError } = await supabase
+            .from('products')
+            .select('*, manufacturers(manufacturer_title)')
+            .or(filters.join(','))
+            .not('product_id', 'in', `(${Array.from(seenIds).join(',')})`)
+            .limit(10);
+      
+          if (recsError) {
+            toast.error('Error fetching recommendations');
+          } else {
+            setRecommended(recs || []);
+          }
+        } else {
+          setRecommended([]);
+        }
         setLoading(false);
       };
   

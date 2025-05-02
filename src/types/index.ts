@@ -126,14 +126,7 @@ export type Order = {
             business_name: string;
         };
     } | null;
-    order_items:{
-        qty: number;
-        products:{
-            product_title: string;
-            product_img1: string;
-            product_price: number;
-        } | null;
-    }
+    order_items:OrderItem[];
 };
 
 export type OrderItem = {
