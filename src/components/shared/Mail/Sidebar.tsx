@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ArchiveX, File, Inbox, Send, Trash2 } from "lucide-react"
+import { ArchiveX, Clock5, File, Inbox, Milestone, OctagonAlert, SendHorizontal, Star, Trash2 } from "lucide-react"
 
 import { Label } from "@/components/ui/label"
 import {
@@ -23,6 +23,7 @@ import { Contact } from "@/types"
 import supabase from "@/lib/supabaseClient"
 import { MailContext } from "./MailContext"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import ThemeToggle from "@/components/ThemeToggle"
 
 // This is sample data
 const data = {
@@ -39,15 +40,39 @@ const data = {
       isActive: true,
     },
     {
+      title: "Sent",
+      url: "#",
+      icon: SendHorizontal,
+      isActive: false,
+    },
+    {
+      title: "Starred",
+      url: "#",
+      icon: Star,
+      isActive: false,
+    },
+    {
+      title: "Snoozed",
+      url: "#",
+      icon: Clock5,
+      isActive: false,
+    },
+    {
+      title: "Important",
+      url: "#",
+      icon: Milestone,
+      isActive: false,
+    },
+    {
       title: "Drafts",
       url: "#",
       icon: File,
       isActive: false,
     },
     {
-      title: "Sent",
+      title: "Spam",
       url: "#",
-      icon: Send,
+      icon: OctagonAlert,
       isActive: false,
     },
     {
@@ -217,6 +242,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarContent>
         <SidebarFooter>
           <NavUser />
+          <div className="hidden md:block">
+            <ThemeToggle />
+          </div>
         </SidebarFooter>
       </Sidebar>
 
@@ -247,7 +275,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   key={contact.id}
                   onClick={() => handleSelectMail(contact)}
                   className={`flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight last:border-b-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
-                    contact.is_read ? 'myBox' : 'unread' // Add conditional class
+                    contact.is_read ? 'myBox' : 'unread font-bold' // Add conditional class
                   }`}
                 >
                   <div className="flex w-full items-center gap-2">

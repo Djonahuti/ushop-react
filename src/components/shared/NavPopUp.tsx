@@ -175,7 +175,7 @@ export function NavPopUp() {
          className="rounded-full" 
          />
         ):(
-          <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+          <AvatarFallback className="rounded-lg">{customer.customer_name.substring(0, 2).toUpperCase()}</AvatarFallback>
         )}
       </Avatar>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -228,7 +228,7 @@ export function NavPopUp() {
       </Popover>
       <div className="block md:hidden text-sm">
           <ThemeToggle />
-        </div>      
+      </div>      
     </div>
   )
 }

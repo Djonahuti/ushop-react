@@ -33,6 +33,7 @@ import {
 import { Admin } from "@/types"
 import supabase from "@/lib/supabaseClient"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
+import ThemeToggle from "../ThemeToggle"
 
 const data = [
   [
@@ -213,6 +214,9 @@ export function PopRight() {
           </Sidebar>
         </PopoverContent>
       </Popover>
+      <div className="block md:hidden text-sm">
+          <ThemeToggle />
+      </div>      
     </div>
   )
 }
