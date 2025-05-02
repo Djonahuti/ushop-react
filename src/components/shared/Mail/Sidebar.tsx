@@ -137,6 +137,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           c.id === contact.id ? { ...c, is_starred: newStarredStatus } : c
         )
       );
+    };
+    
+    const toggleUnreadFilter = async () => {
+      const newUnreadStatus = !contacts.every((contact) => contact.is_read);
+    
+      // Update the database
+      await supabase
+        .from('contacts')
+        .update({ is_read: newUnreadStatus })
+        .in('id', contacts.map((contact) => contact.id));
+    
+      // Update local state
+      setContacts((prevContacts) =>
+        prevContacts.map((contact) => ({
+          ...contact,
+          is_read: newUnreadStatus,
+        }))
+      );
     };    
 
   return (
@@ -212,7 +230,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </div>
             <Label className="flex items-center gap-2 text-sm">
               <span>Unreads</span>
-              <Switch className="shadow-none" />
+              <Switch
+               className="shadow-none" 
+               onCheckedChange={toggleUnreadFilter}
+              />
             </Label>
           </div>
           <SidebarInput placeholder="Type to search..." />
@@ -225,7 +246,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   href="#"
                   key={contact.id}
                   onClick={() => handleSelectMail(contact)}
-                  className="flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight last:border-b-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  className={`flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight last:border-b-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
+                    contact.is_read ? 'myBox' : 'unread' // Add conditional class
+                  }`}
                 >
                   <div className="flex w-full items-center gap-2">
                   <Avatar>

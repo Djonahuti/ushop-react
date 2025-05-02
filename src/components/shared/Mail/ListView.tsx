@@ -84,7 +84,9 @@ export default function ListView() {
         <button
           key={contact.id}
           onClick={() => setSelectedMail(contact)}
-          className="w-full text-left flex flex-col gap-2 border-b p-4 hover:bg-accent"
+          className={`w-full text-left flex flex-col gap-2 border-b p-4 hover:bg-accent ${
+            contact.is_read ? 'myBox' : 'unread'
+          }`}
         >
           <div className="flex items-center gap-2">
             <Avatar>
@@ -103,7 +105,7 @@ export default function ListView() {
               {formatSubmittedAt(contact.submitted_at)}
             </span>
           </div>
-          <div className="flex flex-col justify-between space-x-8 items-center relative gap-1">
+          <div className="flex justify-between space-x-8 items-center relative gap-1">
           <span className="text-sm font-semibold">{contact.subject?.subject}</span>
           <a
             href="#"
