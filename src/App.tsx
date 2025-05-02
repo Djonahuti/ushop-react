@@ -87,6 +87,12 @@ function App() {
           <Route path="/feeds" element={<AdminRoute><AllFeedbacks /></AdminRoute>} />
           <Route path="/add-bundle" element={<AdminRoute><AddBundle /></AdminRoute>} />
           <Route
+          path="/order-history"
+          element={
+            <AdminRoute><OrderStatus /></AdminRoute>
+          }
+          />
+          <Route
             path="/edit/:productId"
             element={
               <EditProduct />

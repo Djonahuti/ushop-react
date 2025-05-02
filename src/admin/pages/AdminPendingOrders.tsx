@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { IconCashRegister, IconPackageExport, IconTrolleyFilled } from '@tabler/icons-react';
 import { BanknoteX, DoorOpen, Handshake, PackageCheck, Truck } from 'lucide-react';
 import DeliveryProgressBar from '@/components/shared/DeliveryProgressBar';
+import { Link } from 'react-router-dom';
 
 export default function AdminPendingOrders() {
   const [orders, setOrders] = useState<PendingOrder[]>([]);
@@ -242,7 +243,13 @@ export default function AdminPendingOrders() {
                       </div>
                       <div className="space-x-2 text-sm">
                         <span>Order ID: <span className="text-blue-500">{order.invoice_no}</span></span>
-                        <Button variant="link" className="p-0 h-auto text-sm">Order details</Button>
+                        <Link
+                         to="/order-history" 
+                         className="p-0 h-auto text-sm"
+                         state={{ order_id: order.p_order_id }}
+                        >
+                          See Status History
+                        </Link>
                       </div>
                     </div>
 
