@@ -109,6 +109,7 @@ export type Order = {
     order_status: string;
     submitted_at: string;
     customer_id: number;
+    feedback_complete: boolean;
     customers: {
         customer_name: string;
         customer_email: string;
@@ -127,6 +128,10 @@ export type Order = {
         };
     } | null;
     order_items:OrderItem[];
+    feedbacks: {
+        feedback_complete: boolean;        
+    };
+
 };
 
 export type OrderItem = {

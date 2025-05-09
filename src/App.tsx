@@ -215,7 +215,7 @@ function App() {
         />
 
         <Route
-          path="/feedback/:orderId"
+          path="/feedback"
           element={
             <StrictRoute>
               <FeedbackPage />

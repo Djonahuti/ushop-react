@@ -13,18 +13,16 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
-import { Bank, Feedback, Order, OrderItem } from '@/types'
+import { Bank, Order, OrderItem } from '@/types'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { generateInvoicePDF } from '@/utils/generateInvoicePDF'
-import { IconCreditCard, IconReceipt } from '@tabler/icons-react'
-import { MessageSquareText, PackageCheck } from 'lucide-react'
+import { IconCreditCard, IconMessage, IconReceipt, IconStarFilled } from '@tabler/icons-react'
+import { PackageCheck, Star } from 'lucide-react'
 import DeliveryTimeline from '@/components/shared/DeliveryTimeline'
-
 
 const CustomerOrders = () => {
   const [order, setOrders] = useState<Order[]>([]);
-  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const navigate = useNavigate();  
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [tab, setTab] = useState<string>('all');
@@ -64,7 +62,7 @@ const CustomerOrders = () => {
 
     toast.success('RECEIVED!');
     setOrders(order.filter(o => o.invoice_no !== invoice_no));
-};
+  };
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -93,21 +91,32 @@ const CustomerOrders = () => {
 
       setOrders(orderData || []);
       setFilteredOrders(orderData || []);
-
-      const { data: feedbackData, error: feedbackError } = await supabase
-        .from('feedbacks')
-        .select('*, customers(customer_name, customer_image), products(product_title, product_img1), feedtype(feedback_type)')
-        .eq('customer_id', customerData.customer_id);
-
-      if (feedbackError) {
-        console.error('Failed to fetch feedbacks', feedbackError.message);
-      } else {
-        setFeedbacks(feedbackData || []);
-      }
     };
 
     fetchOrders();
   }, []);
+
+  const handleLeaveFeedback = (orderId: number) => {
+    navigate('/feedback', { state: { order_id: orderId } })
+  }
+
+  const renderFeedbackStatus = (order: Order) => {
+    if (order.order_status !== 'COMPLETED') return null
+    if (!order.feedback_complete) {
+      return (
+        <Button className="mt-2" title="Leave Feedback" onClick={() => handleLeaveFeedback(order.order_id)}>
+          <IconMessage />
+        </Button>
+      )
+    }
+    // fetch/display highest-rated product feedback for this order
+    return (
+      <div className="mb-2 border-bottom space-y-2">
+        <HighestProductFeedback orderId={order.order_id} />
+      </div>
+
+    )
+  }  
 
   useEffect(() => {
     const filtered = order.filter(o => {
@@ -160,10 +169,6 @@ const CustomerOrders = () => {
               <p className="text-muted-foreground">No orders found.</p>
             ) : (
               filteredOrders.map(order => {
-                const orderFeedback = feedbacks.find(
-                  f => f.order_id === order.order_id
-                );
-
                 return (
                   <Card key={order.order_id} className="shadow-sm">
                   <CardContent className="p-4 flex flex-col gap-2">
@@ -212,29 +217,7 @@ const CustomerOrders = () => {
                       <DeliveryTimeline status={order.order_status} />
                     </div>
                     <div className="relative flex justify-between items-center mt-2">
-                      <div className="px-2 py-1">
-                        {/* Feedback section */}
-                        {orderFeedback ? (
-                          <div className="mt-4 border-top space-y-2">
-                            <Label className="text-sm text-muted-foreground">{orderFeedback.feedtype?.feedback_type}</Label>
-                            <p className="text-yellow-500 text-xl">
-                              {'★'.repeat(orderFeedback.rating)}{'☆'.repeat(5 - orderFeedback.rating)}
-                            </p>
-                          </div>
-                        ) : (
-                          order.order_status === "COMPLETED" && (
-                            <Link
-                              to={`/feedback/${order.order_id}`}
-                              state={{ order_id: order.order_id, customer_id: order.customer_id, product_id: order.product_id }}
-                              className="btn btn-outline-primary mt-2"
-                              title="Leave Feedback"
-                            >
-                              <MessageSquareText />
-                            </Link>
-                          )
-                        )}                        
-                      </div>
-                      <p className="text-right text-base font-medium">
+                      <div className="text-right text-base font-medium">
                         {order.order_status === 'Pending' && (
                           <Button onClick={() => navigate(`/confirm-pay/${order.invoice_no}`)} className="mt-2" title="Mark as paid">
                             <IconCreditCard stroke={2} />
@@ -247,12 +230,12 @@ const CustomerOrders = () => {
                           </Button>
                         )}
 
+                        {renderFeedbackStatus(order)} 
 
-                        
                         <Button onClick={() => customer && generateInvoicePDF(order, banks)} className="ml-2" title="Download Invoice">
                             <IconReceipt stroke={2} />
-                        </Button>                        
-                      </p>
+                        </Button>                       
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -264,6 +247,27 @@ const CustomerOrders = () => {
 
       </Tabs>
     </div>
+  )
+}
+
+// HighestProductFeedback component: fetch highest-rated product feedback
+const HighestProductFeedback: React.FC<{ orderId: number }> = ({ orderId }) => {
+  const [feedback, setFeedback] = useState<{ rating: number }>({ rating: 0 })
+  useEffect(() => {
+    supabase
+      .from('feedbacky')
+      .select('rating')
+      .eq('order_id', orderId)
+      .not('order_item_id', 'is', null)
+      .order('rating', { ascending: false })
+      .limit(1)
+      .then(({ data }) => data?.[0] && setFeedback(data[0]))
+  }, [orderId])
+  return (
+    <span className="flex items-center space-x-1">
+      {[...Array(feedback.rating)].map((_, i) => <IconStarFilled key={i} className="text-yellow-400" />)}
+      {[...Array(5 - feedback.rating)].map((_, i) => <Star key={i} className="text-yellow-400" />)}
+    </span>
   )
 }
 
