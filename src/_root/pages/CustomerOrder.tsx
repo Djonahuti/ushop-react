@@ -255,7 +255,7 @@ const HighestProductFeedback: React.FC<{ orderId: number }> = ({ orderId }) => {
   const [feedback, setFeedback] = useState<{ rating: number }>({ rating: 0 })
   useEffect(() => {
     supabase
-      .from('feedbacky')
+      .from('feedbacks')
       .select('rating')
       .eq('order_id', orderId)
       .not('order_item_id', 'is', null)

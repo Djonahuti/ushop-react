@@ -25,7 +25,12 @@ const SeeFeedbacks = () => {
             
             const {data: feedbackData, error} = await supabase
                 .from('feedbacks')
-                .select('*, customers(customer_name, customer_email, customer_image), products(product_img1, product_title), feedtype(feedback_type), orders(invoice_no), order_id, product_id, feedtype_id ')
+                .select(`
+                  feedback_id, order_id, order_item_id, rating, comment, created_at,
+                  feedtype:feedtype(feedback_type),
+                  order_item:order_items(order_item_id, products(product_title, product_img1))
+                  order:orders(customer_id, customers(customer_name, customer_image))
+                `)
 
                 .order('created_at', { ascending: false});
 
@@ -51,29 +56,29 @@ const SeeFeedbacks = () => {
                         <div className="flex justify-between items-center relative space-x-2 pb-2">
                             <p className="px-2 py-1">
                                 <Avatar className="h-8 w-8 rounded-full">
-                                    {item.customers?.customer_image ? (
+                                    {item.orders?.customers?.customer_image ? (
                                         <AvatarImage
-                                        src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${item.customers.customer_image}`}
-                                        alt={item.customers?.customer_name} />
+                                        src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${item.orders?.customers.customer_image}`}
+                                        alt={item.orders?.customers?.customer_name} />
                                     ):(
                                         <AvatarFallback className="rounded-full">NG</AvatarFallback>
                                     )}
                                 </Avatar>                                
                             </p>
                             <p className="text-lg font-bold">
-                                <Label className="text-gray-500">{item.customers?.customer_name}</Label>
+                                <Label className="text-gray-500">{item.orders?.customers?.customer_name}</Label>
                             </p>
                         </div>                            
                             <CardTitle className="text-orange-400 text-center">
-                                <Link to={`/products/${item.product_id}`} className="hover:underline">
-                                    {item.products?.product_title}
+                                <Link to={`/products/${item.order_item_id ? item.order_item?.products?.product_id : '/'}`} className="hover:underline">
+                                    {item.order_item_id ? item.order_item?.products?.product_title : 'Order Review'}
                                 </Link>
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <img
-                             src={`/products/${item.products?.product_img1}`} 
-                             alt={item.products?.product_title}
+                             src={`/products/${item.order_item_id ? item.order_item?.products?.product_img1 : null}`} 
+                             alt={item.order_item?.products?.product_title}
                              className="w-full h-32 object-contain rounded-md mb-2" 
                             />
                             <div className="text-gray-300">

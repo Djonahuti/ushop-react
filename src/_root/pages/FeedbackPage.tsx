@@ -114,13 +114,13 @@ const FeedbackPage: React.FC = () => {
       }))
       // insert product feedback
       const { error: prodErr } = await supabase
-        .from('feedbacky')
+        .from('feedbacks')
         .insert(feedbackRows)
       if (prodErr) throw prodErr
 
       // insert overall order feedback
       const { error: orderErr } = await supabase
-        .from('feedbacky')
+        .from('feedbacks')
         .insert([
           {
             order_id,

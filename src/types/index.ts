@@ -290,29 +290,31 @@ export type Feedback = {
     feedback_id: number;
     created_at: string;
     customer_id: number;
-    product_id: number;
+    order_item_id: number | null;
     order_id: number;
-    orders?:{
-        invoice_no: number;
-    };
     feedtype_id: number;
-    feedtype?:{
+    feedtype:{
         feedback_type: string;
     };
-    comment: Text;
+    comment: string | null;
     rating: number;
-    customers?:{
-        customer_name:string;
-        customer_image:string;
-    };
-    products?:{
-        product_title: string;
-        product_img1: string;
-        seller_id: number;
-        sellers: {
-            business_name: string;
-        };
-    };
+    orders?: {
+      customers:{
+          customer_name:string;
+          customer_image:string;
+      }
+    }
+    order_item?:{
+      products?:{
+          product_id: number;
+          product_title: string;
+          product_img1: string;
+          seller_id: number;
+          sellers: {
+              business_name: string;
+          };
+      }
+    }
 }
 
 export type OrderStatusHistory = {
