@@ -28,8 +28,8 @@ const SeeFeedbacks = () => {
                 .select(`
                   feedback_id, order_id, order_item_id, rating, comment, created_at,
                   feedtype:feedtype(feedback_type),
-                  order_item:order_items(order_item_id, products(product_title, product_img1))
-                  order:orders(customer_id, customers(customer_name, customer_image))
+                  order_item:order_items(order_item_id, products(product_id, product_title, product_img1))
+                  order:orders(order_id, customer_id, customers(customer_id, customer_name, customer_image))
                 `)
 
                 .order('created_at', { ascending: false});
@@ -38,7 +38,7 @@ const SeeFeedbacks = () => {
                 console.error('Failed to fetch Feedbacks', error.message);
                 return;
             }
-            
+            console.log(feedbackData);
             setFeedbacks(feedbackData || []);
 
         };
@@ -66,11 +66,11 @@ const SeeFeedbacks = () => {
                                 </Avatar>                                
                             </p>
                             <p className="text-lg font-bold">
-                                <Label className="text-gray-500">{item.orders?.customers?.customer_name}</Label>
+                                <Label className="text-gray-500">{item.order_id ? item.orders?.customers?.customer_name: 'N/A'}</Label>
                             </p>
                         </div>                            
                             <CardTitle className="text-orange-400 text-center">
-                                <Link to={`/products/${item.order_item_id ? item.order_item?.products?.product_id : '/'}`} className="hover:underline">
+                                <Link to={`/products/${item.order_item_id ? item.order_item?.products?.product_id : 'none'}`} className="hover:underline">
                                     {item.order_item_id ? item.order_item?.products?.product_title : 'Order Review'}
                                 </Link>
                             </CardTitle>
