@@ -51,7 +51,7 @@ const SeeFeedbacks = () => {
             <h3 className="text-xl font-bold text-gray-700 mb-4 text-center">Feedbacks</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {feedbacks.map((item) => (
-                    <Card key={item.feedback_id} className="bg-gray-800 p-4 rounded-lg shadow-md">
+                    <Card key={item.feedback_id} className="bg-gray-800 p-1 rounded-lg shadow-md">
                         <CardHeader>
                         <div className="flex justify-between items-center relative space-x-1 pb-2">
                             <p className="px-2 py-1">
