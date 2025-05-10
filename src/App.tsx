@@ -120,7 +120,7 @@ function App() {
         </Route>        
 
         <Route element={<MailLayout />}>
-          <Route path="/inbox" element={<AdminRoute><MailView /></AdminRoute>} />
+          <Route path="/my-inbox" element={<AdminRoute><MailView /></AdminRoute>} />
         </Route>
         
         {/* public routes */}
