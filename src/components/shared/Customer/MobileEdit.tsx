@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Customer } from '@/types';
 import { CameraIcon } from 'lucide-react';
 
@@ -193,14 +193,14 @@ export function MobileEdit() {
     <div className="min-h-screen flex items-center justify-center p-4">
     <div className="font-std mb-10 w-full rounded-2xl p-10 font-normal leading-relaxed shadow-xl">
         <div className='flex flex-col'>
-           <Card className='flex flex-col md:flex-row justify-between mb-5 items-start'>
-            <CardHeader>
+           <Card className='flex md:flex-row justify-between mb-5 items-start'>
+            <CardHeader className='flex flex-col items-center text-center'>
                 <CardTitle>
-                <h2 className="mb-5 text-4xl font-bold">Update Profile</h2>                    
+                <h2 className="mb-5 text-3xl font-bold text-center">Update Profile</h2>                    
                 </CardTitle>
             </CardHeader>
             <CardContent className='text-center'>
-            <div className="relative flex flex-col items-center">            
+            <div className="relative flex items-center">            
             <Label htmlFor="customer_image" className='cursor-pointer relative group'>
              <Avatar className="rounded-full w-32 h-32 mx-auto border-4 border-orange-700 mb-4 transition-transform duration-300 hover:scale-105 ring ring-gray-300">
               {customer.customer_image ? (
@@ -208,7 +208,7 @@ export function MobileEdit() {
                   src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
                   alt="Profile" />
                 ): (
-                  <Avatar className="w-31 h-31" />
+                  <AvatarFallback className='text-3xl'>{customer.customer_name.substring(0, 2).toUpperCase()}</AvatarFallback>
                 )}
               </Avatar>
 

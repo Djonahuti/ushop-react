@@ -200,14 +200,14 @@ export function MobileView() {
     <div className="min-h-screen flex items-center justify-center p-4">
     <div className="font-std mb-10 w-full rounded-2xl p-10 font-normal leading-relaxed shadow-xl">
         <div className='flex flex-col'>
-           <Card className='flex flex-col md:flex-row justify-between mb-5 items-start'>
-            <CardHeader>
+           <Card className='flex md:flex-row mb-5 items-center'>
+            <CardHeader className='flex flex-col items-center text-center'>
                 <CardTitle>
-                <h2 className="mb-5 text-4xl font-bold">Update Profile</h2>                    
+                <h2 className="mb-5 text-3xl font-bold text-center">Update Profile</h2>                    
                 </CardTitle>
             </CardHeader>
             <CardContent className='text-center'>
-            <div className="relative flex flex-col items-center">            
+            <div className="relative flex items-center">            
             <Label htmlFor="seller_image" className='cursor-pointer relative group'>
              <Avatar className="rounded-full w-32 h-32 mx-auto border-4 border-orange-700 mb-4 transition-transform duration-300 hover:scale-105 ring ring-gray-300">
               {seller.seller_image ? (
