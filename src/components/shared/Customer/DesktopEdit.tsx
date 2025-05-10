@@ -9,11 +9,22 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { Customer } from '@/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const getEnumValues = async (enumType: string): Promise<string[]> => {
+  const { data, error } = await supabase.rpc('get_enum_values', { enum_name: enumType });
+  if (error) {
+    console.error(`Error fetching ${enumType}:`, error.message);
+    return [];
+  }
+  return data || [];
+};
 
 const schema = z.object({
   customer_name: z.string().min(1, 'Name is required'),
   customer_email: z.string().email('Invalid email address'),
   customer_country: z.string().optional(),
+  state: z.string().optional(),
   customer_city: z.string().optional(),
   customer_contact: z.string().optional(),
   customer_address: z.string().optional(),
@@ -25,6 +36,30 @@ export function DesktopEdit() {
   const { register, handleSubmit, setValue } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
+
+  const [countries, setCountries] = useState<string[]>([]);
+  const [statesList, setStatesList] = useState<string[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchEnums = async () => {
+      const [countryEnum, stateEnum, cityEnum] = await Promise.all([
+        getEnumValues('country'),
+        getEnumValues('states'),
+        getEnumValues('cities'),
+      ]);
+      setCountries(countryEnum);
+      setStatesList(stateEnum);
+      setCities(cityEnum);
+    };
+    fetchEnums();
+  }, []);
+
+  useEffect(() => {
+    register("customer_country");
+    register("state");
+    register("customer_city");
+  }, [register]);  
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -61,6 +96,7 @@ export function DesktopEdit() {
           setValue('customer_name', data.customer_name);
           setValue('customer_email', data.customer_email);
           setValue('customer_country', data.customer_country);
+          setValue('state', data.state);
           setValue('customer_city', data.customer_city);
           setValue('customer_contact', data.customer_contact);
           setValue('customer_address', data.customer_address);
@@ -104,6 +140,7 @@ export function DesktopEdit() {
         customer_name: data.customer_name,
         customer_email: data.customer_email,
         customer_country: data.customer_country,
+        state: data.state,
         customer_city: data.customer_city,
         customer_contact: data.customer_contact,
         customer_address: data.customer_address,
@@ -240,21 +277,61 @@ export function DesktopEdit() {
           placeholder={customer.customer_contact} />
         </div>
         <div className="col-span-2 space-y-2">
-          <Label>Location</Label>
+          <Label className='flex flex-col items-center text-center'>Location</Label>
+          <div className="grid grid-col-1 md:grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 justify-items-center space-y-2">
+            {/* Country Dropdown */}          
+
+            <Select
+              onValueChange={(value) => setValue("customer_country", value)}
+              defaultValue={customer.customer_country}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a country" />
+              </SelectTrigger>
+              <SelectContent>
+                {countries.map((country) => (
+                  <SelectItem key={country} value={country}>{country}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* State Dropdown */} 
+
+            <Select
+              onValueChange={(value) => setValue("state", value)}
+              defaultValue={customer.state}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a state" />
+              </SelectTrigger>
+              <SelectContent>
+                {statesList.map((state) => (
+                  <SelectItem key={state} value={state}>{state}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>  
+              
+            {/* City Dropdown */}    
+
+            <Select
+              onValueChange={(value) => setValue("customer_city", value)}
+              defaultValue={customer.customer_city}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a city" />
+              </SelectTrigger>
+              <SelectContent>
+                {cities.map((city) => (
+                  <SelectItem key={city} value={city}>{city}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>                       
+          </div>          
           <Input
             id="customer_address"
             {...register('customer_address')}
             placeholder={customer.customer_address}
           />
-          <Input
-            id="customer_city"
-            {...register('customer_city')}
-            placeholder={customer.customer_city}
-          />
-          <Input
-          id="customer_country"
-          {...register('customer_country')} 
-          placeholder={customer.customer_country} />
         </div>
         <div className="col-span-2 space-y-2">
           <Label htmlFor="customer_image">Change Image</Label>

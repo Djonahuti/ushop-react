@@ -92,6 +92,7 @@ export type Customer = {
     customer_name: string;
     customer_address: string;
     customer_contact: string;
+    state: string;
     customer_city: string;
     customer_country: string;
     customer_pass?: string;
