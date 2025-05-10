@@ -189,7 +189,7 @@ export function PopRight() {
          className="rounded-full" 
          />
         ):(
-          <AvatarFallback className="rounded-lg">{admin.admin_name.substring(0, 2).toUpperCase()}</AvatarFallback>
+          <AvatarFallback className="rounded-lg">{admin.admin_name.split(" ").map((n) => n[0]).join("")}</AvatarFallback>
         )}
       </Avatar>
       <Popover open={isOpen} onOpenChange={setIsOpen}>

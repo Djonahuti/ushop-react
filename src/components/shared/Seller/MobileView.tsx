@@ -215,7 +215,7 @@ export function MobileView() {
                   src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${seller.seller_image}`}
                   alt="Profile" />
                 ): (
-                  <AvatarFallback className="text-3xl">{seller.business_name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback className="text-3xl">{seller.business_name.split(" ").map((n) => n[0]).join("")}</AvatarFallback>
                 )}
               </Avatar>
 

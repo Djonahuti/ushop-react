@@ -247,7 +247,7 @@ export function MobileEdit() {
                   src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
                   alt="Profile" />
                 ): (
-                  <AvatarFallback className='text-3xl'>{customer.customer_name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback className='text-3xl'>{customer.customer_name.split(" ").map((n) => n[0]).join("")}</AvatarFallback>
                 )}
               </Avatar>
 

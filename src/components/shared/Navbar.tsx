@@ -159,7 +159,7 @@ const Navbar = () => {
         {customer && customer.customer_id ? (
       <DropdownMenu>
         <DropdownMenuTrigger>
-            <Avatar className="h-10 w-10 rounded-lg">
+            <Avatar className="h-10 w-10 rounded-full">
             {customer.customer_image ? (
             <AvatarImage
             src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
@@ -167,7 +167,7 @@ const Navbar = () => {
             className="w-10 h-10 rounded-full border-gray-300" 
             />
             ):(
-                <AvatarFallback className="rounded-lg">{customer.customer_name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                <AvatarFallback className="rounded-full">{customer.customer_name.split(" ").map((n: string) => n[0]).join("")}</AvatarFallback>
             )}
             </Avatar>
         </DropdownMenuTrigger>
@@ -186,7 +186,7 @@ const Navbar = () => {
                   className="rounded-full" 
                 />
                 ):(
-                    <AvatarFallback className="rounded-full">{customer.customer_name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                    <AvatarFallback className="rounded-full">{customer.customer_name.split(" ").map((n: string) => n[0]).join("")}</AvatarFallback>
                 )}
               </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">

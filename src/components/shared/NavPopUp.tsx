@@ -228,7 +228,7 @@ export function NavPopUp() {
          className="rounded-full" 
          />
         ):(
-          <AvatarFallback className="rounded-lg">{customer.customer_name.substring(0, 2).toUpperCase()}</AvatarFallback>
+          <AvatarFallback className="rounded-lg">{customer.customer_name.split(" ").map((n) => n[0]).join("")}</AvatarFallback>
         )}
       </Avatar>
       <Popover open={isOpen} onOpenChange={setIsOpen}>

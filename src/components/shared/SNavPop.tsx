@@ -151,7 +151,7 @@ export function SNavPop() {
          className="rounded-full" 
          />
         ):(
-          <AvatarFallback className="rounded-lg">{seller.business_name.substring(0, 2).toUpperCase()}</AvatarFallback>
+          <AvatarFallback className="rounded-lg">{seller.business_name.split(" ").map((n) => n[0]).join("")}</AvatarFallback>
         )}
       </Avatar>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
