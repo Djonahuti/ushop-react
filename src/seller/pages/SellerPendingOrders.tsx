@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
-import { PendingOrder } from '@/types';
+import { PendingOrder, PendingOrderItems } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { IconCashRegister, IconPackageExport, IconTrolleyFilled } from '@tabler/icons-react';
 import { BanknoteX, DoorOpen, Handshake, PackageCheck, Truck } from 'lucide-react';
 import DeliveryProgressBar from '@/components/shared/DeliveryProgressBar';
+import { Link } from 'react-router-dom';
 
 export default function SellerPendingOrders() {
   const [orders, setOrders] = useState<PendingOrder[]>([]);
@@ -46,8 +47,8 @@ export default function SellerPendingOrders() {
 
       const { data, error } = await supabase
         .from('pending_orders')
-        .select('*, products(product_title, product_price, product_img1), customers(customer_name)')
-        .eq('seller_id', sellerId); // Filter by seller_id
+        .select(`*, pending_order_items(qty, products(product_title, product_price, product_img1)), customers(customer_name)`)
+        //.eq('seller_id', sellerId); // Filter by seller_id
 
         if (error) {
             console.error('Failed to fetch orders', error.message);
@@ -236,15 +237,22 @@ export default function SellerPendingOrders() {
                       </div>
                       <div className="space-x-2 text-sm">
                         <span>Order ID: <span className="text-blue-500">{order.invoice_no}</span></span>
-                        <Button variant="link" className="p-0 h-auto text-sm">Order details</Button>
+                        <Link
+                         to="/order-history" 
+                         className="p-0 h-auto text-sm"
+                         state={{ order_id: order.p_order_id }}
+                        >
+                          See Status History
+                        </Link>
                       </div>
                     </div>
 
                     <Separator className="my-2" />
 
-                    <div className="flex gap-4">
+            {Array.isArray(order.pending_order_items) && order.pending_order_items.map((item: PendingOrderItems, index) => (
+                    <div key={`${item.pending_order_item_id}-${index}`} className="flex gap-4">
                       <img
-                        src={`/products/${order.products?.product_img1 || 'default.png'}`}
+                        src={`/products/${item.products?.product_img1 || 'default.png'}`}
                         alt=""
                         className="w-20 h-20 object-cover rounded"
                       />
@@ -253,13 +261,14 @@ export default function SellerPendingOrders() {
                           <Label className="font-medium text-sm text-orange-600">
                             {order.customers?.customer_name || 'Your Order'}
                           </Label>
-                          <p className="font-medium text-sm mt-1">{order.products?.product_title}</p>
+                          <p className="font-medium text-sm mt-1">{item.products?.product_title}</p>
                           <p className="text-sm text-muted-foreground mt-1">
-                            ₦{order.products?.product_price?.toLocaleString()} × {order.qty}
+                            ₦{item.products?.product_price?.toLocaleString()} × {item.qty}
                           </p>
                         </div>
                       </div>
                     </div>
+                  ))}
 
                     <Separator className="my-2" />
 

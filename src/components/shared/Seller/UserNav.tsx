@@ -102,7 +102,7 @@ export function NavUser() {
                  className="rounded-full" 
                  />
                 ):(
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">{seller.business_name.substring(0, 2).toUpperCase()}</AvatarFallback>
                 )}
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -130,7 +130,7 @@ export function NavUser() {
                  className="rounded-full" 
                  />
                 ):(
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">{seller.business_name.substring(0, 2).toUpperCase()}</AvatarFallback>
                 )}
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">

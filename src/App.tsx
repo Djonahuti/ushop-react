@@ -110,7 +110,7 @@ function App() {
           <Route path="/users" element={<SellerRoute><Database /></SellerRoute>} />
           <Route path="/my-products" element={<SellerRoute><MyProducts /></SellerRoute>} />
           <Route path="/orders-me" element={<SellerRoute><SellerPendingOrders /></SellerRoute>} />
-          <Route path="/feeds" element={<SellerRoute><AllFeedbacks /></SellerRoute>} />
+          <Route path="/sell-feeds" element={<SellerRoute><AllFeedbacks /></SellerRoute>} />
           <Route
             path="/update/:productId"
             element={

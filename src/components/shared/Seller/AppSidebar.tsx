@@ -9,7 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { CameraIcon, FileCodeIcon, FileTextIcon, LayoutDashboardIcon, Package2, PackagePlus, PackageSearch, User2 } from "lucide-react"
+import { CameraIcon, FileCodeIcon, FileTextIcon, LayoutDashboardIcon, MessageCircleMore, Package2, PackagePlus, PackageSearch, User2 } from "lucide-react"
 import ThemeToggle from "../../ThemeToggle"
 import { NavMain } from "./MainNav"
 import { NavUser } from "./UserNav"
@@ -41,6 +41,11 @@ const navData = {
       imgURL: Package2,
       route: "/orders-me",
       label: "Orders",
+    },
+    {
+      imgURL: MessageCircleMore,
+      route: "/sell-feeds",
+      label: "Feedbacks",
     },
   ],
 

@@ -8,8 +8,9 @@ import { Outlet } from "react-router-dom";
 export default function SellerLayout () {
 
   return (
+    <div className="min-h-screen">
     <SidebarProvider>
-      <AppSidebar variant="inset" />
+      <div className="hidden md:block"><AppSidebar variant="inset" /></div>
       <SidebarInset>
         <SellerHeader />
       <main>
@@ -18,5 +19,6 @@ export default function SellerLayout () {
       </main>
       </SidebarInset>
     </SidebarProvider>
+    </div>
   )
 }

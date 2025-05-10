@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Seller } from '@/types';
 import { CameraIcon } from 'lucide-react';
 
@@ -215,7 +215,7 @@ export function MobileView() {
                   src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${seller.seller_image}`}
                   alt="Profile" />
                 ): (
-                  <Avatar className="w-31 h-31" />
+                  <AvatarFallback className="text-3xl">{seller.business_name.substring(0, 2).toUpperCase()}</AvatarFallback>
                 )}
               </Avatar>
 

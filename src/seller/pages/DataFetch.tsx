@@ -68,8 +68,8 @@ export const DataFetch = () => {
 
       const { data, error } = await supabase
         .from('pending_orders')
-        .select('*, products(product_title, product_price, product_img1), customers(customer_name)')
-        .eq('seller_id', sellerId); // Filter by seller_id
+        .select(`*, pending_order_items(products(product_title, product_price, product_img1)), customers(customer_name)`)
+        //.eq(`pending_order_items(seller_id)`, sellerId); // Filter by seller_id
 
         if (error) {
             console.error('Failed to fetch orders', error.message);
@@ -223,22 +223,12 @@ export const DataFetch = () => {
   };
 
 
-
   const orderColumns: ColumnDef<PendingOrder>[] = [
-    { accessorKey: "id", header: "Order ID" },
     { accessorKey: "customerName", header: "Customer",
       cell: ({ row }) => row.original.customers?.customer_name || "Unknown",
      },
-    { accessorKey: "product_id", header: "Product",
-      cell: ({ row }) => row.original.products?.product_title || "Unknown",
-     },
-    { accessorKey: "product_img1", header: "Image",
-     cell: ({ row }) => <img src={`/products/${row.original.products?.product_img1}`} alt="Product" width="50" className="rounded-full" />,
-    },
     { accessorKey: "invoice_no", header: "Invoice NO" },
     { accessorKey: "order_status", header: "Status" },
-    { accessorKey: "qty", header: "Qty" },
-    { accessorKey: "size", header: "Size" },
     { accessorKey: "created_at", header: "Order Date",
       cell: ({ row }) => {
         const date = new Date(row.original.created_at);
