@@ -102,7 +102,7 @@ export default function Overview() {
       {/* User Profile Section */}
       <Card className="space-y-4">
         <CardContent className="flex items-center gap-4 py-6">
-              <Avatar className="h-14 w-14 rounded-lg">
+              <Avatar className="h-14 w-14 rounded-full">
                 {customer.customer_image ? (
                 <AvatarImage
                  src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
@@ -110,7 +110,7 @@ export default function Overview() {
                  className="rounded-full" 
                  />
                 ):(
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-full">CN</AvatarFallback>
                 )}
               </Avatar>
           <div className="flex-1">

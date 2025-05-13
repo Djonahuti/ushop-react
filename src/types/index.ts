@@ -12,6 +12,7 @@ export type Product = {
     product_img3: string;
     product_video: string;
     sold_count: number;
+    rating: number;
     manufacturer_id: number;
     p_cat_id: number;
     cat_id: number;

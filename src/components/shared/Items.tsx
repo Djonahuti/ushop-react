@@ -247,7 +247,18 @@ export default function Items({ items, itemsPerPage = 10, onSelectedUpdate, show
           <div className="px-2 pt-0 pb-0">
             <Link to={`/products/${item.product_id}`} className="text-xs font-semibold leading-tight line-clamp-2 text-orange-500">{item.product_title}</Link>
             <div className="flex justify-between items-center text-[12px] gap-1 mt-1 text-muted-foreground relative space-x-3">
-              <span className="left-2 font-bold">⭐ 4.1</span>
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <span
+                    key={index}
+                    className={`${
+                      index < item.rating ? "text-yellow-400" : "text-gray-200"
+                    }`}
+                  >
+                    ★
+                  </span>
+                ))}
+              </div>
               <Separator orientation="vertical" className="h-5" />
               <span className="right-2 font-bold">{item.sold_count || 0} sold</span>
             </div>

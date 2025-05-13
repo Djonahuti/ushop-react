@@ -118,6 +118,39 @@ const FeedbackPage: React.FC = () => {
         .insert(feedbackRows)
       if (prodErr) throw prodErr
 
+      // Update product ratings in products table
+      for (const pf of data.productFeedbacks) {
+        // Get the product_id from the corresponding order_item
+        const orderItem = items.find(item => item.order_item_id === pf.order_item_id)
+        if (!orderItem) continue
+      
+        const product_id = orderItem.product_id
+        
+        // Get all ratings for this product by looking up all order_item_ids related to it
+        const relatedOrderItemIds = items
+          .filter(item => item.product_id === product_id)
+          .map(item => item.order_item_id)
+
+        // Recalculate average rating for the product
+        const { data: ratings, error: ratingFetchError } = await supabase
+          .from('feedbacks')
+          .select('rating')
+          .in('order_item_id', relatedOrderItemIds)
+      
+        if (ratingFetchError || !ratings?.length) continue
+      
+        const avgRating = Math.round(
+          ratings.reduce((acc, r) => acc + r.rating, 0) / ratings.length
+        )
+      
+        // Update the product's rating
+        await supabase
+          .from('products')
+          .update({ rating: avgRating })
+          .eq('product_id', product_id)
+      }
+
+
       // insert overall order feedback
       const { error: orderErr } = await supabase
         .from('feedbacks')
