@@ -111,16 +111,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   
   React.useEffect(() => {
     const fetchContact = async () => {
-      const { data } = await supabase
+      let query =  supabase
         .from('contacts')
         .select('*, customers(customer_name, customer_email, customer_image), subject(subject)')
         .order('submitted_at', { ascending: false }); // Optional: Order by submission date
 
+        if (activeItem.title === "Starred") {
+          query = query.eq('is_starred', true);
+        } else if (activeItem.title === "Important") {
+          query = query.eq('is_read', false);
+        }
+
+        const { data } = await query;
       setContacts(data || []);
     };
 
     fetchContact();
-  }, []);
+  }, [activeItem]);
 
   const formatTime = (date: Date) =>
     date.toLocaleTimeString("en-US", {
