@@ -94,13 +94,13 @@ export function NavUser() {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground md:h-8 md:p-0"
             >
-              <Avatar className="h-8 w-8 rounded-lg">
+              <Avatar className="h-8 w-8 rounded-full">
                 {admin.admin_image ? (
                 <AvatarImage
                  src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${admin.admin_image}`}
                  alt={admin.admin_name} />
                 ):(
-                  <AvatarFallback className="rounded-lg">{admin.admin_name.split(" ").map((n) => n[0]).join("")}</AvatarFallback>
+                  <AvatarFallback className="rounded-full">{admin.admin_name.split(" ").map((n) => n[0]).join("")}</AvatarFallback>
                 )}
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -118,13 +118,13 @@ export function NavUser() {
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-              <Avatar className="h-8 w-8 rounded-lg grayscale">
+              <Avatar className="h-8 w-8 rounded-full grayscale">
                 {admin.admin_image ? (
                 <AvatarImage
                  src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${admin.admin_image}`} 
                  alt={admin.admin_name} />
                 ):(
-                  <AvatarFallback className="rounded-lg">{admin.admin_name.split(" ").map((n) => n[0]).join("")}</AvatarFallback>
+                  <AvatarFallback className="rounded-full">{admin.admin_name.split(" ").map((n) => n[0]).join("")}</AvatarFallback>
                 )}
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">

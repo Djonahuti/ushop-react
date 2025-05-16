@@ -181,7 +181,7 @@ export function PopRight() {
       <div className="hidden font-medium text-muted-foreground md:inline-block">
         {admin.admin_email}
       </div>
-      <Avatar className="h-8 w-8 rounded-lg">
+      <Avatar className="h-8 w-8 rounded-full">
         {admin.admin_image ? (
         <AvatarImage
          src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${admin.admin_image}`}
@@ -189,7 +189,7 @@ export function PopRight() {
          className="rounded-full" 
          />
         ):(
-          <AvatarFallback className="rounded-lg">{admin.admin_name.split(" ").map((n) => n[0]).join("")}</AvatarFallback>
+          <AvatarFallback className="rounded-full">{admin.admin_name.split(" ").map((n) => n[0]).join("")}</AvatarFallback>
         )}
       </Avatar>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
