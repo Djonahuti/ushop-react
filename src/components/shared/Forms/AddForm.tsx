@@ -180,8 +180,8 @@ const AddForm: React.FC = () => {
 
   return (
     <Card>
-      <CardHeader className="flex items-center gap-2 self-center font-medium">
-        <CardTitle className="flex items-center justify-center"><PlusCircleIcon />Quick Create</CardTitle>
+      <CardHeader className="flex items-center justify-center">
+        <CardTitle className="flex items-center justify-center w-full gap-2"><PlusCircleIcon />Quick Create</CardTitle>
       </CardHeader>
       <CardContent>
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'category' | 'manufacturer' | 'productCategory')}>

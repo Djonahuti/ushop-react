@@ -94,8 +94,8 @@ const PostForm: React.FC = () => {
   return (
     <div className="p-6">
         <Card>
-            <CardHeader className="flex items-center gap-2 self-center font-medium">
-              <CardTitle className="flex items-center justify-center"><PackagePlus/>Add Product</CardTitle>
+            <CardHeader className="flex items-center justify-center">
+              <CardTitle className="flex items-center justify-center w-full gap-2"><PackagePlus/>Add Product</CardTitle>
             </CardHeader>
             <CardContent>
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-6 shadow rounded-lg">
