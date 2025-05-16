@@ -48,7 +48,7 @@ export function PopRight() {
       {
         label: "Inbox",
         icon: Inbox,
-        url: "/inbox",
+        url: "/my-inbox",
         count: unreadCount,
       },
       {
