@@ -17,8 +17,8 @@ import { Bank, Order, OrderItem } from '@/types'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { generateInvoicePDF } from '@/utils/generateInvoicePDF'
-import { IconCreditCard, IconMessage, IconReceipt, IconStarFilled } from '@tabler/icons-react'
-import { PackageCheck, Star } from 'lucide-react'
+import { IconCreditCard, IconMessage, IconReceipt } from '@tabler/icons-react'
+import { PackageCheck } from 'lucide-react'
 import DeliveryTimeline from '@/components/shared/DeliveryTimeline'
 
 const CustomerOrders = () => {
@@ -111,7 +111,7 @@ const CustomerOrders = () => {
     }
     // fetch/display highest-rated product feedback for this order
     return (
-      <div className="mb-2 border-bottom space-y-2">
+      <div className="text-lg space-x-2">
         <HighestProductFeedback orderId={order.order_id} />
       </div>
 
@@ -213,11 +213,7 @@ const CustomerOrders = () => {
                     <Separator className="my-2" />
 
                     <div className="text-right text-base font-medium">
-                      Total: ₦{order.due_amount?.toLocaleString()}
-                      <DeliveryTimeline status={order.order_status} />
-                    </div>
-                    <div className="relative flex justify-between items-center mt-2">
-                      <div className="text-right text-base font-medium">
+                      <div className="flex justify-between text-base mb-2">
                         {order.order_status === 'Pending' && (
                           <Button onClick={() => navigate(`/confirm-pay/${order.invoice_no}`)} className="mt-2" title="Mark as paid">
                             <IconCreditCard stroke={2} />
@@ -235,8 +231,11 @@ const CustomerOrders = () => {
                         <Button onClick={() => customer && generateInvoicePDF(order, banks)} className="ml-2" title="Download Invoice">
                             <IconReceipt stroke={2} />
                         </Button>                       
-                      </div>
+                      </div>                      
+                      Total: ₦{order.due_amount?.toLocaleString()}
+                      <DeliveryTimeline status={order.order_status} />
                     </div>
+
                   </CardContent>
                 </Card>
                 );
@@ -264,10 +263,18 @@ const HighestProductFeedback: React.FC<{ orderId: number }> = ({ orderId }) => {
       .then(({ data }) => data?.[0] && setFeedback(data[0]))
   }, [orderId])
   return (
-    <span className="flex items-center space-x-1">
-      {[...Array(feedback.rating)].map((_, i) => <IconStarFilled key={i} className="text-yellow-400" />)}
-      {[...Array(5 - feedback.rating)].map((_, i) => <Star key={i} className="text-yellow-400" />)}
-    </span>
+    <p className="flex items-center">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <span
+          key={index}
+          className={`${
+            index < feedback.rating ? "text-yellow-400" : "text-gray-200"
+          }`}
+        >
+          ★
+        </span>
+      ))}
+    </p>
   )
 }
 
