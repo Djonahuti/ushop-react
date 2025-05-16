@@ -4,7 +4,6 @@ import { Coupon } from "@/types";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-
 export default function Coupons() {
   const [error, setError] = useState<string | null>(null);  
   const [coupons, setCoupons] = useState<Coupon[]>([]);
