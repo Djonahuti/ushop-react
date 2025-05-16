@@ -81,9 +81,12 @@ export default function ListView() {
   return (
     <div className="flex-1 overflow-y-auto bg-background">
       {contacts.map((contact) => (
-        <button
+        <div
           key={contact.id}
           onClick={() => setSelectedMail(contact)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") setSelectedMail(contact);
+          }}
           className={`w-full text-left flex flex-col gap-2 border-b p-4 hover:bg-accent ${
             contact.is_read ? 'myBox' : 'unread'
           }`}
@@ -121,7 +124,7 @@ export default function ListView() {
           <p className="text-xs text-muted-foreground line-clamp-2">
             {String(contact.message)}
           </p>
-        </button>
+        </div>
       ))}
     </div>
   )

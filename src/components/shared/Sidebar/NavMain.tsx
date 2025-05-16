@@ -34,7 +34,7 @@ export function NavMain({
               <a href="/add-form"><span>Quick Create</span></a>
             </SidebarMenuButton>
             <Link
-              to="/inbox"
+              to="/my-inbox"
               className="h-9 w-9 shrink-0 group-data-[collapsible=icon]:opacity-0"
             >
               <MailIcon />

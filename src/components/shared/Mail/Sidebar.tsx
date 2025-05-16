@@ -270,10 +270,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroup className="px-0">
             <SidebarGroupContent>
               {contacts.map((contact) => (
-                <a
-                  href="#"
+                <div
                   key={contact.id}
                   onClick={() => handleSelectMail(contact)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") setSelectedMail(contact);
+                  }}
                   className={`flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight last:border-b-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
                     contact.is_read ? 'myBox' : 'unread font-bold' // Add conditional class
                   }`}
@@ -299,7 +301,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     href="#"
                     key={contact.id}
                     onClick={() => handleSelectMail(contact)}
-                    className="text-lg left-2 text-yellow-500 hover:text-yellow-600 item-end"
+                    className="text-lg left-2 text-yellow-500 hover:text-yellow-600 text-end"
                   >
                       <button onClick={() => toggleStar(contact)}>
                         {contact.is_starred ? '★' : '☆'} {/* Star icon */}
@@ -309,7 +311,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <span className="line-clamp-2 w-[260px] whitespace-break-spaces text-xs">
                     {String(contact.message)}
                   </span>
-                </a>
+                </div>
               ))}
             </SidebarGroupContent>
           </SidebarGroup>
