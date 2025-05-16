@@ -295,7 +295,7 @@ export const DataFetch = () => {
           <BanknoteX />
          )}
 
-         {row.original.order_status === 'COMPLETED' && (
+         {row.original.order_status === 'RECEIVED' && (
           <PackageCheck />
          )} 
 
