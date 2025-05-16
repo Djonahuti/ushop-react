@@ -96,7 +96,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [activeItem, setActiveItem] = React.useState(data.navMain[0])
   const { setOpen } = useSidebar()
   const [contacts, setContacts] = React.useState<Contact[]>([]);
-  const { setSelectedMail } = React.useContext(MailContext)
+  const { setSelectedMail, activeFilter, setActiveFilter } = React.useContext(MailContext)
 
   const handleSelectMail = async (mail: Contact) => {
     setOpen(true)
@@ -116,9 +116,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         .select('*, customers(customer_name, customer_email, customer_image), subject(subject)')
         .order('submitted_at', { ascending: false }); // Optional: Order by submission date
 
-        if (activeItem.title === "Starred") {
+        if (activeFilter === "Starred") {
           query = query.eq('is_starred', true);
-        } else if (activeItem.title === "Important") {
+        } else if (activeFilter === "Important") {
           query = query.eq('is_read', false);
         }
 
@@ -127,7 +127,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     };
 
     fetchContact();
-  }, [activeItem]);
+  }, [activeFilter]);
 
   const formatTime = (date: Date) =>
     date.toLocaleTimeString("en-US", {
@@ -233,6 +233,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       }}
                       onClick={() => {
                         setActiveItem(item)
+                        setActiveFilter(item.title)
                         setOpen(true)
                       }}
                       isActive={activeItem?.title === item.title}

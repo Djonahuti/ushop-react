@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
  */
 export default function ListView() {
   const [contacts, setContacts] = useState<Contact[]>([])
-  const { setSelectedMail } = useContext(MailContext)
+  const { setSelectedMail, activeFilter } = useContext(MailContext)
 
   const handleSelectMail = async (mail: Contact) => {
     setSelectedMail(mail); // This now pushes it to Inbox.tsx
@@ -27,10 +27,18 @@ export default function ListView() {
   // Fetch messages
   useEffect(() => {
     const fetchContacts = async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('contacts')
         .select('*, customers(customer_name, customer_email, customer_image), subject(subject)')
         .order('submitted_at', { ascending: false });
+
+      if (activeFilter === "Starred") {
+        query = query.eq('is_starred', true);
+      } else if (activeFilter === "Important") {
+        query = query.eq('is_read', false);
+      }
+
+      const { data, error } = await query;
       if (error) {
         console.error('Error loading contacts:', error)
       } else {
@@ -38,7 +46,7 @@ export default function ListView() {
       }
     }
     fetchContacts()
-  }, [])
+  }, [activeFilter])
 
   // Helpers for time formatting
   const formatTime = (date: Date) =>
