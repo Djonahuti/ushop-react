@@ -4,12 +4,16 @@ import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/shared/data-table";
 import supabase from "@/lib/supabaseClient";
-import { Customer, Order, Product } from "@/types";
+import { Customer, PendingOrder, Product } from "@/types";
 import { toast } from "sonner";
+import { BanknoteX, Handshake, PackageCheck, Truck } from "lucide-react";
+import { IconCashRegister, IconPackageExport, IconTrolleyFilled } from "@tabler/icons-react";
+import { formatDistanceToNow } from "date-fns";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 
 export const DataFetch = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<PendingOrder[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [users, setUsers] = useState<Customer[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -29,20 +33,14 @@ export const DataFetch = () => {
 
     fetchProducts();
   }, []);
-
-  const getOrders = async (): Promise<Order[]> => {
-    const { data, error } = await supabase.from('orders').select('*, customers(customer_name)').order('order_id', { ascending: false });
-    if (error) {
-      console.error('Error fetching orders:', error.message);
-      toast.error('Failed to fetch orders');
-      return [];
-    }
-    return data || [];
-  };  
+  
   
   useEffect(() => {
     const fetchOrders = async () => {
-        const { data, error } = await supabase.from('orders').select('*, customers(customer_name)').order('order_id', { ascending: false });
+        const { data, error } = await supabase
+        .from('pending_orders')
+        .select(`*, pending_order_items(qty, products(product_title, product_price, product_img1)), customers(customer_name)`)
+        .order('p_order_id', { ascending: false });
 
         if (error) {
             setError('Failed to fetch orders');
@@ -68,9 +66,158 @@ export const DataFetch = () => {
     fetchCustomerData();
   }, []);  
 
-  const handleUpdateOrderStatus = async (id: string, status: string) => {
-    await updateOrderStatus(id, status);
-    getOrders().then(setOrders);
+  const handleConfirm = async (invoice_no: number) => {
+    const { data: orderData, error: orderError } = await supabase
+    .from('orders')
+    .select('order_id')
+    .eq('invoice_no', invoice_no)
+    .single();
+
+    if (orderError || !orderData) {
+      alert('Failed to find order.');
+      return;
+    }
+
+    await supabase
+      .from('orders')
+      .update({ order_status: 'Payment confirmed' })
+      .eq('invoice_no', invoice_no);
+
+    await supabase
+      .from('pending_orders')
+      .update({ order_status: 'Payment confirmed' })
+      .eq('invoice_no', invoice_no);
+
+    // Log the status update in order_status_history
+    await supabase
+      .from('order_status_history')
+      .insert([{ order_id: orderData.order_id, status: 'Payment confirmed' }]);      
+
+    alert('Payment confirmed!');
+    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+  };
+
+  const handleShipped = async (invoice_no: number) => {
+    const { data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .select('order_id')
+      .eq('invoice_no', invoice_no)
+      .single();
+
+    if (orderError || !orderData) {
+      alert('Failed to find order.');
+      return;
+    }
+
+    await supabase
+      .from('orders')
+      .update({ order_status: 'SHIPPED' })
+      .eq('invoice_no', invoice_no);
+
+    await supabase
+      .from('pending_orders')
+      .update({ order_status: 'SHIPPED' })
+      .eq('invoice_no', invoice_no);
+
+    // Log the status update in order_status_history
+    await supabase
+      .from('order_status_history')
+      .insert([{ order_id: orderData.order_id, status: 'Shipped' }]);      
+
+    alert('SHIPPED!');
+    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+  };
+
+  const handleWaiting = async (invoice_no: number) => {
+    const { data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .select('order_id')
+      .eq('invoice_no', invoice_no)
+      .single();
+
+    if (orderError || !orderData) {
+      alert('Failed to find order.');
+      return;
+    } 
+
+    await supabase
+      .from('orders')
+      .update({ order_status: 'WAITING TO BE SHIPPED' })
+      .eq('invoice_no', invoice_no);
+
+    await supabase
+      .from('pending_orders')
+      .update({ order_status: 'WAITING TO BE SHIPPED' })
+      .eq('invoice_no', invoice_no);
+
+    // Log the status update in order_status_history
+    await supabase
+      .from('order_status_history')
+      .insert([{ order_id: orderData.order_id, status: 'Waiting to be Shipped' }]);      
+
+    alert('WAITING TO BE SHIPPED!');
+    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+  };
+
+  const handleOutForDelivery = async (invoice_no: number) => {
+    const { data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .select('order_id')
+      .eq('invoice_no', invoice_no)
+      .single();
+
+    if (orderError || !orderData) {
+      alert('Failed to find order.');
+      return;
+    }    
+    await supabase
+      .from('orders')
+      .update({ order_status: 'OUT FOR DELIVERY' })
+      .eq('invoice_no', invoice_no);
+
+    await supabase
+      .from('pending_orders')
+      .update({ order_status: 'OUT FOR DELIVERY' })
+      .eq('invoice_no', invoice_no);
+
+    // Log the status update in order_status_history
+    await supabase
+      .from('order_status_history')
+      .insert([{ order_id: orderData.order_id, status: 'Out for delivery' }]);      
+
+    alert('OUT FOR DELIVERY!');
+    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+  };
+
+  const handleDelivered = async (invoice_no: number) => {
+    const { data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .select('order_id')
+      .eq('invoice_no', invoice_no)
+      .single();
+
+    if (orderError || !orderData) {
+      alert('Failed to find order.');
+      return;
+    }    
+    
+    await supabase
+      .from('orders')
+      .update({ order_status: 'DELIVERED' })
+      .eq('invoice_no', invoice_no);
+
+    await supabase
+      .from('pending_orders')
+      .update({ order_status: 'DELIVERED' })
+      .eq('invoice_no', invoice_no);
+
+    // Log the status update in order_status_history
+    await supabase
+      .from('order_status_history')
+      .insert([{ order_id: orderData.order_id, status: 'Delivered' }]);      
+
+    alert('DELIVERED!');
+    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
 
 
@@ -106,15 +253,53 @@ export const DataFetch = () => {
     }
   };
 
-  const orderColumns: ColumnDef<Order>[] = [
-    { accessorKey: "id", header: "Order ID" },
-    { accessorKey: "customerName", header: "Customer" },
-    { accessorKey: "status", header: "Status" },
+  const orderColumns: ColumnDef<PendingOrder>[] = [
+    { accessorKey: "customerName", header: "Customer",
+      cell: ({ row }) => row.original.customers?.customer_name || "Unknown",
+     },
+    { accessorKey: "invoice_no", header: "Invoice NO" },
+    { accessorKey: "order_status", header: "Status" },
+    { accessorKey: "created_at", header: "Order Date",
+      cell: ({ row }) => {
+        const date = new Date(row.original.created_at);
+        return formatDistanceToNow(date, { addSuffix: true });
+      },
+     },
     {
       accessorKey: "actions",
       header: "Actions",
       cell: ({ row }) => (
-        <Button onClick={() => handleUpdateOrderStatus(String(row.original.order_id), "Shipped")}>Mark as Shipped</Button>
+        <div className="flex gap-2">
+
+         {row.original.order_status === 'Paid' && (
+          <Button onClick={() => handleConfirm(row.original.invoice_no)} title="Confirm Payment"><IconCashRegister /></Button>          
+         )}
+
+         {row.original.order_status === 'Payment confirmed' && (
+          <Button onClick={() => handleWaiting(row.original.invoice_no)} title="Mark as Waiting"><IconTrolleyFilled /></Button>          
+         )}
+
+         {row.original.order_status === 'WAITING TO BE SHIPPED' && (
+          <Button onClick={() => handleShipped(row.original.invoice_no)} title="Mark as Shipped"><Truck /></Button>
+         )}
+
+         {row.original.order_status === 'SHIPPED' && (
+          <Button onClick={() => handleOutForDelivery(row.original.invoice_no)} title="Mark as Out for delivery"><IconPackageExport stroke={2} /></Button>
+         )}
+
+         {row.original.order_status === 'OUT FOR DELIVERY' && (
+          <Button onClick={() => handleDelivered(row.original.invoice_no)} title="Mark as Delivered"><Handshake /></Button>
+         )}
+
+         {row.original.order_status === 'Pending' && (
+          <BanknoteX />
+         )}
+
+         {row.original.order_status === 'COMPLETED' && (
+          <PackageCheck />
+         )} 
+
+        </div>
       ),
     },
   ];
@@ -122,8 +307,6 @@ export const DataFetch = () => {
   const productColumns: ColumnDef<Product>[] = [
     { accessorKey: "product_title", header: "Title" },
     { accessorKey: "product_price", header: "Price" },
-    { accessorKey: "product_desc", header: "Description" },
-    { accessorKey: "product_features", header: "Features" },
     { accessorKey: "product_label", header: "Label" },
     {
       accessorKey: "cat_id",
@@ -166,7 +349,11 @@ export const DataFetch = () => {
            src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${row.original.customer_image}`}
            alt={row.original.customer_name} 
            className="w-10 h-10 rounded-full border" />
-        ) : ("No Image")
+        ) : (
+          <Avatar className="h-10 w-10 rounded-full">
+            <AvatarFallback className="rounded-full">{row.original.customer_name.split(" ").map((n: string) => n[0]).join("")}</AvatarFallback>
+          </Avatar>
+        )
       ),
     },
     {
@@ -207,18 +394,5 @@ export const DataFetch = () => {
     </div>
   );
 };
-async function updateOrderStatus(id: string, status: string): Promise<void> {
-  const { error } = await supabase
-    .from('orders')
-    .update({ status })
-    .eq('order_id', id);
-
-  if (error) {
-    console.error('Error updating order status:', error.message);
-    toast.error('Failed to update order status');
-  } else {
-    toast.success('Order status updated successfully');
-  }
-}
 
 
