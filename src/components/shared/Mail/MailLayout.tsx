@@ -7,7 +7,7 @@ import { AppSidebar } from "./Sidebar"
 import { MailHeader } from "./MailHeader"
 import { Outlet } from "react-router-dom"
 import { Toaster } from "sonner"
-import { MailProvider } from "./MailContext"
+import { MailProvider } from "./MailProvider"
 
 export default function MailLayout() {
   return (
