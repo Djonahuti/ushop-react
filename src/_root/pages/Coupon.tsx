@@ -49,11 +49,11 @@ export default function Coupons() {
     <div className="py-10 px-4 md:px-8">
       <h2 className="text-2xl font-semibold mb-6">Mega Coupons</h2>
 
-      <div className="grid grid-cols-1 sm:grid-col-1 xs:grid-col-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-col-1 xs:grid-col-1 md:grid-cols-2 gap-4">
         {coupons.map((coupon) => (
           <div
             key={coupon.coupon_id}
-            className="flex items-center justify-between bg-amber-50 border rounded-lg p-4 shadow-sm"
+            className="bg-amber-50 border rounded-lg p-4 shadow-sm space-y-4"
           >
             <div className="flex items-center gap-4">
               <img
@@ -68,7 +68,7 @@ export default function Coupons() {
               </div>
             </div>
 
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex justify-between items-center">
               <span className="bg-white border font-mono px-2 py-1 rounded text-sm text-gray-600">
                 {coupon.coupon_code}
               </span>
