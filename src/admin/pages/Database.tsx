@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { BanknoteX, Handshake, PackageCheck, Truck } from "lucide-react";
 import { IconCashRegister, IconPackageExport, IconTrolleyFilled } from '@tabler/icons-react';
 import { formatDistanceToNow } from 'date-fns';
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 
 export const Database = () => {
@@ -36,7 +37,10 @@ export const Database = () => {
   
   useEffect(() => {
     const fetchOrders = async () => {
-        const { data, error } = await supabase.from('orders').select('*, customers(customer_name)').order('order_id', { ascending: false });
+        const { data, error } = await supabase
+        .from('orders')
+        .select('*, customers(customer_name)')
+        .order('order_id', { ascending: false });
 
         if (error) {
             setError('Failed to fetch orders');
@@ -66,7 +70,7 @@ export const Database = () => {
     const fetchPendingOrders = async () => {
       const { data, error } = await supabase
         .from('pending_orders')
-        .select('*, products(product_title, product_img1), customers(customer_name)')
+        .select(`*, pending_order_items(qty, products(product_title, product_img1)), customers(customer_name)`)
         .order('invoice_no', { ascending: false });
 
       if (error) {
@@ -201,9 +205,7 @@ export const Database = () => {
       },
      },
     { accessorKey: "order_status", header: "Status" },
-    { accessorKey: "qty", header: "Quantity" },
     { accessorKey: "due_amount", header: "Total Price" },
-    { accessorKey: "size", header: "Size" },
     {
       accessorKey: "actions",
       header: "Actions",
@@ -247,16 +249,8 @@ export const Database = () => {
     { accessorKey: "customer_id", header: "Customer",
       cell: ({ row }) => row.original.customers?.customer_name || "Unknown",
      },
-    { accessorKey: "product_id", header: "Product",
-      cell: ({ row }) => row.original.products?.product_title || "Unknown",
-     },
-    { accessorKey: "product_img1", header: "Image",
-     cell: ({ row }) => <img src={`/products/${row.original.products?.product_img1}`} alt="Product" width="50" className="rounded-full" />,
-    },
     { accessorKey: "invoice_no", header: "Invoice NO" },
     { accessorKey: "order_status", header: "Status" },
-    { accessorKey: "qty", header: "Qty" },
-    { accessorKey: "size", header: "Size" },
     { accessorKey: "created_at", header: "Order Date",
       cell: ({ row }) => {
         const date = new Date(row.original.created_at);
@@ -331,7 +325,11 @@ export const Database = () => {
            src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${row.original.customer_image}`}
            alt={row.original.customer_name} 
            className="w-10 h-10 rounded-full border" />
-        ) : ("No Image")
+        ) : (
+          <Avatar className="h-10 w-10 rounded-full">
+            <AvatarFallback className="rounded-full">{row.original.customer_name.split(" ").map((n: string) => n[0]).join("")}</AvatarFallback>
+          </Avatar>          
+        )
       ),
     },
     {
