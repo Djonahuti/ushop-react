@@ -5,10 +5,12 @@ import { IconDiscountFilled, IconGiftFilled } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import Modal from "./Modal";
 import Contact from "@/_root/pages/Contact";
+import Coupons from "@/_root/pages/Coupon";
 
 const StickyTools = () => {
     const navigate = useNavigate();
-    const [isContactModalOpen, setContactModalOpen] = useState(false); // State for modal
+    const [isCouponModalOpen, setCouponModalOpen] = useState(false);
+    const [isContactModalOpen, setContactModalOpen] = useState(false);
     const [showTools, setShowTools] = useState(false); // State to toggle visibility
   return (
     <div className="space-y-1">
@@ -33,7 +35,10 @@ const StickyTools = () => {
             >
               <X />
             </Button>
-            <button className="p-2 rounded shadow hover:bg-orange-200 hover:text-gray-700 bg-orange-100 text-black">
+            <button
+             className="p-2 rounded shadow hover:bg-orange-200 hover:text-gray-700 bg-orange-100 text-black"
+             onClick={() => setCouponModalOpen(true)}
+            >
               <Ticket />
             </button>
             <button
@@ -60,7 +65,12 @@ const StickyTools = () => {
       {/* Contact Modal */}
       <Modal isOpen={isContactModalOpen} onClose={() => setContactModalOpen(false)}>
         <Contact />
-      </Modal>              
+      </Modal>
+
+      {/* Contact Modal */}
+      <Modal isOpen={isCouponModalOpen} onClose={() => setCouponModalOpen(false)}>
+        <Coupons />
+      </Modal>                    
     </div>
   )
 }

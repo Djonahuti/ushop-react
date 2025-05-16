@@ -187,8 +187,22 @@ export type Coupon = {
     coupon_id: number;
     coupon_code: string;
     coupon_price: number;
+    product_id: number;
     coupon_limit: number;
     coupon_used: number;
+    products: {
+        product_title: string;
+        product_img1: string;
+        product_price: number;
+        product_psp_price: number;
+        manufacrurer_id: number;
+        manufacturers: {
+            manufacturer_title: string;
+        }
+        sellers: {
+            business_name: string;
+        }        
+    };    
 };
 
 export type PendingOrder = {

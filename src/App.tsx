@@ -54,6 +54,7 @@ import Bundle from "./_root/pages/Bundles"
 import Choices from "./_root/pages/Choices"
 import Mailbox from "./routes/Mailbox"
 import MailView from "./components/shared/Mail/MailView"
+import Coupons from "./_root/pages/Coupon"
 
 
 function App() {
@@ -219,6 +220,15 @@ function App() {
           element={
             <StrictRoute>
               <FeedbackPage />
+            </StrictRoute>
+          }
+        />
+
+        <Route
+          path="/coupon"
+          element={
+            <StrictRoute>
+              <Coupons />
             </StrictRoute>
           }
         />
