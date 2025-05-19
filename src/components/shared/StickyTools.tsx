@@ -20,7 +20,7 @@ const StickyTools = () => {
           // Single button to show tools
           <Button
             variant="ghost"
-            className="p-2 rounded shadow text-white bg-[#F4623A] hover:bg-[#e4572e]"
+            className="p-2 rounded shadow-xl/30 shadow-orange-500/50 text-white bg-[#F4623A] hover:bg-[#e4572e]"
             onClick={() => setShowTools(true)}
           >
             <Gem />

@@ -1,4 +1,5 @@
 import Bottombar from "@/components/shared/Bottombar";
+import Footer from "@/components/shared/Footer";
 import Navbar from "@/components/shared/Navbar";
 import StickyTools from "@/components/shared/StickyTools";
 import Topbar from "@/components/shared/TopBar";
@@ -21,6 +22,8 @@ const RootLayout = () => {
         <Outlet />
         <Toaster />
       </section>
+
+      <Footer />
 
       <div className="md:hidden"><Bottombar /></div>
     </div>
