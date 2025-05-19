@@ -115,7 +115,8 @@ export default function Cart({
   
 
   if (loading) return <div>Loading cart...</div>;
-  if (items.length === 0) return       <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+  if (items.length === 0) return (
+        <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
           <div className="w-full max-w-sm">
             <div className={cn("flex flex-col gap-6", className)} {...props}>
               <div className="justify text-center">
@@ -137,7 +138,7 @@ export default function Cart({
             </div>
           </div>
   
-        </div>;
+        </div>);
 
   return (
     <>

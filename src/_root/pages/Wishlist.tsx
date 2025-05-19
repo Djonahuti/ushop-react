@@ -6,9 +6,13 @@ import { Trash2 } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 
-export default function Wishlist() {
+export default function Wishlist({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"div">) {
   const [items, setItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -44,7 +48,27 @@ export default function Wishlist() {
   }, []);
 
   if (loading) return <div>Loading wishlist...</div>;
-  if (items.length === 0) return <div>Your wishlist is empty</div>;
+  if (items.length === 0) return (
+          <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+            <div className="w-full max-w-sm">
+              <div className={cn("flex flex-col gap-6", className)} {...props}>
+                <div className="justify text-center">
+                  <h1 className="mb-4 text-4xl font-semibold text-red-500">Empty Wishlist</h1>
+                  <p className="mb-4 text-lg text-gray-600">Your have nothing on your wishlist</p>
+                  <div className="animate-bounce">
+                   <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  className="mx-auto h-16 w-16 text-red-500 icon icon-tabler icons-tabler-outline icon-tabler-heart-search">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M12 20l-.975 -.966l-6.525 -6.462a5 5 0 1 1 7.5 -6.566a5 5 0 0 1 8.37 5.428" />
+                    <path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+                    <path d="M20.2 20.2l1.8 1.8" />
+                   </svg>
+                  </div>
+                  <p className="mt-4 text-gray-600">You can <a href="/" className="text-blue-500">Continue shopping</a>.</p>
+                </div>
+              </div>
+            </div>
+    
+          </div>);
 
   return (
     <div className="container mx-auto space-y-2 px-4">
