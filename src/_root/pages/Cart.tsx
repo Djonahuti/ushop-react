@@ -1,13 +1,17 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import supabase from '@/lib/supabaseClient';
+import { cn } from '@/lib/utils';
 import { CartItem } from '@/types';
 import { Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 
-export default function Cart() {
+export default function Cart({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"div">) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -111,7 +115,29 @@ export default function Cart() {
   
 
   if (loading) return <div>Loading cart...</div>;
-  if (items.length === 0) return <div>Your cart is empty</div>;
+  if (items.length === 0) return       <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+          <div className="w-full max-w-sm">
+            <div className={cn("flex flex-col gap-6", className)} {...props}>
+              <div className="justify text-center">
+                <h1 className="mb-4 text-4xl font-semibold text-red-500">Empty Cart</h1>
+                <p className="mb-4 text-lg text-gray-600">Your Cart is Empty</p>
+                <div className="animate-bounce">
+                  <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  className="mx-auto h-16 w-16 text-red-500 icon icon-tabler icons-tabler-outline icon-tabler-basket-search">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M17 10l-2 -6" />
+                    <path d="M7 10l2 -6" />
+                    <path d="M11 20h-3.756a3 3 0 0 1 -2.965 -2.544l-1.255 -7.152a2 2 0 0 1 1.977 -2.304h13.999a2 2 0 0 1 1.977 2.304l-.215 1.227" />
+                    <path d="M13.483 12.658a2 2 0 1 0 -2.162 3.224" />
+                    <path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+                    <path d="M20.2 20.2l1.8 1.8" />
+                  </svg>
+                </div>
+                <p className="mt-4 text-gray-600">You can <a href="/" className="text-blue-500">Continue shopping</a>.</p>
+              </div>
+            </div>
+          </div>
+  
+        </div>;
 
   return (
     <>
