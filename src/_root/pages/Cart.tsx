@@ -181,7 +181,7 @@ export default function Cart({
     </div>
 
     {bundleItems.length > 0 && (
-  <div className="mt-8 p-4 border-t">
+  <div className="mt-8 p-4 border-t mb-10">
     <h2 className="text-xl font-bold mb-4">Your Bundles</h2>
 
     {bundleItems.map(bundle => (
