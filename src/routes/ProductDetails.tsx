@@ -9,6 +9,9 @@ import { Button } from '@/components/ui/button';
 import RelatedProducts from '@/components/shared/RelatedProducts';
 import { Product } from '@/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
+import { Label } from '@/components/ui/label';
 
 
 export default function ProductDetails() {
@@ -16,6 +19,75 @@ export default function ProductDetails() {
   // const router = useRouter(); const { productId } = router.query // for Next.js
 
   const [product, setProduct] = useState<Product | null>(null);
+  const [qty, setQty] = useState(1);
+  const [size, setSize] = useState('M');
+
+  // Add to Cart functionality
+  const handleAddToCart = async (product: Product) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('You must be logged in to add to cart.');
+      return;
+    }
+  
+    // Fetch customer_id
+    const { data: customer, error } = await supabase
+      .from('customers')
+      .select('customer_id')
+      .eq('customer_email', user.email)
+      .single();
+  
+    if (error || !customer) {
+      toast.error('Customer not found.');
+      return;
+    }
+  
+    await supabase.from('cart').insert({
+      customer_id: customer.customer_id,
+      product_id: product.product_id,
+      qty,
+      p_price: product.product_price,
+      size,
+      ip_add: window.location.hostname,
+    });
+  
+    toast.success('Added to cart!');
+  };
+
+  // Add to Cart Wishlist
+  const handleAddWishlist = async (product: Product) => {
+    const { data: { user } } = await supabase.auth.getUser();
+  
+    if (!user) {
+      toast.error('You must be logged in to add to wishlist.');
+      return;
+    }
+  
+    // First, get customer_id from customers table
+    const { data: customer, error } = await supabase
+      .from('customers')
+      .select('customer_id')
+      .eq('customer_email', user.email)
+      .single();
+  
+    if (error || !customer) {
+      toast.error('Customer not found.');
+      return;
+    }
+  
+    // Insert into wishlist
+    const { error: insertError } = await supabase.from('wishlist').insert({
+      customer_id: customer.customer_id,
+      product_id: product.product_id, // assuming `product` is in scope
+    });
+  
+    if (insertError) {
+      toast.error('Failed to add to wishlist.');
+      console.error(insertError);
+    } else {
+      toast.success('Added to wishlist!');
+    }
+  };  
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -93,48 +165,41 @@ export default function ProductDetails() {
 
           {/* Quantity & Size Selection */}
         <div className="flex space-x-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Quantity:</label>
-            <Input type="number" defaultValue={1} className="w-20" />
+          <div className='space-y-2'>
+            <Label className="block text-sm font-medium text-gray-700">Quantity:</Label>
+            <Input
+             type="number" 
+             min={1}
+             value={qty}
+             onChange={e => setQty(Number(e.target.value))} 
+             className="w-20" 
+            />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Bundle Quantity (Optional):</label>
-            <Input type="number" defaultValue={0} className="w-20" />
-          </div>
-        </div>
-
-        <div className="flex space-x-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Size:</label>
-            <Input type="text" defaultValue="Small" className="w-24" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Bundle Size (Optional):</label>
-            <Input type="text" defaultValue="Small" className="w-24" />
+          <div className='space-y-2'>
+            <Label className="block text-sm font-medium text-gray-700">Size:</Label>
+            <Select value={size} onValueChange={setSize}>
+              <SelectTrigger className="w-22">
+                <SelectValue placeholder="Select size" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="XXL">XXL</SelectItem>
+                <SelectItem value="XL">XL</SelectItem>
+                <SelectItem value="L">L</SelectItem>
+                <SelectItem value="M">M</SelectItem>
+                <SelectItem value="Small">Small</SelectItem>
+                <SelectItem value="XS">XS</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         {/* Action Buttons */}
         <div className="flex space-x-4">
           <Button
-            onClick={async () => {
-              const { error } = await supabase.from('cart').insert({
-                product_id: product.product_id,
-                qty: 1,
-                p_price: product.product_price.toString(),
-                ip_add: window.location.hostname, // or get via server
-              });
-              if (!error) alert('Added to cart!');
-            }} 
+            onClick={() => handleAddToCart(product)} 
             className="bg-red-500 hover:bg-red-600">Add to Cart</Button>
           <Button
-            onClick={async () => {
-              const { error } = await supabase.from('wishlist').insert({
-                customer_id: 1, // replace with actual logged-in user
-                product_id: product.product_id,
-              });
-              if (!error) alert('Added to wishlist!');
-          }} 
+            onClick={() => handleAddWishlist(product)}  
             className="bg-gray-700 hover:bg-gray-800">Add to Wishlist</Button>
         </div>
         </div>
