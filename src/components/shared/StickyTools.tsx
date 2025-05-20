@@ -35,30 +35,54 @@ const StickyTools = () => {
             >
               <X />
             </Button>
+
+            <div className="relative group">
             <button
              className="p-2 rounded shadow hover:bg-orange-200 hover:text-gray-700 bg-orange-100 text-black"
              onClick={() => setCouponModalOpen(true)}
             >
               <Ticket />
             </button>
+            <span className="absolute left-1/2 -top-7 -translate-x-1/2 px-2 py-0.5 rounded-full bg-orange-500 text-white text-xs font-semibold shadow opacity-0 group-hover:opacity-100 transition pointer-events-none z-10">
+              Coupons
+            </span>
+            </div>
+
+            <div className="relative group">
             <button
               className="p-2 rounded shadow hover:bg-orange-200 hover:text-gray-700 bg-orange-100 text-black"
               onClick={() => navigate('/choice')}
             >
               <IconDiscountFilled />
             </button>
+            <span className="absolute left-1/2 -top-7 -translate-x-1/2 px-2 py-0.5 rounded-full bg-orange-500 text-white text-xs font-semibold shadow opacity-0 group-hover:opacity-100 transition pointer-events-none z-10">
+              Choice
+            </span>            
+            </div>
+
+            <div className="relative group">
             <button
               className="p-2 rounded shadow hover:bg-orange-200 hover:text-gray-700 bg-orange-100 text-black"
               onClick={() => navigate('/bundle')}
             >
               <IconGiftFilled />
             </button>
+            <span className="absolute left-1/2 -top-7 -translate-x-1/2 px-2 py-0.5 rounded-full bg-orange-500 text-white text-xs font-semibold shadow opacity-0 group-hover:opacity-100 transition pointer-events-none z-10">
+              Bundles
+            </span>            
+            </div>
+
+            <div className="relative group">
             <button
               className="p-2 rounded shadow hover:bg-orange-200 hover:text-gray-700 bg-orange-100 text-black"
               onClick={() => setContactModalOpen(true)} // Open modal
             >
               <Edit />
             </button>
+            <span className="absolute left-1/2 -top-7 -translate-x-1/2 px-2 py-0.5 rounded-full bg-orange-500 text-white text-xs font-semibold shadow opacity-0 group-hover:opacity-100 transition pointer-events-none z-10">
+              Contact
+            </span>            
+            </div>
           </div>        
       )}
       </div>
