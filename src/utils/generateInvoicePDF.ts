@@ -43,7 +43,10 @@ export const generateInvoicePDF = async (order: Order, banks: Bank[]) => {
     ],
   });
 
-  y = doc.lastAutoTable.finalY + 10;
+  // Extend jsPDF type to include lastAutoTable
+  type JsPDFWithAutoTable = jsPDF & { lastAutoTable?: { finalY: number } };
+  const docWithAutoTable = doc as JsPDFWithAutoTable;
+  y = (docWithAutoTable.lastAutoTable?.finalY ?? y) + 10;
 
   // ====== BANK DETAILS ======
   doc.setFontSize(14);
