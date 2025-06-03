@@ -124,8 +124,9 @@ const Profile: React.FC = () => {
     // Change Password function
     const changePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
       // Sign in with the current password to verify it
-      const { error: signInError } = await supabase.auth.signIn({
-        email: supabase.auth.user()?.email || '', // Get the current user's email
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email || '', // Get the current user's email
         password: currentPassword,
       });
     
@@ -135,7 +136,7 @@ const Profile: React.FC = () => {
       }
     
       // If sign in is successful, update the password
-      const { error: updateError } = await supabase.auth.update({
+      const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword,
       });
     
@@ -147,16 +148,30 @@ const Profile: React.FC = () => {
     };
   
   // Delete Account function
-    const deleteAccount = async (): Promise<void> => {
-      const { error } = await supabase.auth.delete();
-    
-      if (error) {
-        console.error('Error deleting account:', error.message);
-      } else {
-        console.log('Account deleted successfully');
-        // Optionally, redirect the user or show a success message
-      }
-    };
+  const deleteAccount = async (): Promise<void> => {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      console.error('Error getting user:', userError?.message);
+      return;
+    }
+
+    // You need to implement a secure backend function to delete a user.
+    // For demonstration, we'll just remove the admin record from the 'admins' table.
+    // WARNING: This does NOT delete the user from Supabase Auth!
+    const { error } = await supabase
+      .from('admins')
+      .delete()
+      .eq('admin_email', user.email);
+
+    if (error) {
+      console.error('Error deleting admin data:', error.message);
+    } else {
+      console.log('Admin data deleted successfully');
+      // Optionally, sign out the user
+      await supabase.auth.signOut();
+      // Optionally, redirect the user or show a success message
+    }
+  };
   
     if (loading){
       return(
