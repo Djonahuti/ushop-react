@@ -90,8 +90,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <img
                   src={
                     state === "collapsed" 
-                    ? "/src/assets/ushop-small.svg" 
-                    : "/src/assets/ushop.svg"
+                    ? "/logo/ushop-small.svg" 
+                    : "/logo/ushop.svg"
                   }
                   alt="logo"
                   width={state === "collapsed" ? 50 : 85}
