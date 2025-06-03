@@ -67,16 +67,17 @@ export function RegisterForm({
   const onSubmit = async (data: FormData) => {
     setIsPending(true); // Show loader
       // Step 1: Sign up the user in Supabase Auth
-      const { user, error: authError } = await supabase.auth.signUp({
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.customer_email,
         password: data.customer_pass,
       });
-  
+
       if (authError) {
         console.error('Error signing up:', authError.message);
         setIsPending(false);
         return;
       }
+      const user = authData?.user;
   
       // Step 2: Store additional customer information in the customers table
       const { error: dbError } = await supabase
