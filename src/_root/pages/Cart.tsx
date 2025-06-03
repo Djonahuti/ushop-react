@@ -15,7 +15,19 @@ export default function Cart({
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const [bundleItems, setBundleItems] = useState<any[]>([]);
+  type BundleProduct = {
+    choice_product_id: number;
+    discounted_price: number;
+    products: { product_title: string; product_img1: string };
+  };
+
+  type BundleItem = {
+    choice_id: number;
+    total_price: number;
+    choice_products: BundleProduct[];
+  };
+
+  const [bundleItems, setBundleItems] = useState<BundleItem[]>([]);
 
   useEffect(() => {
     async function fetchBundles() {
@@ -43,7 +55,17 @@ export default function Cart({
         `)
         .eq('customer_id', customer.customer_id);
   
-      setBundleItems(data || []);
+      setBundleItems(
+        (data || []).map((bundle): BundleItem => ({
+          choice_id: bundle.choice_id,
+          total_price: bundle.total_price,
+          choice_products: (bundle.choice_products || []).map((cp): BundleProduct => ({
+            choice_product_id: cp.choice_product_id,
+            discounted_price: cp.discounted_price,
+            products: Array.isArray(cp.products) ? cp.products[0] : cp.products,
+          })),
+        }))
+      );
     }
   
     fetchBundles();
@@ -186,17 +208,21 @@ export default function Cart({
 
     {bundleItems.map(bundle => (
       <div key={bundle.choice_id} className="mb-6">
-        {bundle.choice_products.map(cp => (
+        {bundle.choice_products.map((cp: {
+          choice_product_id: number;
+          discounted_price: number;
+          products: { product_title: string; product_img1: string };
+        }) => (
           <div key={cp.choice_product_id} className="flex items-center gap-4 mb-2">
-            <img src={`/products/${cp.products.product_img1}`} className="w-16 h-16 object-cover rounded" />
-            <div>
-              <p className="font-medium">{cp.products.product_title}</p>
-              <p className="text-sm">₦{cp.discounted_price.toFixed(2)}</p>
-            </div>
+        <img src={`/products/${cp.products.product_img1}`} className="w-16 h-16 object-cover rounded" />
+        <div>
+          <p className="font-medium">{cp.products.product_title}</p>
+          <p className="text-sm">₦{cp.discounted_price.toFixed(2)}</p>
+        </div>
           </div>
         ))}
 
-        <div className="text-right font-bold">Bundle Total: ₦{bundle.total_price.toFixed(2)}</div>
+        <div className="text-right font-bold">Bundle Total: ₦{(bundle.total_price as number).toFixed(2)}</div>
         <Button
           variant="default"
           className="mt-2"
