@@ -45,7 +45,7 @@ const Topbar = () => {
     <nav className="fixed top-0 left-0 my-nav w-full h-16 flex justify-between items-center text-sm z-50 space-x-2">
         <Link to="/" className="w-24 h-10 mt-2 p-2">
           <img
-            src="/src/assets/ushop.svg"
+            src="/logo/ushop.svg"
             alt="logo"
             width={170}
             height={35}
@@ -122,7 +122,7 @@ const Topbar = () => {
     ) : (
         <Link to="/login" className="rounded-full">
           <Avatar className="h-10 w-10 rounded-full">
-            <AvatarFallback className="rounded-full">CN</AvatarFallback>
+            <AvatarFallback className="rounded-full">US</AvatarFallback>
           </Avatar>        
         </Link>
 
