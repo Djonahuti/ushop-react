@@ -177,7 +177,7 @@ const Profile: React.FC = () => {
       return(
         <div className="fixed inset-0 z-50 flex items-center justify-center my-nav">
           <img
-            src="/src/assets/ushop-small.svg"
+            src="/logo/ushop-small.svg"
             alt="logo"
             className="animate-bounce"
           />
