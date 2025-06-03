@@ -276,7 +276,7 @@ const filteredProducts = products.filter((product) => {
     </div>
     
     {/* Banner Info */}    
-    <section className="bg-pink-500 text-white text-center py py-3 sm:py-7 md:py-8 lg:py-10 mt mt-16 sm:mt-12 md:mt-0 lg:mt-0">
+    <section className="bg-orange-100 border-l-4 border-orange-500 shadow-md rounded text-gray-400 text-center py py-3 sm:py-7 md:py-8 lg:py-10 mt mt-16 sm:mt-12 md:mt-0 lg:mt-0">
       <div>
         <h2 className="md:text-4xl text-2xl md:font-bold font-medium">UP TO 80% OFF</h2>
         <p className="md:mt-2 mt-1">Sale Ends In: {timeLeft} (GMT+1)</p>
