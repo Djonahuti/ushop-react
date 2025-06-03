@@ -5,7 +5,7 @@ import supabase from "@/lib/supabaseClient"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { useEffect, useState } from "react"
@@ -246,9 +246,9 @@ export function RegisterForm({
         </div>
         <div className="mt-4 text-center text-sm">
           Already have an account?{" "}
-          <a href="/login" className="underline underline-offset-4">
+          <Link to="/login" className="underline underline-offset-4">
             Login
-          </a>
+          </Link>
         </div>
       </form>
         </CardContent>
