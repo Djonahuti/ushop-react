@@ -247,6 +247,7 @@ const filteredProducts = products.filter((product) => {
           selectedManufacturer={selectedManufacturer}
           selectedPCat={selectedPCat}
           selectedCat={selectedCat}
+          products={filteredProducts}
         />
       </div>   
       </section>     

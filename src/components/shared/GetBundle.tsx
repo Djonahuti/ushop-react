@@ -8,6 +8,7 @@ import { ShoppingCart } from 'lucide-react';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '../ui/carousel';
 import { Badge } from '../ui/badge';
 import { Link } from 'react-router-dom';
+import { Product } from '@/types';
 
 interface BundleProduct {
   product_id: number;
@@ -34,6 +35,7 @@ interface GetBundleProps {
   selectedManufacturer: number | null;
   selectedPCat: number | null;
   selectedCat: number | null;
+  products: Product[];
 }
 
 export default function GetBundle({selectedManufacturer, selectedPCat, selectedCat}: GetBundleProps) {
