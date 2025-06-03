@@ -18,7 +18,7 @@ export function CustomerHeader() {
                   <div className="block md:hidden text-sm h-16">
                     <Link to="/" className="w-24 h-10 mt-2 p-2">
                       <img
-                        src="/src/assets/ushop.svg"
+                        src="/logo/ushop.svg"
                         alt="logo"
                         width={90}
                         height={15}

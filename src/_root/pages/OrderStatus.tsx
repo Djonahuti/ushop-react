@@ -75,7 +75,7 @@ const OrderStatus = () => {
     return(
       <div className="fixed inset-0 z-50 flex items-center justify-center my-nav">
         <img
-          src="/src/assets/ushop.svg"
+          src="/logo/ushop.svg"
           alt="logo"
           className="w-[250px] h-[70px] animate-pulse"
         />

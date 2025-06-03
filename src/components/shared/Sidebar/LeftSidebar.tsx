@@ -148,7 +148,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5">
               <a href="#">
                 <img
-                  src="/src/assets/ushop.svg"
+                  src="/logo/ushop.svg"
                   alt="logo"
                   width={85}
                   height={20}

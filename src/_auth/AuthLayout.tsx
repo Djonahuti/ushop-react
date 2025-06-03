@@ -8,7 +8,7 @@ const AuthLayout = () => {
         <a href="/" className="flex items-center gap-2 self-center font-medium">
           <div className="flex h-10 w-140 items-center justify-center">
             <img
-              src="/src/assets/ushop.svg"
+              src="/logo/ushop.svg"
               alt="logo"
             />
           </div>
