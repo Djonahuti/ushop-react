@@ -99,7 +99,7 @@ export function PopRight() {
       {
         label: "Notifications",
         icon: Bell,
-        url: "/inbox",
+        url: "/my-inbox",
       },   
     ],
   ]  
