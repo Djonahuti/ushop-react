@@ -107,7 +107,7 @@ const Navbar = () => {
     <nav className="my-nav shadow-md px-4 py-3 flex items-center justify-between sticky top-0 z-50">
     <Link to="/" className="w-24 h-10 mt-2 space-x-3 pl-2">
       <img
-        src="/src/assets/ushop.svg"
+        src="/logo/ushop.svg"
         alt="logo"
         width={170}
         height={40}
