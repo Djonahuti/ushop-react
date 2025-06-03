@@ -22,7 +22,7 @@ const Home = () => {
     const [timeLeft, setTimeLeft] = useState<string | null>(null);
 
     useEffect(() => {
-      const target = new Date("2025-12-24T23:59:00+01:00").getTime();
+      const target = new Date("2025-3-24T23:59:00+01:00").getTime();
 
       const updateCountdown = () => {
         const now = new Date().getTime();
