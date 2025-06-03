@@ -22,27 +22,35 @@ const Home = () => {
     const [timeLeft, setTimeLeft] = useState<string | null>(null);
 
     useEffect(() => {
-      const target = new Date("2025-3-24T23:59:00+01:00").getTime();
-
+      const targetDate = new Date("2025-12-24T23:59:00+01:00");
+      const targetString = `${targetDate.toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+      })}, ${targetDate.getHours().toString().padStart(2, "0")}:${targetDate
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")}`;
+      
       const updateCountdown = () => {
         const now = new Date().getTime();
-        const distance = target - now;
-
+        const distance = targetDate.getTime() - now;
+      
         if (distance <= 0) {
           setTimeLeft("Sale Ended");
           return;
         }
-
-        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      
         const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
+      
         setTimeLeft(
-          `${days}d ${hours}h ${minutes}m ${seconds}s`
+          `${targetString} — ${hours.toString().padStart(2, "0")}:${minutes
+            .toString()
+            .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
         );
       };
-
+    
       updateCountdown();
       const interval = setInterval(updateCountdown, 1000);
       return () => clearInterval(interval);
