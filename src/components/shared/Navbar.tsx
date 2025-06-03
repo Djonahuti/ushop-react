@@ -225,7 +225,7 @@ const Navbar = () => {
     ) : (
         <Link to="/login" className="rounded-full">
           <Avatar className="h-10 w-10 rounded-full">
-            <AvatarFallback className="rounded-full">CN</AvatarFallback>
+            <AvatarFallback className="rounded-full">US</AvatarFallback>
           </Avatar>        
         </Link>
 
