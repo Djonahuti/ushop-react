@@ -209,7 +209,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <a href="/dashboard">
                   <div className="flex aspect-square size-8 items-center justify-center text-sidebar-primary-foreground">
                   <img
-                  src="/src/assets/ushop-small.svg"
+                  src="/logo/ushop-small.svg"
                   alt="logo"
                   width={85}
                   height={20}
