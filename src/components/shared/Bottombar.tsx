@@ -66,7 +66,7 @@ const Bottombar = () => {
           ):(
             <Link to="/login">
             <Avatar className="h-9 w-9 rounded-full">
-              <AvatarFallback className="rounded-full">CN</AvatarFallback>
+              <AvatarFallback className="rounded-full">US</AvatarFallback>
             </Avatar>
             </Link>
           )}
