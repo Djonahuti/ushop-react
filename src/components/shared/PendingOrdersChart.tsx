@@ -190,6 +190,16 @@ export function PendingOrdersChart() {
             ))}
           </AreaChart>
         </ChartContainer>
+        <div className="@[540px]/card:block hidden mt-6">
+          <h4 className="font-semibold mb-2">Recent Orders</h4>
+          <ul className="text-xs text-muted-foreground">
+            {orders.slice(0, 5).map(order => (
+              <li key={order.p_order_id}>
+                #{order.p_order_id} — {order.order_status} — {new Date(order.created_at).toLocaleDateString()}
+              </li>
+            ))}
+          </ul>
+        </div>        
       </CardContent>
     </Card>
   )
