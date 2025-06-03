@@ -18,7 +18,35 @@ const Home = () => {
     const [search, setSearch] = useState('');
     const [selectedManufacturer, setSelectedManufacturer] = useState<number | null>(null);
     const [selectedPCat, setSelectedPCat] = useState<number | null>(null);
-    const [selectedCat, setSelectedCat] = useState<number | null>(null);    
+    const [selectedCat, setSelectedCat] = useState<number | null>(null);   
+    const [timeLeft, setTimeLeft] = useState<string | null>(null);
+
+    useEffect(() => {
+      const target = new Date("2025-12-24T23:59:00+01:00").getTime();
+
+      const updateCountdown = () => {
+        const now = new Date().getTime();
+        const distance = target - now;
+
+        if (distance <= 0) {
+          setTimeLeft("Sale Ended");
+          return;
+        }
+
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        setTimeLeft(
+          `${days}d ${hours}h ${minutes}m ${seconds}s`
+        );
+      };
+
+      updateCountdown();
+      const interval = setInterval(updateCountdown, 1000);
+      return () => clearInterval(interval);
+    }, []);
 
     const [error, setError] = useState<string | null>(null);
 
@@ -243,7 +271,7 @@ const filteredProducts = products.filter((product) => {
     <section className="bg-pink-500 text-white text-center py py-3 sm:py-7 md:py-8 lg:py-10 mt mt-16 sm:mt-12 md:mt-0 lg:mt-0">
       <div>
         <h2 className="md:text-4xl text-2xl md:font-bold font-medium">UP TO 80% OFF</h2>
-        <p className="md:mt-2 mt-1">Sale Ends: Mar 27, 07:59 (GMT+1)</p>
+        <p className="md:mt-2 mt-1">Sale Ends In: {timeLeft} (GMT+1)</p>
       </div>
     </section>    
 
