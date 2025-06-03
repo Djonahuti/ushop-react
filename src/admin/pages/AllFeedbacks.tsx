@@ -23,7 +23,32 @@ const AllFeedbacks = () => {
                 `)
                 .order('created_at', { ascending: false});
             
-            setFeedbacks(data || []);
+            setFeedbacks(
+                (data || []).map((item: Record<string, unknown>) => {
+                    // Flatten nested arrays if needed
+                    const feedtype = item.feedtype && Array.isArray(item.feedtype) ? item.feedtype[0] : item.feedtype;
+                    const order_item = item.order_item && Array.isArray(item.order_item) ? item.order_item[0] : item.order_item;
+                    const orders = item.orders && Array.isArray(item.orders) ? item.orders[0] : item.orders;
+                    // Extract customer_id safely
+                    const customer_id = orders?.customers?.customer_id ?? null;
+                    // Extract feedtype_id safely
+                    const feedtype_id = feedtype?.feedtype_id ?? null;
+            
+                    return {
+                        feedback_id: Number(item.feedback_id),
+                        order_id: Number(item.order_id),
+                        order_item_id: item.order_item_id !== undefined && item.order_item_id !== null ? Number(item.order_item_id) : null,
+                        rating: Number(item.rating),
+                        comment: String(item.comment),
+                        created_at: String(item.created_at),
+                        feedtype: feedtype,
+                        feedtype_id: feedtype_id !== undefined && feedtype_id !== null ? Number(feedtype_id) : null,
+                        order_item: order_item,
+                        orders: orders,
+                        customer_id: customer_id !== undefined && customer_id !== null ? Number(customer_id) : null,
+                    } as Feedback;
+                })
+            );
 
         };
 
