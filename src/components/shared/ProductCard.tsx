@@ -117,7 +117,9 @@ export default function ProductCard({ products, itemsPerPage = 8 }: Props) {
             {paginatedProducts.map((product) => (
               <div key={product.product_id} className="flex flex-col rounded-md overflow-hidden shadow-sm myBox">
                 <div className="relative">
-                <ImageSlider images={[product.product_img1, product.product_img2, product.product_img3].filter(Boolean)} />
+                  <Link to={`/products/${product.product_id}`} className="block h-full">
+                    <ImageSlider images={[product.product_img1, product.product_img2, product.product_img3].filter(Boolean)} />
+                  </Link>
                   <div></div>{product.manufacturers?.manufacturer_title && (
                           <span  className="absolute top-2 right-2 bg-black text-white text-xs px-2 py-1 rounded">
                             {product.manufacturers.manufacturer_title}
