@@ -22,6 +22,7 @@ const schema = z.object({
   status: z.string().optional(),
   product_psp_price: z.coerce.number().optional(),
   product_features: z.array(z.string()).optional(),
+  item_qty: z.coerce.number().min(0, 'Quantity must be a positive number'),
   product_url: z.string().optional(),
   product_img1: z.any().optional(),
   product_img2: z.any().optional(),
@@ -148,6 +149,16 @@ const PostForm: React.FC = () => {
         ))}
         <Button type="button" onClick={() => append('')}>Add Feature</Button>
       </div>
+      <div  className="space-y-2">
+        <Label htmlFor="item_qty">Item Quantity</Label>
+        <Input
+          id="item_qty"
+          type="number"
+          {...register('item_qty')}
+          placeholder="Enter item quantity"
+        />
+        {errors.item_qty && <span>{errors.item_qty.message}</span>}
+      </div>      
       <div  className="space-y-2">
         <Label htmlFor="product_url">Product URL</Label>
         <Input
