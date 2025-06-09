@@ -22,6 +22,7 @@ const schema = z.object({
   status: z.string().optional(),
   product_psp_price: z.coerce.number().optional(),
   product_features: z.array(z.string()).optional(),
+  item_qty: z.coerce.number().min(0, 'Quantity must be a positive number'),
   product_url: z.string().optional(),
   product_img1: z.any().optional(),
   product_img2: z.any().optional(),
@@ -118,10 +119,10 @@ const SellProduct: React.FC = () => {
   return (
     <div className="p-6">
         <Card>
-            <CardHeader className="flex items-center gap-2 self-center font-medium">
-              <CardTitle className="flex items-center justify-center"><PackagePlus/>Add Product</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <CardHeader className="flex items-center justify-center">
+            <CardTitle className="flex items-center justify-center w-full gap-2"><PackagePlus/>Add Product</CardTitle>
+          </CardHeader>
+          <CardContent>
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-6 shadow rounded-lg">
       <div  className="space-y-2">
         <Label htmlFor="product_title">Product Title</Label>
@@ -172,6 +173,16 @@ const SellProduct: React.FC = () => {
         ))}
         <Button type="button" onClick={() => append('')}>Add Feature</Button>
       </div>
+      <div  className="space-y-2">
+        <Label htmlFor="item_qty">Item Quantity</Label>
+        <Input
+          id="item_qty"
+          type="number"
+          {...register('item_qty')}
+          placeholder="Enter item quantity"
+        />
+        {errors.item_qty && <span>{errors.item_qty.message}</span>}
+      </div>      
       <div  className="space-y-2">
         <Label htmlFor="product_url">Product URL</Label>
         <Input

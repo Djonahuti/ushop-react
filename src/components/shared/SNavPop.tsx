@@ -8,9 +8,10 @@ import {
   PersonStanding,
   Scale,
   Cog,
-  Blocks,
+  PackageSearch,
   User2,
   LogOut,
+  PackagePlus,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -48,9 +49,14 @@ const data = [
   ],
   [
     {
-      label: "Product Management",
-      icon: Blocks,
-      url: "/sell-products",
+      label: "My Products",
+      icon: PackageSearch,
+      url: "/my-products",
+    },
+    {
+      label: "Sell Product",
+      icon: PackagePlus,
+      url: "/sell-product",
     },
     {
       label: "Order Management",
