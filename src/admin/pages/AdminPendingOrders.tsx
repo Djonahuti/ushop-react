@@ -11,6 +11,7 @@ import { IconCashRegister, IconPackageExport, IconTrolleyFilled } from '@tabler/
 import { BanknoteX, DoorOpen, Handshake, PackageCheck, Truck } from 'lucide-react';
 import DeliveryProgressBar from '@/components/shared/DeliveryProgressBar';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export default function AdminPendingOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -68,7 +69,7 @@ export default function AdminPendingOrders() {
     .single();
 
     if (orderError || !orderData) {
-      alert('Failed to find order.');
+      toast.error('Failed to find order.');
       return;
     }
 
@@ -87,7 +88,7 @@ export default function AdminPendingOrders() {
       .from('order_status_history')
       .insert([{ order_id: orderData.order_id, status: 'Payment confirmed' }]);      
 
-    alert('Payment confirmed!');
+    toast.success('Payment confirmed!');
     setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
 
@@ -99,7 +100,7 @@ export default function AdminPendingOrders() {
       .single();
 
     if (orderError || !orderData) {
-      alert('Failed to find order.');
+      toast.error('Failed to find order.');
       return;
     }
 
@@ -118,7 +119,7 @@ export default function AdminPendingOrders() {
       .from('order_status_history')
       .insert([{ order_id: orderData.order_id, status: 'Shipped' }]);      
 
-    alert('SHIPPED!');
+    toast.success('SHIPPED!');
     setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
 
@@ -130,7 +131,7 @@ export default function AdminPendingOrders() {
       .single();
 
     if (orderError || !orderData) {
-      alert('Failed to find order.');
+      toast.error('Failed to find order.');
       return;
     } 
 
@@ -149,7 +150,7 @@ export default function AdminPendingOrders() {
       .from('order_status_history')
       .insert([{ order_id: orderData.order_id, status: 'Waiting to be Shipped' }]);      
 
-    alert('WAITING TO BE SHIPPED!');
+    toast.success('WAITING TO BE SHIPPED!');
     setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
 
@@ -161,7 +162,7 @@ export default function AdminPendingOrders() {
       .single();
 
     if (orderError || !orderData) {
-      alert('Failed to find order.');
+      toast.error('Failed to find order.');
       return;
     }    
     await supabase
@@ -179,7 +180,7 @@ export default function AdminPendingOrders() {
       .from('order_status_history')
       .insert([{ order_id: orderData.order_id, status: 'Out for delivery' }]);      
 
-    alert('OUT FOR DELIVERY!');
+    toast.success('OUT FOR DELIVERY!');
     setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
 
@@ -191,7 +192,7 @@ export default function AdminPendingOrders() {
       .single();
 
     if (orderError || !orderData) {
-      alert('Failed to find order.');
+      toast.error('Failed to find order.');
       return;
     }    
     
@@ -210,7 +211,7 @@ export default function AdminPendingOrders() {
       .from('order_status_history')
       .insert([{ order_id: orderData.order_id, status: 'Delivered' }]);      
 
-    alert('DELIVERED!');
+    toast.success('DELIVERED!');
     setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
 
