@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import supabase from '@/lib/supabaseClient';
-import { Customer } from '@/types';
+import { Bank, Customer } from '@/types';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -8,6 +9,17 @@ import { toast } from 'sonner';
 
 export default function Checkout() {
   const [cart, setCart] = useState<{ cart_id: number; qty: number; size: string; p_price: number; product_id: number; products: { product_title: string; product_price: number; product_img1: string } }[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [modalInvoiceNo, setModalInvoiceNo] = useState<number | null>(null);
+  const [banks, setBanks] = useState<Bank[]>([]);
+
+  useEffect(() => {
+    const loadBanks = async () => {
+      const { data: banksData } = await supabase.from('banks').select('*');
+      setBanks(banksData || []);
+    };
+    loadBanks();
+  }, []);
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'offline'>('paypal');
@@ -229,8 +241,9 @@ export default function Checkout() {
       // Clear the cart after successful order placement
       await supabase.from('cart').delete().eq('customer_id', customer.customer_id);
 
-      alert(`Your order has been submitted! Invoice No: ${invoice_no}. Please pay to the following bank accounts...`);
-      navigate('/my-orders');
+      setModalInvoiceNo(invoice_no ?? null);
+      setShowModal(true);
+      toast.success("Order placed successfully!");
     } catch (err) {
       console.error("Unexpected error placing order:", err);
       toast.error("Something went wrong while placing your order.");
@@ -283,6 +296,51 @@ export default function Checkout() {
       <Button onClick={handlePlaceOrder} className="mt-4 w-full">
         Place Order
       </Button>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/30">
+          <div className="myBox rounded-lg shadow-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-bold mb-2">Order Submitted!</h3>
+            <p className="mb-2">
+              Your order has been submitted!<br />
+              <span className="font-semibold">Invoice No:</span> {modalInvoiceNo}
+            </p>
+            <p className="mb-2">Please pay to one of the following bank accounts:</p>
+            <Table>
+              <TableCaption>Please pay to one of the following bank accounts:</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Logo</TableHead>
+                  <TableHead className="w-[100px]">Bank</TableHead>
+                  <TableHead>AC NO</TableHead>
+                  <TableHead className="text-right">AC Name</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {banks.length === 0 && <TableRow><TableCell>No Banks found</TableCell></TableRow>}
+                {banks.map((bank) => (
+                  <TableRow key={bank.bank_id}>
+                    <TableCell><img src={bank.logo_url} alt="bankLogo" width="50" /></TableCell>
+                    <TableCell className="font-medium">{bank.bank_name}</TableCell>
+                    <TableCell>{bank.account_number}</TableCell>
+                    <TableCell>{bank.account_name}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <Button
+              onClick={() => {
+                setShowModal(false);
+                navigate('/my-orders');
+              }}
+              className="w-full"
+            >
+              OK
+            </Button>
+          </div>
+        </div>
+      )}      
     </div>
   );
 }
