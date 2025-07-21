@@ -130,7 +130,14 @@ export function LoginForm({
                     "Login"
                   )}
                 </Button>
-                <Button variant="outline" className="w-full">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  type="button"
+                  onClick={async () => {
+                    await supabase.auth.signInWithOAuth({ provider: 'google' });
+                  }}
+                >
                   Login with Google
                 </Button>
                   </div>

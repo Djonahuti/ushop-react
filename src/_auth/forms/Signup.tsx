@@ -239,7 +239,14 @@ export function RegisterForm({
             "Sign Up"
           )}
         </Button>
-        <Button variant="outline" className="w-full">
+        <Button
+          variant="outline"
+          className="w-full"
+          type="button"
+          onClick={async () => {
+            await supabase.auth.signInWithOAuth({ provider: 'google' });
+          }}
+        >
           Sign Up with Google
         </Button>            
           </div>
