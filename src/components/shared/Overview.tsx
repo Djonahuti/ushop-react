@@ -1,6 +1,5 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-//import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Heart, Ticket, CreditCard, Truck, Package, CheckCircle, Clock, Wallet } from "lucide-react"
 import { Customer, Order, OrderItem, Product } from "@/types"
@@ -9,10 +8,8 @@ import supabase from "@/lib/supabaseClient"
 import { toast } from "sonner"
 import { Link } from "react-router-dom"
 import { Badge } from "../ui/badge"
-import { useAuth } from "@/context/AuthContext"
 
 export default function Overview() {
-  const { loading: authLoading } = useAuth(); // <-- get loading from AuthContext
     const [customer, setCustomer] = useState<Customer | null>(null);
     const [loading, setLoading] = useState(true);
     const [recommended, setRecommended] = useState<Product[]>([]);
@@ -93,7 +90,6 @@ export default function Overview() {
       fetchCustomerData();
     }, []);
   
-    if (authLoading) return <div>Loading...</div>;
     if (loading) return <div>Loading...</div>;
     if (!customer) return <div>No customer data found.</div>;
 
