@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .eq('customer_email', user.email)
         .single();
       if (!existingCustomer && !customerError) {
-        await supabase.from('customers').insert([
+        const { error: insertError } = await supabase.from('customers').insert([
           {
             customer_email: user.email,
             customer_name: user.user_metadata?.full_name || user.email,
@@ -24,7 +24,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             provider_id: user.id,
           },
         ]);
-        toast.success('Google account registered!');
+        if (insertError) {
+          console.error('Failed to insert Google user into customers:', insertError.message);
+          toast.error('Failed to save Google user in customers table: ' + insertError.message);
+        } else {
+          toast.success('Google account registered!');
+        }
       }
     }
   };
