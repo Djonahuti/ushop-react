@@ -26,12 +26,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const isGoogle = user.app_metadata?.provider === 'google';
         if (isGoogle) {
           // Check if user already exists in customers table
-          const { data: existingCustomer, error: customerError } = await supabase
+          const { data: existingCustomer, status } = await supabase
             .from('customers')
             .select('customer_email')
             .eq('customer_email', user.email)
-            .single();
-          if (!existingCustomer && !customerError) {
+            .maybeSingle();
+          if (!existingCustomer && status !== 200) {
             // Insert new customer
             await supabase.from('customers').insert([
               {
