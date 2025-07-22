@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react"
 import supabase from "@/lib/supabaseClient"
+import { toast } from "sonner"
 
 export const AuthContext = createContext<any>(null)
 
@@ -41,6 +42,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 provider_id: user.id,
               },
             ]);
+            toast.success('Google account registered!');
           }
         }
       }

@@ -244,12 +244,7 @@ export function RegisterForm({
           className="w-full"
           type="button"
           onClick={async () => {
-            await supabase.auth.signInWithOAuth({
-              provider: 'google',
-              options: {
-                redirectTo: `${window.location.origin}/overview`,
-              }
-            });
+            await supabase.auth.signInWithOAuth({ provider: 'google' });
           }}
         >
           Sign Up with Google
