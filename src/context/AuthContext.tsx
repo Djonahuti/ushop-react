@@ -7,11 +7,37 @@ export const AuthContext = createContext<any>(null)
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null)
 
+  // Helper to insert Google user into customers table if needed
+  const ensureGoogleCustomer = async (user: any) => {
+    if (user?.app_metadata?.provider === 'google') {
+      const { data: existingCustomer, error: customerError } = await supabase
+        .from('customers')
+        .select('customer_email')
+        .eq('customer_email', user.email)
+        .single();
+      if (!existingCustomer && !customerError) {
+        await supabase.from('customers').insert([
+          {
+            customer_email: user.email,
+            customer_name: user.user_metadata?.full_name || user.email,
+            provider: 'google',
+            provider_id: user.id,
+          },
+        ]);
+        toast.success('Google account registered!');
+      }
+    }
+  };
+
   useEffect(() => {
     // Get current user session
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       setUser(session?.user || null)
+      // Ensure Google customer on initial load
+      if (session?.user) {
+        await ensureGoogleCustomer(session.user)
+      }
     }
 
     getUser()
@@ -19,32 +45,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Listen to auth state changes
     const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user || null)
-
-      // Only run on sign-in or sign-up
       if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
-        const user = session.user;
-        // Check if user is from Google
-        const isGoogle = user.app_metadata?.provider === 'google';
-        if (isGoogle) {
-          // Check if user already exists in customers table
-          const { data: existingCustomer, error: customerError } = await supabase
-            .from('customers')
-            .select('customer_email')
-            .eq('customer_email', user.email)
-            .single();
-          if (!existingCustomer && !customerError) {
-            // Insert new customer
-            await supabase.from('customers').insert([
-              {
-                customer_email: user.email,
-                customer_name: user.user_metadata?.full_name || user.email,
-                provider: 'google',
-                provider_id: user.id,
-              },
-            ]);
-            toast.success('Google account registered!');
-          }
-        }
+        await ensureGoogleCustomer(session.user)
       }
     })
 
