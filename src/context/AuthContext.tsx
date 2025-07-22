@@ -16,34 +16,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     getUser()
 
     // Listen to auth state changes
-    const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null)
-
-      // Only run on sign-in or sign-up
-      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
-        const user = session.user;
-        // Check if user is from Google
-        const isGoogle = user.app_metadata?.provider === 'google';
-        if (isGoogle) {
-          // Check if user already exists in customers table
-          const { data: existingCustomer, status } = await supabase
-            .from('customers')
-            .select('customer_email')
-            .eq('customer_email', user.email)
-            .maybeSingle();
-          if (!existingCustomer && status !== 200) {
-            // Insert new customer
-            await supabase.from('customers').insert([
-              {
-                customer_email: user.email,
-                customer_name: user.user_metadata?.full_name || user.email,
-                provider: 'google',
-                provider_id: user.id,
-              },
-            ]);
-          }
-        }
-      }
     })
 
     return () => {
