@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom"
 import Login from "@/routes/Login"
 import Register from "@/routes/Register"
 import NotFound from "@/routes/NotFound"
@@ -54,19 +54,62 @@ import Bundle from "./_root/pages/Bundles"
 import Choices from "./_root/pages/Choices"
 import MailView from "./components/shared/Mail/MailView"
 import Coupons from "./_root/pages/Coupon"
+import { useEffect } from "react"
+import supabase from "./lib/supabaseClient"
 
 
 function App() {
   const { user } = useAuth()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    const checkUserRole = async () => {
+      if (user) {
+        const { data: admin, error: adminError } = await supabase
+          .from('admins')
+          .select('*')
+          .eq('admin_email', user.email)
+          .single();
+
+        if (admin && !adminError) {
+          navigate('/admin-dashboard');
+          return;
+        }
+
+        const { data: seller, error: sellerError } = await supabase
+          .from('sellers')
+          .select('*')
+          .eq('seller_email', user.email)
+          .single();
+
+        if (seller && !sellerError) {
+          navigate('/seller-dashboard');
+          return;
+        }
+
+        const { data: customer, error: customerError } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('customer_email', user.email)
+          .single();
+
+        if (customer && !customerError) {
+          navigate('/overview');
+          return;
+        }
+      }
+    };
+
+    checkUserRole();
+  }, [user, navigate]);
 
   return (
     <>
     <main>
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
         <>
-    <Router>
       <Routes>
-        <Route path="/" element={<Navigate to={user ? "/" : "/login"} />} />
+        <Route path="/" element={<Home />} />
         <Route path="*" element={<NotFound />} />
         
         {/* Admin routes */}
@@ -262,11 +305,10 @@ function App() {
         {/* private routes */}
         <Route element={<AuthLayout />}>
           <Route path="/admin-login" element={<AdminLogin />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Register />} />
+          <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
+          <Route path="/signup" element={user ? <Navigate to="/" /> : <Register />} />
         </Route>
       </Routes>
-    </Router>
         </>
       </ThemeProvider>
     </main>
@@ -274,4 +316,10 @@ function App() {
   )
 }
 
-export default App
+const Root = () => (
+  <Router>
+    <App />
+  </Router>
+);
+
+export default Root
