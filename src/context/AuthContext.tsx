@@ -6,6 +6,7 @@ export const AuthContext = createContext<any>(null)
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true);
 
   // Helper to insert Google user into customers table if needed
   const ensureGoogleCustomer = async (user: any) => {
@@ -43,6 +44,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (session?.user) {
         await ensureGoogleCustomer(session.user)
       }
+      setLoading(false);
     }
 
     getUser()
@@ -53,6 +55,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
         await ensureGoogleCustomer(session.user)
       }
+      setLoading(false);
     })
 
     return () => {
@@ -60,7 +63,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [])
 
-  return <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, loading }}>{children}</AuthContext.Provider>
 }
 
 export const useAuth = () => useContext(AuthContext)

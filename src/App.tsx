@@ -57,7 +57,10 @@ import Coupons from "./_root/pages/Coupon"
 
 
 function App() {
-  const { user } = useAuth()
+  const { user, loading } = useAuth();
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <>
