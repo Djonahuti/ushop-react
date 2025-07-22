@@ -10,12 +10,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Helper to insert Google user into customers table if needed
   const ensureGoogleCustomer = async (user: any) => {
+    console.log('ensureGoogleCustomer called with user:', user);
     if (user?.app_metadata?.provider === 'google') {
       const { data: existingCustomer, error: customerError } = await supabase
         .from('customers')
         .select('customer_email')
         .eq('customer_email', user.email)
         .single();
+      console.log('existingCustomer:', existingCustomer, 'customerError:', customerError);
       if (!existingCustomer && !customerError) {
         const { error: insertError } = await supabase.from('customers').insert([
           {
@@ -36,32 +38,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    // Get current user session
+    // Always check on initial load
     const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user || null)
-      // Ensure Google customer on initial load
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
       if (session?.user) {
-        await ensureGoogleCustomer(session.user)
+        await ensureGoogleCustomer(session.user);
       }
       setLoading(false);
-    }
+    };
 
-    getUser()
+    getUser();
 
     // Listen to auth state changes
     const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user || null)
+      setUser(session?.user || null);
       if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
-        await ensureGoogleCustomer(session.user)
+        await ensureGoogleCustomer(session.user);
       }
       setLoading(false);
-    })
+    });
 
     return () => {
-      listener.subscription.unsubscribe()
-    }
-  }, [])
+      listener.subscription.unsubscribe();
+    };
+  }, []);
 
   return <AuthContext.Provider value={{ user, loading }}>{children}</AuthContext.Provider>
 }
