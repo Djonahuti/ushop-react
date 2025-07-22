@@ -1,14 +1,14 @@
 // src/main.tsx
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import Root from './App.tsx'
+import App from './App.tsx'
 import './index.css'  // tailwind styles
 import { AuthProvider } from './context/AuthContext.tsx'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
   <AuthProvider>
-    <Root />
+    <App />
   </AuthProvider>
 </React.StrictMode>
 )
