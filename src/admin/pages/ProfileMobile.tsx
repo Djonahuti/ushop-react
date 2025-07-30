@@ -78,32 +78,9 @@ export function ProfileMobile() {
     }, [setValue]);
     
     // Update Admin Image function: upload immediately after selecting a file
-    const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       if (event.target.files && event.target.files[0]) {
-        const file = event.target.files[0];
-        setImageFile(file);
-        if (!admin) return;
-        // Upload image to Supabase Storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('media') // Replace with your storage bucket name
-          .upload(`admins/${file.name}`, file, { upsert: true });
-
-        if (uploadError) {
-          console.error('Error uploading image:', uploadError.message);
-          return;
-        }
-        const imagePath = uploadData.path;
-        // Update admin_image in DB
-        const { error: updateError } = await supabase
-          .from('admins')
-          .update({ admin_image: imagePath })
-          .eq('admin_email', admin.admin_email);
-        if (updateError) {
-          console.error('Error updating admin image:', updateError.message);
-        } else {
-          setAdmin({ ...admin, admin_image: imagePath });
-          console.log('Profile image updated successfully');
-        }
+        setImageFile(event.target.files[0]);
       }
     };
 
@@ -244,11 +221,11 @@ export function ProfileMobile() {
             </Label>
 
             {/* Hidden file input */}
+            {/* File input for profile image */}
             <Input
                type='file' 
                id="admin_image" 
                onChange={handleImageChange}
-               className='hidden'
                accept="image/*" 
             />             
             </div>
@@ -263,6 +240,13 @@ export function ProfileMobile() {
                  {...register('admin_name')}
                  placeholder={admin.admin_name}
                  className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500'
+                />
+                <Label htmlFor="admin_image">Change Image</Label>
+                <Input
+                  id="admin_image"
+                  type="file"
+                  onChange={handleImageChange}
+                  accept="image/*"
                 />
             </div>
             <div className="space-y-2">
