@@ -77,10 +77,33 @@ export function ProfileMobile() {
       fetchAdminData();
     }, [setValue]);
     
-    // Update Admin Image function
-    const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      if (event.target.files) {
-        setImageFile(event.target.files[0]);
+    // Update Admin Image function: upload immediately after selecting a file
+    const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (event.target.files && event.target.files[0]) {
+        const file = event.target.files[0];
+        setImageFile(file);
+        if (!admin) return;
+        // Upload image to Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('media') // Replace with your storage bucket name
+          .upload(`admins/${file.name}`, file, { upsert: true });
+
+        if (uploadError) {
+          console.error('Error uploading image:', uploadError.message);
+          return;
+        }
+        const imagePath = uploadData.path;
+        // Update admin_image in DB
+        const { error: updateError } = await supabase
+          .from('admins')
+          .update({ admin_image: imagePath })
+          .eq('admin_email', admin.admin_email);
+        if (updateError) {
+          console.error('Error updating admin image:', updateError.message);
+        } else {
+          setAdmin({ ...admin, admin_image: imagePath });
+          console.log('Profile image updated successfully');
+        }
       }
     };
 
@@ -227,9 +250,8 @@ export function ProfileMobile() {
                onChange={handleImageChange}
                className='hidden'
                accept="image/*" 
-              />             
+            />             
             </div>
-            <Button className='px-4 py-2'>Change Profile Picture</Button> 
             </CardContent>
            </Card>
 

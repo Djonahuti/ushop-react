@@ -113,10 +113,33 @@ export function MobileEdit() {
     fetchCustomerData();
   }, [setValue]);
 
-  // Update Customer Image function
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setImageFile(event.target.files[0]);
+  // Update Customer Image function: upload immediately after selecting a file
+  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      setImageFile(file);
+      if (!customer) return;
+      // Upload image to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('media') // Replace with your storage bucket name
+        .upload(`customers/${file.name}`, file, { upsert: true });
+
+      if (uploadError) {
+        console.error('Error uploading image:', uploadError.message);
+        return;
+      }
+      const imagePath = uploadData.path;
+      // Update customer_image in DB
+      const { error: updateError } = await supabase
+        .from('customers')
+        .update({ customer_image: imagePath })
+        .eq('customer_email', customer.customer_email);
+      if (updateError) {
+        console.error('Error updating customer image:', updateError.message);
+      } else {
+        setCustomer({ ...customer, customer_image: imagePath });
+        console.log('Profile image updated successfully');
+      }
     }
   };
 
@@ -264,9 +287,8 @@ export function MobileEdit() {
                onChange={handleImageChange}
                className='hidden'
                accept="image/*" 
-              />             
+            />             
             </div>
-            <Button className='px-4 py-2'>Change Profile Picture</Button> 
             </CardContent>
            </Card>
 
