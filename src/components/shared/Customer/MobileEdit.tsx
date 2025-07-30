@@ -113,33 +113,10 @@ export function MobileEdit() {
     fetchCustomerData();
   }, [setValue]);
 
-  // Update Customer Image function: upload immediately after selecting a file
-  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Update Customer Image function: set file for upload on form submit
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
-      const file = event.target.files[0];
-      setImageFile(file);
-      if (!customer) return;
-      // Upload image to Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('media') // Replace with your storage bucket name
-        .upload(`customers/${file.name}`, file, { upsert: true });
-
-      if (uploadError) {
-        console.error('Error uploading image:', uploadError.message);
-        return;
-      }
-      const imagePath = uploadData.path;
-      // Update customer_image in DB
-      const { error: updateError } = await supabase
-        .from('customers')
-        .update({ customer_image: imagePath })
-        .eq('customer_email', customer.customer_email);
-      if (updateError) {
-        console.error('Error updating customer image:', updateError.message);
-      } else {
-        setCustomer({ ...customer, customer_image: imagePath });
-        console.log('Profile image updated successfully');
-      }
+      setImageFile(event.target.files[0]);
     }
   };
 
@@ -273,26 +250,25 @@ export function MobileEdit() {
                   <AvatarFallback className='text-3xl'>{customer.customer_name.split(" ").map((n) => n[0]).join("")}</AvatarFallback>
                 )}
               </Avatar>
-
               {/* Camera icon overlay */}
               <div className="absolute bottom-2 right-2 bg-white p-1 rounded-full shadow-md group-hover:scale-110 transition">
                 <CameraIcon  className='w-5 h-5 text-orange-700'/>
               </div>                       
             </Label>
-
-            {/* Hidden file input */}
-            <Input
-               type='file' 
-               id="customer_image" 
-               onChange={handleImageChange}
-               className='hidden'
-               accept="image/*" 
-            />             
             </div>
             </CardContent>
            </Card>
 
            <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
+            <div className="space-y-2">
+                <Label htmlFor="customer_image">Change Image</Label>
+                <Input
+                  id="customer_image"
+                  type="file"
+                  onChange={handleImageChange}
+                  accept="image/*"
+                />
+            </div>
             <div className="space-y-2">
                 <Label>Full Name</Label>
                 <Input
