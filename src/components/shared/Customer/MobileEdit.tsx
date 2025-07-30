@@ -38,6 +38,7 @@ export function MobileEdit() {
   const { register, handleSubmit, setValue } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
+  const [saving, setSaving] = useState(false);
 
   const [countries, setCountries] = useState<string[]>([]);
   const [statesList, setStatesList] = useState<string[]>([]);
@@ -122,21 +123,19 @@ export function MobileEdit() {
 
   // Update Customer function
   const onSubmit = async (data: FormData) => {
-    // Handle image upload let imagePath = customer?.customer_image || ''
-    let imagePath = customer?.customer_image; // Keep the existing image if no new image is uploaded
+    setSaving(true);
+    let imagePath = customer?.customer_image;
     if (imageFile) {
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('media') // Replace with your storage bucket name
+        .from('media')
         .upload(`customers/${imageFile.name}`, imageFile);
-
       if (uploadError) {
+        setSaving(false);
         console.error('Error uploading image:', uploadError.message);
         return;
       }
-      imagePath = uploadData.path; // Get the uploaded image path
+      imagePath = uploadData.path;
     }
-
-    // Update customer details
     const { error } = await supabase
       .from('customers')
       .update({
@@ -150,12 +149,11 @@ export function MobileEdit() {
         customer_image: imagePath,
       })
       .eq('customer_email', customer?.customer_email);
-
+    setSaving(false);
     if (error) {
       console.error('Error updating customer data:', error.message);
     } else {
-      console.log('Customer data updated successfully');
-      // Optionally, show a success message or redirect
+      window.location.reload();
     }
   };
 
@@ -356,7 +354,13 @@ export function MobileEdit() {
               />
             </div>
             <div className='flex justify-end space-x-4'>
-                <Button type="submit" className="col-span-2">Save Changes</Button>
+                <Button type="submit" className="col-span-2" disabled={saving}>
+                  {saving ? (
+                    <span className="flex items-center"><svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>Saving...</span>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </Button>
             </div>
            </form>
 
