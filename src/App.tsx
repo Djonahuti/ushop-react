@@ -54,6 +54,7 @@ import Bundle from "./_root/pages/Bundles"
 import Choices from "./_root/pages/Choices"
 import MailView from "./components/shared/Mail/MailView"
 import Coupons from "./_root/pages/Coupon"
+import RoleRedirect from "./routes/RoleRedirect"
 
 
 function App() {
@@ -265,6 +266,9 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Register />} />
         </Route>
+
+        {/* Role redirect route */}
+        <Route path="/role-redirect" element={<RoleRedirect />} />
       </Routes>
     </Router>
         </>

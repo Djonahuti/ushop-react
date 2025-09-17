@@ -138,7 +138,7 @@ export function LoginForm({
                     await supabase.auth.signInWithOAuth({
                       provider: 'google',
                       options: {
-                        redirectTo: `${window.location.origin}/overview`,
+                        redirectTo: `${window.location.origin}/role-redirect`,
                       }
                      });
                   }}
