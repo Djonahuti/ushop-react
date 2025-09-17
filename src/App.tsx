@@ -63,7 +63,7 @@ function App() {
   return (
     <>
     <main>
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <ThemeProvider>
         <>
     <Router>
       <Routes>
