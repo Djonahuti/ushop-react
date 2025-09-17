@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import supabase from "@/lib/supabaseClient";
 import { useAuth } from "@/context/AuthContext";
-import { Loader2 } from "lucide-react";
 
 export default function RoleRedirect() {
   const navigate = useNavigate();
@@ -81,12 +80,13 @@ export default function RoleRedirect() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <p className="text-sm text-muted-foreground">Checking your role...</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center my-nav">
+          <img
+            src="/logo/ushop-small.svg"
+            alt="logo"
+            className="animate-bounce"
+          />
         </div>
-      </div>
     );
   }
 
