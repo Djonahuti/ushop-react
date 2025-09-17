@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import supabase from "@/lib/supabaseClient";
 import { useAuth } from "@/context/AuthContext";
@@ -6,13 +6,21 @@ import { Loader2 } from "lucide-react";
 
 export default function RoleRedirect() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useAuth();
 
   useEffect(() => {
     const checkUserRole = async () => {
+      console.log('RoleRedirect: user object:', user);
+      
+      // Wait a bit for the user object to be available
       if (!user) {
-        navigate('/login');
+        console.log('RoleRedirect: No user found, waiting...');
+        setTimeout(() => {
+          if (!user) {
+            console.log('RoleRedirect: Still no user after delay, redirecting to login');
+            navigate('/login');
+          }
+        }, 1000);
         return;
       }
 
@@ -59,13 +67,17 @@ export default function RoleRedirect() {
       } catch (error) {
         console.error('Error checking user role:', error);
         navigate('/login');
-      } finally {
-        setLoading(false);
       }
     };
 
-    checkUserRole();
-  }, [user, navigate]);
+    // Only run when user is available and not loading
+    if (!loading && user) {
+      checkUserRole();
+    } else if (!loading && !user) {
+      console.log('RoleRedirect: No user and not loading, redirecting to login');
+      navigate('/login');
+    }
+  }, [user, loading, navigate]);
 
   if (loading) {
     return (
