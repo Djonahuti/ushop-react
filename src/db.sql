@@ -109,6 +109,37 @@ CREATE TABLE public.coupons (
   CONSTRAINT coupons_pkey PRIMARY KEY (coupon_id),
   CONSTRAINT coupons_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(product_id)
 );
+CREATE TYPE states AS ENUM (
+  'Abuja',
+  'Abia State',
+  'Adamawa State',
+  'Akwa-Ibom State',
+  'Anambra State',
+  'Bauchi State',
+  'Benue State',
+  'Bornu State',
+  'Cross River State',
+  'Delta State',
+  'Edo State',
+  'Enugu State',
+  'Imo State',
+  'Jigawa State',
+  'Kaduna State',
+  'Lagos State',
+  'Niger State',
+  'Ogun State',
+  'Platue State',
+  'Rivers State',
+  'Kastina State',
+  'Osun State',
+  'Oyo State',
+  'Sokoto State',
+  'Taraba State',
+  'Kogi State',
+  'Ekiti State',
+  'Kano State',
+  'Bayelsa State'
+);
 CREATE TABLE public.customers (
   customer_id bigint GENERATED ALWAYS AS IDENTITY NOT NULL UNIQUE,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
