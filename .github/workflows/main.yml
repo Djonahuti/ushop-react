@@ -1,0 +1,50 @@
+name: 🚀 Deploy Vite React App to cPanel via FTP
+
+on:
+  push:
+    branches:
+      - main   # change if your default branch is different (e.g. 'master')
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    name: Build & Upload to cPanel
+
+    steps:
+      # Step 1 — Checkout repository
+      - name: 📂 Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2 — Setup Node.js (match your local Node version)
+      - name: 🧱 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Step 3 — Install dependencies and build with injected secrets
+      - name: ⚙️ Install & Build Vite Project
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # add any other env vars your project needs
+        run: |
+          npm ci
+          npm run build
+
+      # Step 4 — Deploy compiled /dist folder to cPanel via FTP
+      - name: 📤 Deploy to cPanel
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ${{ secrets.FTP_PROTOCOL }}
+          local-dir: ./dist/              # upload only built output
+          server-dir: /public_html/       # adjust for your hosting path
+          exclude: |
+            **/.git*
+            **/.github*
+            **/node_modules/**
+            **/.env
+            **/.DS_Store
+          timeout: 60000
