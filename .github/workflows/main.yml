@@ -40,7 +40,6 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ${{ secrets.FTP_PROTOCOL }}
           local-dir: ./dist/              # upload only built output
-          server-dir: /public_html/       # adjust for your hosting path
           exclude: |
             **/.git*
             **/.github*
