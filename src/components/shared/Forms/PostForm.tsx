@@ -63,7 +63,7 @@ const PostForm: React.FC = () => {
 
     fetchData();
   }, []);
-
+ 
   const onSubmit = async (data: FormData) => {
     setIsPending(true);
     try {
