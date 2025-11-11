@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import supabase from '@/lib/supabaseClient';
+import { apiGet, apiPost } from '@/lib/api';
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
@@ -33,7 +33,7 @@ export default function ConfirmPay() {
 
   useEffect(() => {
     const loadBanks = async () => {
-      const { data: banksData } = await supabase.from('banks').select('*');
+      const banksData = await apiGet<any[]>('/banks.php');
       setBanks(banksData || []);
     };
     loadBanks();
@@ -44,7 +44,7 @@ export default function ConfirmPay() {
     const { invoice_no, amount, ref_no } = values;
 
     // Insert payment record
-    await supabase.from('payments').insert({
+    await apiPost('/payments.php', {
       invoice_no: Number(invoice_no),
       amount: Number(amount),
       payment_mode: 'offline',
@@ -54,27 +54,23 @@ export default function ConfirmPay() {
     });
 
     // Update order status to Paid
-    await supabase.from('orders').update({ order_status: 'Paid' }).eq('invoice_no', invoice_no);
-    await supabase.from('pending_orders').update({ order_status: 'Paid' }).eq('invoice_no', invoice_no);
+    await fetch(`${window.location.origin}/api/orders_status_set.php?invoice_no=${invoice_no}&status=Paid`, { method: 'POST' });
+    await fetch(`${window.location.origin}/api/pending_orders_status_set.php?invoice_no=${invoice_no}&status=Paid`, { method: 'POST' });
 
     // Log the status update in order_status_history
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .select('order_id')
-      .eq('invoice_no', invoice_no)
-      .single();
+    const all = await apiGet<any[]>('/orders.php');
+    const found = all.find(o => String(o.invoice_no) === String(invoice_no));
+    if (!found) { alert('Failed to find order.'); setIsPending(false); return; }
+    await fetch(`${window.location.origin}/api/order_status_history.php`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: found.order_id, status: 'Paid' }) });   
 
-    if (orderError || !orderData) {
-      alert('Failed to find order.');
-      setIsPending(false);
-      return;
+    // Send invoice email
+    try {
+      await apiPost('/send_invoice_email.php', { order_id: found.order_id });
+    } catch (error) {
+      console.error('Failed to send invoice email:', error);
     }
 
-    await supabase
-      .from('order_status_history')
-      .insert([{ order_id: orderData.order_id, status: 'Paid' }]);    
-
-    alert('Your payment confirmation has been submitted!');
+    alert('Your payment confirmation has been submitted! Invoice has been sent to your email.');
     navigate('/my-orders');
     setIsPending(false);
   };

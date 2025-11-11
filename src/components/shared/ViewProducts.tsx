@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import supabase from '@/lib/supabaseClient';
+import { apiGet, apiDelete } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, Pencil, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -31,30 +31,48 @@ export default function ProductList({ itemsPerPage = 4 }: Props) {
 
   // Function to delete a product
   const deleteProduct = async (productId: number) => {
-    const { error } = await supabase
-      .from('products')
-      .delete()
-      .eq('product_id', productId);
-  
-    if (error) {
-      console.error('Error deleting product:', error.message);
-      toast.error('Failed to delete product');
-    } else {
+    try {
+      await apiDelete('/products.php', { product_id: productId });
       toast.success('Product deleted successfully');
-      // Optionally, refresh the product list or redirect
+      // Refresh the product list
+      const allProducts = await apiGet<any[]>('/products.php');
+      const categories = await apiGet<any[]>('/categories.php');
+      const manufacturers = await apiGet<any[]>('/manufacturers.php');
+      const productCategories = await apiGet<any[]>('/product_categories.php');
+      
+      const hydrated = (allProducts || []).sort((a, b) => b.product_id - a.product_id).map(p => ({
+        ...p,
+        categories: categories?.find(c => c.cat_id === p.cat_id),
+        manufacturers: manufacturers?.find(m => m.manufacturer_id === p.manufacturer_id),
+        product_categories: productCategories?.find(pc => pc.p_cat_id === p.p_cat_id),
+      }));
+      setProducts(hydrated);
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast.error('Failed to delete product');
     }
   };
 
-  // Fetch products from Supabase
+  // Fetch products from API
   useEffect(() => {
     const fetchProducts = async () => {
-      const { data, error } = await supabase.from('products').select('*, manufacturers(manufacturer_title), categories(cat_title), product_categories(p_cat_title)').order('product_id', { ascending: false });
-
-      if (error) {
+      try {
+        const allProducts = await apiGet<any[]>('/products.php');
+        const categories = await apiGet<any[]>('/categories.php');
+        const manufacturers = await apiGet<any[]>('/manufacturers.php');
+        const productCategories = await apiGet<any[]>('/product_categories.php');
+        
+        const hydrated = (allProducts || []).sort((a, b) => b.product_id - a.product_id).map(p => ({
+          ...p,
+          categories: categories?.find(c => c.cat_id === p.cat_id),
+          manufacturers: manufacturers?.find(m => m.manufacturer_id === p.manufacturer_id),
+          product_categories: productCategories?.find(pc => pc.p_cat_id === p.p_cat_id),
+        }));
+        
+        setProducts(hydrated);
+      } catch (error) {
         setError('Failed to fetch products');
         console.error(error);
-      } else {
-        setProducts(data || []);
       }
 
       setLoading(false);

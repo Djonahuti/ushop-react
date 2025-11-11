@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import supabase from '@/lib/supabaseClient';
+import { apiGet, apiPost } from '@/lib/api';
 import { Bank, Customer } from '@/types';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -15,7 +15,7 @@ export default function Checkout() {
 
   useEffect(() => {
     const loadBanks = async () => {
-      const { data: banksData } = await supabase.from('banks').select('*');
+      const banksData = await apiGet<Bank[]>('/banks.php');
       setBanks(banksData || []);
     };
     loadBanks();
@@ -30,26 +30,21 @@ export default function Checkout() {
 
   useEffect(() => {
     const fetchCustomerAndCart = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: customerData } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('customer_email', user.email)
-        .single();
-
+      const email = localStorage.getItem('auth_email');
+      if (!email) return;
+      const customers = await apiGet<any[]>(`/customers.php?email=${encodeURIComponent(email)}`);
+      const customerData = customers?.[0];
       if (!customerData) return;
+      setCustomer(customerData);
 
-    setCustomer(customerData);
-
-      const { data: cartData } = await supabase
-        .from('cart')
-        .select('*, products(product_title, product_price, product_img1)')
-        .eq('customer_id', customerData.customer_id || 0);
-
-      setCart(cartData || []);
-      const totalAmount = (cartData || []).reduce((sum, item) => sum + (Number(item.p_price) * item.qty), 0);
+      const cartData = await apiGet<any[]>(`/cart.php?customer_id=${customerData.customer_id}`);
+      const enriched: any[] = [];
+      for (const c of (cartData || [])) {
+        const p = await apiGet<any>(`/product.php?product_id=${c.product_id}`);
+        enriched.push({ ...c, products: { product_title: p?.product_title, product_price: p?.product_price, product_img1: p?.product_img1 } });
+      }
+      setCart(enriched);
+      const totalAmount = (enriched || []).reduce((sum, item) => sum + (Number(item.p_price) * item.qty), 0);
       setTotal(totalAmount);
     };
 
@@ -57,32 +52,13 @@ export default function Checkout() {
   }, []);
 
   const handleApplyCoupon = async () => {
-    const { data: coupon, error } = await supabase
-      .from('coupons')
-      .select('*')
-      .eq('coupon_code', couponCode)
-      .single();
-
-    if (error || !coupon) {
-      toast.error("Invalid coupon code");
-      return;
-    }
-
-    // Only apply if coupon not exhausted
-    if (!coupon || coupon.coupon_used >= coupon.coupon_limit) {
-      toast.error("Invalid or Expired coupon");
-      return;
-    }
-
+    const coupon = await apiGet<any>(`/coupons.php?code=${encodeURIComponent(couponCode)}`);
+    if (!coupon) { toast.error('Invalid coupon code'); return; }
+    if (coupon.coupon_used >= coupon.coupon_limit) { toast.error('Invalid or Expired coupon'); return; }
     const discounted = total - Number(coupon.coupon_price);
     setDiscount(Number(coupon.coupon_price));
     setTotal(discounted < 0 ? 0 : discounted);
-
-    // Optionally increment used count
-    await supabase
-      .from('coupons')
-      .update({ coupon_used: coupon.coupon_used + 1 })
-      .eq('coupon_id', coupon.coupon_id);
+    await apiPost('/coupons_update_used.php', { coupon_id: coupon.coupon_id, coupon_used: coupon.coupon_used + 1 });
   };
 
   const handlePlaceOrder = async () => {
@@ -98,28 +74,16 @@ export default function Checkout() {
       // Generate a unique invoice number
       while (!isUnique) {
         invoice_no = Math.floor(Math.random() * 900000000000) + 100000000000; // Generate a random invoice number
-  
-        // Check if the invoice number already exists in both tables
-        const { data: existingOrder } = await supabase
-          .from('orders')
-          .select('invoice_no')
-          .eq('invoice_no', invoice_no)
-          .single();
-  
-        const { data: existingPendingOrder } = await supabase
-          .from('pending_orders')
-          .select('invoice_no')
-          .eq('invoice_no', invoice_no)
-          .single();
-  
-        // If no existing invoice found in both tables, we have a unique invoice number
+
+        const existingOrder = await apiGet<any | null>(`/orders.php?invoice_no=${invoice_no}`);
+        const existingPendingOrder = await apiGet<any | null>(`/pending_orders.php?invoice_no=${invoice_no}`);
+
         isUnique = !existingOrder && !existingPendingOrder;
       }
 
     // Save to orders
     try {
-      // First, insert the order into the orders table
-      const { error: orderInsertError } = await supabase.from('orders').insert({
+      const newOrder = await apiPost<any>('/orders.php', {
         customer_id: customer.customer_id,
         due_amount: Math.round(total),
         invoice_no,
@@ -127,123 +91,68 @@ export default function Checkout() {
         order_status: 'Pending',
       });
 
-      if (orderInsertError) {
-        console.error("Order insert error:", orderInsertError);
+      if (!newOrder?.order_id) {
         toast.error("Failed to place order.");
         return;
       }
 
-      // Retrieve the order ID of the newly created order
-      const { data: orderData, error: orderFetchError } = await supabase
-        .from('orders')
-        .select('order_id')
-        .eq('invoice_no', invoice_no)
-        .single();
+      const pendingOrder = await apiPost<any>('/pending_orders.php', {
+        customer_id: customer.customer_id,
+        invoice_no,
+        order_status: 'Pending',
+        order_id: newOrder.order_id,
+      });
 
-      if (orderFetchError || !orderData) {
-        console.error("Failed to fetch order ID:", orderFetchError);
-        toast.error("Failed to log order status.");
+      if (!pendingOrder?.p_order_id) {
+        toast.error("Failed to create pending order.");
         return;
       }
 
-        // Now insert each product into the pending_orders and pending_order_items
-        const { error: pendingOrderError } = await supabase.from('pending_orders').insert({
-          customer_id: customer.customer_id,
-          invoice_no, // Use the same invoice_no for all products
-          order_status: 'Pending',
+      for (const item of cart) {
+        const prod = await apiGet<any>(`/product.php?product_id=${item.product_id}`);
+        await apiPost('/pending_order_items.php', {
+          pending_order_id: pendingOrder.p_order_id,
+          product_id: item.product_id,
+          qty: item.qty,
+          size: item.size,
+          seller_id: prod?.seller_id ?? null,
         });
-  
-        if (pendingOrderError) {
-          console.error("Pending order insert error:", pendingOrderError);
-          toast.error("Failed to create pending order.");
-          return;
-        }
-  
-        // Retrieve the pending order ID
-        const { data: pendingOrderData, error: pendingOrderFetchError } = await supabase
-          .from('pending_orders')
-          .select('p_order_id')
-          .eq('invoice_no', invoice_no)
-          .single();
-  
-        if (pendingOrderFetchError || !pendingOrderData) {
-          console.error("Failed to fetch pending order ID:", pendingOrderFetchError);
-          toast.error("Failed to log pending order status.");
-          return;
-        }      
 
-        // Insert each product into the order_items and pending_order_items table
-        for (const item of cart) {
-          // Retrieve the seller_id from the product
-          const { data: productData, error: productError } = await supabase
-            .from('products')
-            .select('seller_id')
-            .eq('product_id', item.product_id)
-            .single();
-  
-          if (productError || !productData) {
-            console.error("Failed to fetch product data:", productError?.message);
-            toast.error("Failed to retrieve product information.");
-            return;
-          }
+        await apiPost('/order_items.php', {
+          order_id: newOrder.order_id,
+          product_id: item.product_id,
+          qty: item.qty,
+          size: item.size,
+        });
+      }
 
-          // Insert into pending_order_items
-          const { error: pendingOrderItemError } = await supabase.from('pending_order_items').insert({
-            pending_order_id: pendingOrderData.p_order_id, // Use the pending order ID
-            product_id: item.product_id,
-            qty: item.qty,
-            size: item.size,
-            seller_id: productData.seller_id, // Include seller_id
-          });
-  
-          if (pendingOrderItemError) {
-            console.error("Pending order item insert error:", pendingOrderItemError);
-            toast.error("Failed to add product to pending order.");
-            return;
-          }          
-  
-          // Insert into order_items
-          const { error: orderItemError } = await supabase.from('order_items').insert({
-            order_id: orderData.order_id, // Use the order ID from the orders table
-            product_id: item.product_id,
-            qty: item.qty,
-            size: item.size,
-          });
-  
-          if (orderItemError) {
-            console.error("Order item insert error:", orderItemError);
-            toast.error("Failed to add product to order.");
-            return;
-          }
-  
-        }
-
-      // Log the status update in order_status_history
-      await supabase
-        .from('order_status_history')
-        .insert([{ order_id: orderData.order_id, status: 'Pending' }]);
+      await apiPost('/order_status_history.php', { order_id: newOrder.order_id, status: 'Pending' });
 
     // After successfully placing the order, check for bundles in the cart
     for (const item of cart) {
-      const { data: bundle } = await supabase
-        .from('choices')
-        .select('*')
-        .eq('choice_id', item.product_id) // Assuming product_id is used to identify bundles
-        .single();
+      const bundle = await apiGet<any>(`/choices.php?choice_id=${item.product_id}`);
 
-      if (bundle) {
-        // Delete from choices and choice_products
-        await supabase.from('choice_products').delete().eq('choice_id', bundle.choice_id);
-        await supabase.from('choices').delete().eq('choice_id', bundle.choice_id);
+      if (bundle && bundle.choice_id) {
+        await fetch(`${window.location.origin}/api/choice_products.php?choice_id=${bundle.choice_id}`, { method: 'DELETE' });
+        await fetch(`${window.location.origin}/api/choices.php?choice_id=${bundle.choice_id}`, { method: 'DELETE' });
       }
     }                
 
       // Clear the cart after successful order placement
-      await supabase.from('cart').delete().eq('customer_id', customer.customer_id);
+      await fetch(`${window.location.origin}/api/cart.php?customer_id=${customer.customer_id}`, { method: 'DELETE' });
+
+      // Send invoice email
+      if (newOrder?.order_id) {
+        try {
+          await apiPost('/send_invoice_email.php', { order_id: newOrder.order_id });
+        } catch (error) {
+          console.error('Failed to send invoice email:', error);
+        }
+      }
 
       setModalInvoiceNo(invoice_no ?? null);
       setShowModal(true);
-      toast.success("Order placed successfully!");
+      toast.success("Order placed successfully! Invoice has been sent to your email.");
     } catch (err) {
       console.error("Unexpected error placing order:", err);
       toast.error("Something went wrong while placing your order.");

@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import supabase from "@/lib/supabaseClient";
+import { apiGet } from "@/lib/api";
 import { Feedback } from "@/types"
 import { AvatarImage } from "@radix-ui/react-avatar";
 import { IconTruckDelivery } from "@tabler/icons-react";
@@ -13,47 +13,41 @@ const AllFeedbacks = () => {
 
     useEffect(() => {
         const fetchFeedbacks = async () => {            
-            const {data} = await supabase
-                .from('feedbacks')
-                .select(`
-                  feedback_id, order_id, order_item_id, rating, comment, created_at,
-                  feedtype:feedtype(feedback_type),
-                  order_item:order_items(order_item_id, products(product_id, product_title, product_img1)),
-                  orders:orders(order_id, customer_id, customers(customer_id, customer_name, customer_image))
-                `)
-                .order('created_at', { ascending: false});
-            
-            setFeedbacks(
-                (data || []).map((item: Record<string, unknown>) => {
-                    // Flatten nested arrays if needed
-                    const feedtype = item.feedtype && Array.isArray(item.feedtype) ? item.feedtype[0] : item.feedtype;
-                    const order_item = item.order_item && Array.isArray(item.order_item) ? item.order_item[0] : item.order_item;
-                    const orders = item.orders && Array.isArray(item.orders) ? item.orders[0] : item.orders;
-                    // Extract customer_id safely
-                    const customer_id = orders?.customers?.customer_id ?? null;
-                    // Extract feedtype_id safely
-                    const feedtype_id = feedtype?.feedtype_id ?? null;
-            
-                    return {
-                        feedback_id: Number(item.feedback_id),
-                        order_id: Number(item.order_id),
-                        order_item_id: item.order_item_id !== undefined && item.order_item_id !== null ? Number(item.order_item_id) : null,
-                        rating: Number(item.rating),
-                        comment: String(item.comment),
-                        created_at: String(item.created_at),
-                        feedtype: feedtype,
-                        feedtype_id: feedtype_id !== undefined && feedtype_id !== null ? Number(feedtype_id) : null,
-                        order_item: order_item,
-                        orders: orders,
-                        customer_id: customer_id !== undefined && customer_id !== null ? Number(customer_id) : null,
-                    } as Feedback;
-                })
-            );
-
-        };
-
-        fetchFeedbacks();
-    }, []);
+            const data = await apiGet<any[]>(`/feedbacks.php`)
+            const results: Feedback[] = []
+            for (const f of (data || [])) {
+                const orders = await apiGet<any>(`/orders.php?order_id=${f.order_id}`)
+                const customers = await apiGet<any[]>(`/customers.php`)
+                const customer = customers.find(c => c.customer_id === orders?.customer_id)
+                let order_item = null
+                if (f.order_item_id) {
+                  order_item = await apiGet<any>(`/order_items.php?order_id=${f.order_id}`)
+                  order_item = Array.isArray(order_item) ? order_item.find((oi:any)=>oi.order_item_id===f.order_item_id) : order_item
+                  if (order_item) {
+                    const p = await apiGet<any>(`/product.php?product_id=${order_item.product_id}`)
+                    order_item = { ...order_item, products: { product_id: p?.product_id, product_title: p?.product_title, product_img1: p?.product_img1 } }
+                  }
+                }
+                const feedtype = await apiGet<any[]>(`/feedtype.php`)
+                const ft = feedtype.find(x => x.feedtype_id === f.feedtype_id)
+                results.push({
+                    feedback_id: f.feedback_id,
+                    order_id: f.order_id,
+                    order_item_id: f.order_item_id,
+                    rating: f.rating,
+                    comment: f.comment,
+                    created_at: f.created_at,
+                    feedtype: ft ? { feedback_type: ft.feedback_type, feedtype_id: ft.feedtype_id } : undefined as any,
+                    feedtype_id: ft?.feedtype_id,
+                    order_item,
+                    orders: orders ? { order_id: orders.order_id, customer_id: orders.customer_id, customers: { customer_id: customer?.customer_id, customer_name: customer?.customer_name, customer_image: customer?.customer_image } } : undefined as any,
+                    customer_id: customer?.customer_id,
+                } as Feedback)
+            }
+            setFeedbacks(results)
+        }
+        fetchFeedbacks()
+    }, [])
   return (
     <div className="container mx-auto space-y-2 px-4">
         <div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import supabase from '@/lib/supabaseClient';
+import { apiGet } from '@/lib/api';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
@@ -35,36 +35,39 @@ export default function RelatedProducts({
 
   useEffect(() => {
     const fetchRelated = async () => {
-        let query = supabase
-          .from('products')
-          .select('*, manufacturers(manufacturer_title)')
-          .limit(4);
+      if (!manufacturer_id && !p_cat_id) { setLoading(false); return; }
       
-        // Apply manufacturer or product category filter
-        if (manufacturer_id && p_cat_id) {
-          query = query.or(`manufacturer_id.eq.${manufacturer_id},p_cat_id.eq.${p_cat_id}`);
-        } else if (manufacturer_id) {
-          query = query.eq('manufacturer_id', manufacturer_id);
-        } else if (p_cat_id) {
-          query = query.eq('p_cat_id', p_cat_id);
+      try {
+        let products: Product[] = [];
+        if (manufacturer_id) {
+          const manProducts = await apiGet<Product[]>(`/products.php?manufacturer_id=${manufacturer_id}`);
+          products = [...(manProducts || [])];
         }
-      
-        // Exclude current product
-        query = query.not('product_id', 'eq', currentProductId);
-      
-        const { data, error } = await query;
-      
-        if (error) {
-          console.error('Error fetching related products:', error.message);
+        if (p_cat_id) {
+          const catProducts = await apiGet<Product[]>(`/products.php?p_cat_id=${p_cat_id}`);
+          products = [...products, ...(catProducts || [])];
         }
-      
-        if (data) setRelated(data);
+        
+        const manufacturers = await apiGet<Array<{ manufacturer_id: number; manufacturer_title: string }>>('/manufacturers.php');
+        
+        const enriched = products
+          .filter(p => p.product_id !== currentProductId)
+          .slice(0, 4)
+          .map(p => ({
+            ...p,
+            manufacturers: manufacturers?.find(m => m.manufacturer_id === p.manufacturer_id)
+              ? { manufacturer_title: manufacturers.find(m => m.manufacturer_id === p.manufacturer_id)!.manufacturer_title }
+              : null,
+          }));
+        
+        setRelated(enriched);
+      } catch (error) {
+        console.error('Error fetching related products:', error);
+        }
         setLoading(false);
       };
 
-    if (manufacturer_id || p_cat_id) {
       fetchRelated();
-    }
   }, [manufacturer_id, p_cat_id, currentProductId]);
 
   if (loading) {

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import supabase from '@/lib/supabaseClient';
+import { apiPost, uploadFile } from '@/lib/api';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -34,31 +34,24 @@ const PostCategoryForm: React.FC = () => {
     // Handle image upload
     let imagePath = null;
     if (imageFile) {
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('media') // Replace with your actual bucket name
-        .upload(`categories/${imageFile.name}`, imageFile);
-
-      if (uploadError) {
-        console.error('Error uploading image:', uploadError.message);
+      const uploaded = await uploadFile(imageFile);
+      if (!uploaded) {
+        console.error('Error uploading image');
         return;
       }
-      imagePath = uploadData.path; // Get the uploaded image path
+      imagePath = uploaded;
     }
 
     // Insert category data into the database
-    const { error } = await supabase
-      .from('categories')
-      .insert({
+    try {
+      await apiPost('/categories.php', {
         cat_title: data.cat_title,
-        cat_top: data.cat_top,
+        cat_top: data.cat_top || false,
         cat_image: imagePath,
       });
-
-    if (error) {
-      console.error('Error adding category:', error.message);
-    } else {
       console.log('Category added successfully');
-      // Optionally, reset the form or show a success message
+    } catch (error) {
+      console.error('Error adding category:', error);
     }
   };
 

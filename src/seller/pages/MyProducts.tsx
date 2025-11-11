@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import supabase from '@/lib/supabaseClient';
+import { apiGet, apiDelete } from '@/lib/api';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, Pencil, Trash2 } from 'lucide-react';
@@ -31,58 +31,76 @@ export default function MyProducts({ itemsPerPage = 4 }: Props) {
 
   // Function to delete a product
   const deleteProduct = async (productId: number) => {
-    const { error } = await supabase
-      .from('products')
-      .delete()
-      .eq('product_id', productId);
-  
-    if (error) {
-      console.error('Error deleting product:', error.message);
-      toast.error('Failed to delete product');
-    } else {
+    try {
+      await apiDelete('/products.php', { product_id: productId });
       toast.success('Product deleted successfully');
-      // Optionally, refresh the product list or redirect
+      // Refresh the product list
+      const email = localStorage.getItem('auth_email');
+      if (email && sellerId) {
+        const allProducts = await apiGet<any[]>('/products.php');
+        const sellerProducts = allProducts?.filter(p => p.seller_id === sellerId) || [];
+        // Hydrate with related data
+        const categories = await apiGet<any[]>('/categories.php');
+        const manufacturers = await apiGet<any[]>('/manufacturers.php');
+        const productCategories = await apiGet<any[]>('/product_categories.php');
+        
+        const hydrated = sellerProducts.map(p => ({
+          ...p,
+          categories: categories?.find(c => c.cat_id === p.cat_id),
+          manufacturers: manufacturers?.find(m => m.manufacturer_id === p.manufacturer_id),
+          product_categories: productCategories?.find(pc => pc.p_cat_id === p.p_cat_id),
+        }));
+        setProducts(hydrated);
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast.error('Failed to delete product');
     }
   };
 
   useEffect(() => {
     const fetchSellerId = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const email = localStorage.getItem('auth_email');
+      if (!email) return;
 
-      const { data: sellerData, error: sellerError } = await supabase
-        .from('sellers')
-        .select('seller_id')
-        .eq('seller_email', user.email)
-        .single();
-
-      if (sellerError || !sellerData) {
-        console.error('Error fetching seller ID:', sellerError?.message);
-        return;
+      try {
+        const sellers = await apiGet<any[]>(`/sellers.php?email=${encodeURIComponent(email)}`);
+        if (sellers && sellers.length > 0) {
+          setSellerId(sellers[0].seller_id);
+        }
+      } catch (error) {
+        console.error('Error fetching seller ID:', error);
       }
-
-      setSellerId(sellerData.seller_id); // Set the seller ID
     };
 
     fetchSellerId();
   }, []);    
 
-  // Fetch products from Supabase
+  // Fetch products from API
   useEffect(() => {
     const fetchProducts = async () => {
       if (sellerId === null) return;
 
-      const { data, error } = await supabase
-       .from('products')
-       .select('*, manufacturers(manufacturer_title), categories(cat_title), product_categories(p_cat_title)')
-       .eq('seller_id', sellerId)
-       .order('product_id', { ascending: false });
-
-      if (error) {
+      try {
+        const allProducts = await apiGet<any[]>('/products.php');
+        const sellerProducts = (allProducts || []).filter(p => p.seller_id === sellerId).sort((a, b) => b.product_id - a.product_id);
+        
+        // Hydrate with related data
+        const categories = await apiGet<any[]>('/categories.php');
+        const manufacturers = await apiGet<any[]>('/manufacturers.php');
+        const productCategories = await apiGet<any[]>('/product_categories.php');
+        
+        const hydrated = sellerProducts.map(p => ({
+          ...p,
+          categories: categories?.find(c => c.cat_id === p.cat_id),
+          manufacturers: manufacturers?.find(m => m.manufacturer_id === p.manufacturer_id),
+          product_categories: productCategories?.find(pc => pc.p_cat_id === p.p_cat_id),
+        }));
+        
+        setProducts(hydrated);
+      } catch (error) {
         setError('Failed to fetch products');
         console.error(error);
-      } else {
-        setProducts(data || []);
       }
 
       setLoading(false);

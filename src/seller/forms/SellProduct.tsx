@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import supabase from '@/lib/supabaseClient';
+import { apiGet, apiPost, uploadFile } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -53,9 +53,9 @@ const SellProduct: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: categoriesData } = await supabase.from('categories').select('*');
-      const { data: manufacturersData } = await supabase.from('manufacturers').select('*');
-      const { data: productCategoriesData } = await supabase.from('product_categories').select('*');
+      const categoriesData = await apiGet<Category[]>('/categories.php');
+      const manufacturersData = await apiGet<Manufacturer[]>('/manufacturers.php');
+      const productCategoriesData = await apiGet<ProductCategory[]>('/product_categories.php');
 
       setCategories(categoriesData || []);
       setManufacturers(manufacturersData || []);
@@ -67,47 +67,54 @@ const SellProduct: React.FC = () => {
 
   useEffect(() => {
     const fetchSellerId = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: sellerData, error: sellerError } = await supabase
-        .from('sellers')
-        .select('seller_id')
-        .eq('seller_email', user.email)
-        .single();
-
-      if (sellerError || !sellerData) {
-        console.error('Error fetching seller ID:', sellerError?.message);
-        return;
+      const email = localStorage.getItem('auth_email');
+      if (!email) return;
+      // Simple seller lookup by email
+      const sellers = await apiGet<Array<{ seller_id: number; seller_email: string }>>('/sellers.php?email=' + encodeURIComponent(email));
+      if (sellers && sellers.length > 0) {
+        setSellerId(sellers[0].seller_id);
       }
-
-      setSellerId(sellerData.seller_id); // Set the seller ID
     };
-
     fetchSellerId();
   }, []);  
 
   const onSubmit = async (data: FormData) => {
     setIsPending(true);
     try {
-      const formData = {
-        ...data,
-        product_img1: data.product_img1?.[0]?.name || null,
-        product_img2: data.product_img2?.[0]?.name || null,
-        product_img3: data.product_img3?.[0]?.name || null,
-        product_video: data.product_video?.[0]?.name || null,
+      // Upload media if provided
+      let img1Path: string | null = null;
+      let img2Path: string | null = null;
+      let img3Path: string | null = null;
+      let videoPath: string | null = null;
+
+      if ((data as any).product_img1?.[0]) img1Path = await uploadFile((data as any).product_img1[0]);
+      if ((data as any).product_img2?.[0]) img2Path = await uploadFile((data as any).product_img2[0]);
+      if ((data as any).product_img3?.[0]) img3Path = await uploadFile((data as any).product_img3[0]);
+      if ((data as any).product_video?.[0]) videoPath = await uploadFile((data as any).product_video[0]);
+
+      const payload = {
+        product_title: data.product_title,
+        product_price: data.product_price,
+        product_desc: data.product_desc,
+        product_keywords: data.product_keywords,
+        product_label: data.product_label,
+        status: data.status,
+        product_psp_price: data.product_psp_price,
+        product_features: data.product_features || [],
+        item_qty: data.item_qty,
+        product_url: data.product_url,
+        product_img1: img1Path,
+        product_img2: img2Path,
+        product_img3: img3Path,
+        product_video: videoPath,
+        cat_id: data.cat_id,
+        manufacturer_id: data.manufacturer_id,
+        p_cat_id: data.p_cat_id,
         seller_id: sellerId,
       };
 
-      const { error } = await supabase.from('products').insert([formData]);
-
-      if (error) {
-        console.error('Error posting product:', error.message);
-        toast.error('Failed to post product.');
-      } else {
-        console.log('Product posted successfully');
+      await apiPost('/products.php', payload);
         toast.success('Product posted successfully!');
-      }
     } catch (err) {
       console.error('Unexpected error:', err);
       toast.error('An unexpected error occurred.');

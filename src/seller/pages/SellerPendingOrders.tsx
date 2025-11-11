@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import supabase from '@/lib/supabaseClient';
+import { apiGet } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { PendingOrder, PendingOrderItems } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -21,44 +21,35 @@ export default function SellerPendingOrders() {
 
   useEffect(() => {
     const fetchSellerId = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: sellerData, error: sellerError } = await supabase
-        .from('sellers')
-        .select('seller_id')
-        .eq('seller_email', user.email)
-        .single();
-
-      if (sellerError || !sellerData) {
-        console.error('Error fetching seller ID:', sellerError?.message);
-        return;
-      }
-
-      setSellerId(sellerData.seller_id); // Set the seller ID
+      const email = localStorage.getItem('auth_email');
+      if (!email) return;
+      const sellers = await apiGet<Array<{ seller_id:number; seller_email:string }>>('/sellers.php?email=' + encodeURIComponent(email));
+      const seller = sellers?.[0];
+      if (seller) setSellerId(seller.seller_id);
     };
-
     fetchSellerId();
   }, []);
 
   useEffect(() => {
     const fetchPending = async () => {
-      if (sellerId === null) return; // Ensure sellerId is available
-
-      const { data, error } = await supabase
-        .from('pending_orders')
-        .select(`*, pending_order_items(qty, products(product_title, product_price, product_img1)), customers(customer_name)`)
-        //.eq('seller_id', sellerId); // Filter by seller_id
-
-        if (error) {
-            console.error('Failed to fetch orders', error.message);
-            return;
-          }        
-
-      setOrders(data || []);
-      setFilteredOrders(data || []);
+      if (sellerId === null) return;
+      const po = await apiGet<any[]>('/pending_orders.php');
+      const enriched: any[] = [];
+      for (const p of po) {
+        const items = await apiGet<any[]>(`/pending_order_items.php?pending_order_id=${p.p_order_id}`);
+        const mapped: any[] = [];
+        for (const it of items.filter(x => x.seller_id === sellerId)) {
+          const prod = await apiGet<any>(`/product.php?product_id=${it.product_id}`);
+          mapped.push({ ...it, products: { product_title: prod?.product_title, product_price: prod?.product_price, product_img1: prod?.product_img1 } });
+        }
+        if (mapped.length === 0) continue;
+        const custs = await apiGet<any[]>('/customers.php');
+        const customer = custs.find(c => c.customer_id === p.customer_id);
+        enriched.push({ ...p, pending_order_items: mapped, customers: { customer_name: customer?.customer_name } });
+      }
+      setOrders(enriched as any);
+      setFilteredOrders(enriched as any);
     };
-
     fetchPending();
   }, [sellerId]);
 
@@ -78,124 +69,45 @@ export default function SellerPendingOrders() {
 
 
   const handleShipped = async (invoice_no: number) => {
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .select('order_id')
-      .eq('invoice_no', invoice_no)
-      .single();
-
-    if (orderError || !orderData) {
-      alert('Failed to find order.');
-      return;
-    }
-
-    await supabase
-      .from('orders')
-      .update({ order_status: 'SHIPPED' })
-      .eq('invoice_no', invoice_no);
-
-    await supabase
-      .from('pending_orders')
-      .update({ order_status: 'SHIPPED' })
-      .eq('invoice_no', invoice_no);
-
-    // Log the status update in order_status_history
-    await supabase
-      .from('order_status_history')
-      .insert([{ order_id: orderData.order_id, status: 'Shipped' }]);      
-
+    const ords = await apiGet<any[]>('/orders.php');
+    const found = ords.find(o => o.invoice_no === invoice_no);
+    if (!found) { alert('Failed to find order.'); return; }
+    await fetch(`${window.location.origin}/api/orders_status_set.php?invoice_no=${invoice_no}&status=SHIPPED`, { method: 'POST' });
+    await fetch(`${window.location.origin}/api/pending_orders_status_set.php?invoice_no=${invoice_no}&status=SHIPPED`, { method: 'POST' });
+    await fetch(`${window.location.origin}/api/order_status_history.php`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: found.order_id, status: 'Shipped' }) });
     alert('SHIPPED!');
     setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
 
   const handleWaiting = async (invoice_no: number) => {
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .select('order_id')
-      .eq('invoice_no', invoice_no)
-      .single();
-
-    if (orderError || !orderData) {
-      alert('Failed to find order.');
-      return;
-    } 
-
-    await supabase
-      .from('orders')
-      .update({ order_status: 'WAITING TO BE SHIPPED' })
-      .eq('invoice_no', invoice_no);
-
-    await supabase
-      .from('pending_orders')
-      .update({ order_status: 'WAITING TO BE SHIPPED' })
-      .eq('invoice_no', invoice_no);
-
-    // Log the status update in order_status_history
-    await supabase
-      .from('order_status_history')
-      .insert([{ order_id: orderData.order_id, status: 'Waiting to be Shipped' }]);      
-
+    const ords = await apiGet<any[]>('/orders.php');
+    const found = ords.find(o => o.invoice_no === invoice_no);
+    if (!found) { alert('Failed to find order.'); return; }
+    await fetch(`${window.location.origin}/api/orders_status_set.php?invoice_no=${invoice_no}&status=${encodeURIComponent('WAITING TO BE SHIPPED')}`, { method: 'POST' });
+    await fetch(`${window.location.origin}/api/pending_orders_status_set.php?invoice_no=${invoice_no}&status=${encodeURIComponent('WAITING TO BE SHIPPED')}`, { method: 'POST' });
+    await fetch(`${window.location.origin}/api/order_status_history.php`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: found.order_id, status: 'Waiting to be Shipped' }) });
     alert('WAITING TO BE SHIPPED!');
     setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
 
   const handleOutForDelivery = async (invoice_no: number) => {
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .select('order_id')
-      .eq('invoice_no', invoice_no)
-      .single();
-
-    if (orderError || !orderData) {
-      alert('Failed to find order.');
-      return;
-    }    
-    await supabase
-      .from('orders')
-      .update({ order_status: 'OUT FOR DELIVERY' })
-      .eq('invoice_no', invoice_no);
-
-    await supabase
-      .from('pending_orders')
-      .update({ order_status: 'OUT FOR DELIVERY' })
-      .eq('invoice_no', invoice_no);
-
-    // Log the status update in order_status_history
-    await supabase
-      .from('order_status_history')
-      .insert([{ order_id: orderData.order_id, status: 'Out for delivery' }]);      
-
+    const ords = await apiGet<any[]>('/orders.php');
+    const found = ords.find(o => o.invoice_no === invoice_no);
+    if (!found) { alert('Failed to find order.'); return; }
+    await fetch(`${window.location.origin}/api/orders_status_set.php?invoice_no=${invoice_no}&status=${encodeURIComponent('OUT FOR DELIVERY')}`, { method: 'POST' });
+    await fetch(`${window.location.origin}/api/pending_orders_status_set.php?invoice_no=${invoice_no}&status=${encodeURIComponent('OUT FOR DELIVERY')}`, { method: 'POST' });
+    await fetch(`${window.location.origin}/api/order_status_history.php`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: found.order_id, status: 'Out for delivery' }) });
     alert('OUT FOR DELIVERY!');
     setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
 
   const handleDelivered = async (invoice_no: number) => {
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .select('order_id')
-      .eq('invoice_no', invoice_no)
-      .single();
-
-    if (orderError || !orderData) {
-      alert('Failed to find order.');
-      return;
-    }    
-    
-    await supabase
-      .from('orders')
-      .update({ order_status: 'DELIVERED' })
-      .eq('invoice_no', invoice_no);
-
-    await supabase
-      .from('pending_orders')
-      .update({ order_status: 'DELIVERED' })
-      .eq('invoice_no', invoice_no);
-
-    // Log the status update in order_status_history
-    await supabase
-      .from('order_status_history')
-      .insert([{ order_id: orderData.order_id, status: 'Delivered' }]);      
-
+    const ords = await apiGet<any[]>('/orders.php');
+    const found = ords.find(o => o.invoice_no === invoice_no);
+    if (!found) { alert('Failed to find order.'); return; }
+    await fetch(`${window.location.origin}/api/orders_status_set.php?invoice_no=${invoice_no}&status=DELIVERED`, { method: 'POST' });
+    await fetch(`${window.location.origin}/api/pending_orders_status_set.php?invoice_no=${invoice_no}&status=DELIVERED`, { method: 'POST' });
+    await fetch(`${window.location.origin}/api/order_status_history.php`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: found.order_id, status: 'Delivered' }) });
     alert('DELIVERED!');
     setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };

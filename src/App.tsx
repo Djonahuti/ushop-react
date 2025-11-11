@@ -55,6 +55,7 @@ import Choices from "./_root/pages/Choices"
 import MailView from "./components/shared/Mail/MailView"
 import Coupons from "./_root/pages/Coupon"
 import RoleRedirect from "./routes/RoleRedirect"
+import VerifyEmail from "./routes/VerifyEmail"
 
 
 function App() {
@@ -269,6 +270,9 @@ function App() {
 
         {/* Role redirect route */}
         <Route path="/role-redirect" element={<RoleRedirect />} />
+        
+        {/* Email verification route */}
+        <Route path="/verify" element={<VerifyEmail />} />
       </Routes>
     </Router>
         </>

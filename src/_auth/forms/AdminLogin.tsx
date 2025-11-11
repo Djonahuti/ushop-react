@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import supabase from "@/lib/supabaseClient"
+import { apiPost } from "@/lib/api"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useState } from "react"
+import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 
 const schema = z.object({
@@ -29,20 +30,24 @@ export function AdminLogin({
   });
   
     const onSubmit = async (data: FormData) => {
-      setIsPending(true); // Show loader
-      const { error } = await supabase.auth.signInWithPassword({
-        email: data.admin_email,
-        password: data.admin_pass,
-      });
-  
-      if (error) {
-        console.error('Error logging in:', error.message);
-      } else {
-        console.log('Login successful');
-        
-        // Redirect or perform other actions after successful login
-        navigate('/admin-dashboard'); // Redirect to the dashboard or any other page
-        setIsPending(false); // Hide loader
+      setIsPending(true);
+      try {
+        const res = await apiPost<{ role: string; email: string }>('/login.php', {
+          email: data.admin_email,
+          password: data.admin_pass,
+        });
+        if (res.role !== 'admin') {
+          toast.error('Admin account not found');
+        } else {
+          localStorage.setItem('auth_email', res.email);
+          localStorage.setItem('auth_role', res.role);
+          navigate('/admin-dashboard');
+        }
+      } catch (error: any) {
+        console.error('Error logging in:', error?.message || error);
+        toast.error('Invalid credentials');
+      } finally {
+        setIsPending(false);
       }
     };
     
@@ -91,9 +96,6 @@ export function AdminLogin({
                   ) : (
                     "Login"
                   )}
-                </Button>
-                <Button variant="outline" className="w-full">
-                  Login with Google
                 </Button>
                   </div>
                 </div>

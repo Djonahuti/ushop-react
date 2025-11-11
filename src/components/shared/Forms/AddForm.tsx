@@ -9,7 +9,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from "sonner";
-import supabase from "@/lib/supabaseClient";
+import { apiPost, uploadFile } from "@/lib/api";
 
 // Validation schemas
 const categorySchema = z.object({
@@ -62,27 +62,14 @@ const AddForm: React.FC = () => {
     // Handle category image upload and insertion logic
       let imagePath = null;
       if (data.cat_image) {
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('media') // Replace with your actual bucket name
-          .upload(`categories/${data.cat_image.name}`, data.cat_image);
-  
-        if (uploadError) {
-          console.error('Error uploading image:', uploadError.message);
-          toast.error('Failed to upload image');
-          return;
-        }
-        imagePath = uploadData.path; // Get the uploaded image path
+        imagePath = await uploadFile(data.cat_image);
       }
-  
-      const { error } = await supabase
-        .from('categories')
-        .insert({
-          cat_title: data.cat_title,
-          cat_top: data.cat_top,
-          cat_image: imagePath,
-        });
-  
-      if (error) throw new Error(error.message);
+
+      await apiPost('/categories.php', {
+        cat_title: data.cat_title,
+        cat_top: data.cat_top,
+        cat_image: imagePath,
+      });
       toast.success('Category added successfully');
     } catch (error) {
       if (error instanceof Error) {
@@ -104,27 +91,14 @@ const AddForm: React.FC = () => {
     // Handle manufacturer image upload and insertion logic
       let imagePath = null;
       if (data.manufacturer_image) {
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('media') // Replace with your actual bucket name
-          .upload(`manufacturers/${data.manufacturer_image.name}`, data.manufacturer_image);
-  
-        if (uploadError) {
-          console.error('Error uploading image:', uploadError.message);
-          toast.error('Failed to upload image');
-          return;
-        }
-        imagePath = uploadData.path; // Get the uploaded image path
+        imagePath = await uploadFile(data.manufacturer_image);
       }
-  
-      const { error } = await supabase
-        .from('manufacturers')
-        .insert({
-          manufacturer_title: data.manufacturer_title,
-          manufacturer_top: data.manufacturer_top,
-          manufacturer_image: imagePath,
-        });
-  
-      if (error) throw new Error(error.message);
+
+      await apiPost('/manufacturers.php', {
+        manufacturer_title: data.manufacturer_title,
+        manufacturer_top: data.manufacturer_top,
+        manufacturer_image: imagePath,
+      });
       toast.success('Manufacturer added successfully');
     } catch (error) {
       if (error instanceof Error) {
@@ -144,27 +118,14 @@ const AddForm: React.FC = () => {
     // Handle product category image upload and insertion logic
       let imagePath = null;
       if (data.p_cat_image) {
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('media') // Replace with your actual bucket name
-          .upload(`product_categories/${data.p_cat_image.name}`, data.p_cat_image);
-  
-        if (uploadError) {
-          console.error('Error uploading image:', uploadError.message);
-          toast.error('Failed to upload image');
-          return;
-        }
-        imagePath = uploadData.path; // Get the uploaded image path
+        imagePath = await uploadFile(data.p_cat_image);
       }
-  
-      const { error } = await supabase
-        .from('product_categories')
-        .insert({
-          p_cat_title: data.p_cat_title,
-          p_cat_top: data.p_cat_top,
-          p_cat_image: imagePath,
-        });
-  
-      if (error) throw new Error(error.message);
+
+      await apiPost('/product_categories.php', {
+        p_cat_title: data.p_cat_title,
+        p_cat_top: data.p_cat_top,
+        p_cat_image: imagePath,
+      });
       toast.success('Product category added successfully');
     } catch (error) {
       if (error instanceof Error) {

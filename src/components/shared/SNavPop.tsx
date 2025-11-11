@@ -100,22 +100,14 @@ export function SNavPop() {
 
   React.useEffect(() => {
     const fetchSellerData = async () => {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const email = localStorage.getItem('auth_email');
+      if (!email) { setLoading(false); return; }
 
-      if (user) {
-        const { data, error } = await supabase
-          .from('sellers')
-          .select('*')
-          .eq('seller_email', user.email)
-          .single();
-
-        if (error) {
-          console.error('Error fetching seller data:', error.message);
-        } else {
-          setSeller(data);
-        }
-      } else if (userError) {
-        console.error('Error getting user:', userError.message);
+      try {
+        const sellers = await apiGet<Seller[]>(`/sellers.php?email=${encodeURIComponent(email)}`);
+        setSeller(sellers?.[0] || null);
+      } catch (error) {
+        console.error('Error fetching seller data:', error);
       }
       setLoading(false);
     };
@@ -140,7 +132,8 @@ export function SNavPop() {
   }  
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    localStorage.removeItem('auth_email');
+    localStorage.removeItem('auth_role');
     window.location.href = "/login"
   }
 
@@ -152,7 +145,7 @@ export function SNavPop() {
       <Avatar className="h-8 w-8 rounded-lg">
         {seller.seller_image ? (
         <AvatarImage
-         src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${seller.seller_image}`}
+         src={`/${seller.seller_image}`}
          alt={seller.seller_name}
          className="rounded-full" 
          />

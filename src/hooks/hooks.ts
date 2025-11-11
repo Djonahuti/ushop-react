@@ -1,4 +1,4 @@
-import supabase from "@/lib/supabaseClient";
+import { apiGet } from "@/lib/api";
 import { useEffect, useState } from "react";
 
 const useCustomerData = () => {
@@ -7,21 +7,13 @@ const useCustomerData = () => {
 
   useEffect(() => {
     const fetchCustomerData = async () => {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (user) {
-        const { data, error } = await supabase
-          .from('customers')
-          .select('*')
-          .eq('customer_email', user.email)
-          .single();
-
-        if (error) {
-          console.error('Error fetching customer data:', error.message);
-        } else {
-          setCustomer(data);
-        }
-      } else if (userError) {
-        console.error('Error getting user:', userError.message);
+      const email = localStorage.getItem('auth_email');
+      if (!email) { setLoading(false); return; }
+      try {
+        const data = await apiGet<any[]>(`/customers.php?email=${encodeURIComponent(email)}`);
+        setCustomer(data?.[0] || null);
+      } catch (error) {
+        console.error('Error fetching customer data:', error);
       }
       setLoading(false);
     };

@@ -1,7 +1,7 @@
 // hooks/useWishlistCount.ts
 import { useEffect, useState } from 'react';
 import { useCustomerId } from './useCustomerId';
-import supabase from '@/lib/supabaseClient';
+import { apiGet } from '@/lib/api';
 
 export const useWishlistCount = () => {
   const [count, setCount] = useState(0);
@@ -11,12 +11,8 @@ export const useWishlistCount = () => {
     const getCount = async () => {
       if (!customerId) return;
 
-      const { count } = await supabase
-        .from('wishlist')
-        .select('wishlist_id', { count: 'exact', head: true })
-        .eq('customer_id', customerId);
-
-      setCount(count || 0);
+      const items = await apiGet<any[]>(`/wishlist.php?customer_id=${customerId}`);
+      setCount(items?.length || 0);
     };
 
     getCount();

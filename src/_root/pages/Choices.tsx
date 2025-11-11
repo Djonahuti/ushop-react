@@ -2,7 +2,7 @@ import Items from "@/components/shared/Items"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import supabase from "@/lib/supabaseClient"
+import { apiGet, apiPost } from "@/lib/api"
 import { Category, Manufacturer, Product, ProductCategory } from "@/types"
 import { CheckCircle, FilterIcon, Search } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
@@ -52,24 +52,24 @@ const filteredProducts = products.filter((product) => {
 
     useEffect(() => {
       const fetchProducts = async () => {
-        const { data, error } = await supabase
-          .from('products')
-          .select(`
-            *,
-            manufacturers(manufacturer_title),
-            product_categories(p_cat_title),
-            categories(cat_title)
-          `)
-          .order('product_id', { ascending: false });
-
-        if (error) {
+        try {
+          const allProducts = await apiGet<any[]>('/products.php');
+          const categories = await apiGet<any[]>('/categories.php');
+          const manufacturers = await apiGet<any[]>('/manufacturers.php');
+          const productCategories = await apiGet<any[]>('/product_categories.php');
+          
+          const hydrated = (allProducts || []).sort((a, b) => b.product_id - a.product_id).map(p => ({
+            ...p,
+            manufacturers: manufacturers?.find(m => m.manufacturer_id === p.manufacturer_id),
+            product_categories: productCategories?.find(pc => pc.p_cat_id === p.p_cat_id),
+            categories: categories?.find(c => c.cat_id === p.cat_id),
+          }));
+          
+          setProducts(hydrated);
+        } catch (error) {
           setError('Failed to fetch products');
           console.error(error);
-        } else {
-          setProducts(data || []);
         }
-
-        //Final load complete
         setLoading(false);
       };
       fetchProducts();
@@ -78,57 +78,42 @@ const filteredProducts = products.filter((product) => {
     // Fetch and display Categories
     useEffect(() => {
       const fetchCategories = async () => {
-        const { data, error } = await supabase.from('categories').select('*');
-
-        if (error) {
+        try {
+          const data = await apiGet<any[]>('/categories.php');
+          setCategories(data || []);
+        } catch (error) {
           setError('Failed to fetch categories');
           console.error(error);
-        } else {
-          setCategories(data || []);
         }
-
-        //Final load complete
-        setLoading(false);        
       };
-
       fetchCategories();
     }, []);
 
     // Fetch and display Manufacturers
     useEffect(() => {
       const fetchManufacturers = async () => {
-        const { data, error } = await supabase.from('manufacturers').select('*');
-
-        if (error) {
+        try {
+          const data = await apiGet<any[]>('/manufacturers.php');
+          setManufacturers(data || []);
+        } catch (error) {
           setError('Failed to fetch manufacturers');
           console.error(error);
-        } else {
-          setManufacturers(data || []);
         }
-
-        //Final load complete
-        setLoading(false);        
       };
-
       fetchManufacturers();
     }, []);
 
     // Fetch and display Product Categories
     useEffect(() => {
       const fetchPCategories = async () => {
-        const { data, error } = await supabase.from('product_categories').select('*');
-
-        if (error) {
+        try {
+          const data = await apiGet<any[]>('/product_categories.php');
+          setPCategories(data || []);
+        } catch (error) {
           setError('Failed to fetch product categories');
           console.error(error);
-        } else {
-          setPCategories(data || []);
         }
-
-        //Final load complete
-        setLoading(false);        
       };
-
       fetchPCategories();
     }, []);
 

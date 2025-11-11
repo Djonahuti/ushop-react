@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import supabase from '@/lib/supabaseClient';
+import { apiGet, apiPost } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { CartItem } from '@/types';
 import { Trash2 } from 'lucide-react';
@@ -31,41 +31,33 @@ export default function Cart({
 
   useEffect(() => {
     async function fetchBundles() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data: customer } = await supabase
-        .from('customers')
-        .select('customer_id')
-        .eq('customer_email', user.email)
-        .single();
+      const email = localStorage.getItem('auth_email');
+      if (!email) return;
+      const customers = await apiGet<any[]>(`/customers.php?email=${encodeURIComponent(email)}`);
+      const customer = customers?.[0];
       if (!customer) return;
-  
-      // fetch all bundles for this customer
-      const { data } = await supabase
-        .from('choices')
-        .select(`
-          choice_id,
-          total_price,
-          choice_products (
-            choice_product_id,
-            original_price,
-            discounted_price,
-            products ( product_title, product_img1 )
-          )
-        `)
-        .eq('customer_id', customer.customer_id);
-  
-      setBundleItems(
-        (data || []).map((bundle): BundleItem => ({
-          choice_id: bundle.choice_id,
-          total_price: bundle.total_price,
-          choice_products: (bundle.choice_products || []).map((cp): BundleProduct => ({
-            choice_product_id: cp.choice_product_id,
-            discounted_price: cp.discounted_price,
-            products: Array.isArray(cp.products) ? cp.products[0] : cp.products,
-          })),
-        }))
-      );
+
+      const choices = await apiGet<any[]>(`/choices.php?customer_id=${customer.customer_id}`);
+      const bundles: BundleItem[] = [];
+      for (const choice of choices || []) {
+        const products = await apiGet<any[]>(`/choice_products.php?choice_id=${choice.choice_id}`);
+        const mapped = await Promise.all(
+          (products || []).map(async (cp) => {
+            const p = await apiGet<any>(`/product.php?product_id=${cp.product_id}`);
+            return {
+              choice_product_id: cp.choice_product_id,
+              discounted_price: cp.discounted_price,
+              products: { product_title: p?.product_title, product_img1: p?.product_img1 },
+            } as BundleProduct;
+          })
+        );
+        bundles.push({
+          choice_id: choice.choice_id,
+          total_price: choice.total_price,
+          choice_products: mapped,
+        });
+      }
+      setBundleItems(bundles);
     }
   
     fetchBundles();
@@ -75,35 +67,38 @@ export default function Cart({
   const total = items.reduce((sum, item) => sum + (Number(item.p_price) * item.qty), 0);
 
   const handleRemove = async (cart_id: number) => {
-    await supabase.from('cart').delete().eq('cart_id', cart_id);
+    await fetch(`${window.location.origin}/api/cart.php?cart_id=${cart_id}`, { method: 'DELETE' });
     setItems(items.filter(item => item.cart_id !== cart_id));
   };
   
   const handleQtyChange = async (cart_id: number, qty: number) => {
-    await supabase.from('cart').update({ qty }).eq('cart_id', cart_id);
+    await apiPost('/cart_update.php', { cart_id, qty });
     setItems(prev => prev.map(item => item.cart_id === cart_id ? { ...item, qty } : item));
   };
 
 
   useEffect(() => {
     const fetchCart = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const email = localStorage.getItem('auth_email');
+      if (!email) { setLoading(false); return; }
+      const customers = await apiGet<any[]>(`/customers.php?email=${encodeURIComponent(email)}`);
+      const customer = customers?.[0];
+      if (!customer) { setLoading(false); return; }
 
-      const { data: customer, error } = await supabase
-        .from('customers')
-        .select('customer_id')
-        .eq('customer_email', user.email)
-        .single();
-
-      if (error || !customer) return;
-
-      const { data, error: fetchError } = await supabase
-        .from('cart')
-        .select('*, products(product_title, product_img1)')
-        .eq('customer_id', customer.customer_id);
-
-      if (!fetchError) setItems(data || []);
+      const data = await apiGet<any[]>(`/cart.php?customer_id=${customer.customer_id}`);
+      const enriched: CartItem[] = [];
+      for (const item of data || []) {
+        const p = await apiGet<any>(`/product.php?product_id=${item.product_id}`);
+        enriched.push({
+          ...item,
+          products: {
+            product_title: p?.product_title,
+            product_img1: p?.product_img1,
+            product_price: p?.product_price,
+          },
+        });
+      }
+      setItems(enriched);
       setLoading(false);
     };
 

@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import supabase from "@/lib/supabaseClient";
+import { apiGet, apiPost, apiPut, uploadFile } from "@/lib/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -46,29 +46,27 @@ export function ProfileDesktop() {
   
     useEffect(() => {
       const fetchAdminData = async () => {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        const email = localStorage.getItem('auth_email');
+        if (!email) { setLoading(false); return; }
 
-        if (user) {
-          const { data, error } = await supabase
-            .from('admins')
-            .select('*')
-            .eq('admin_email', user.email)
-            .single();
-  
-          if (error) {
-            console.error('Error fetching admin data:', error.message);
-          } else {
+        try {
+          const admins = await apiGet<Admin[]>(`/admins.php?email=${encodeURIComponent(email)}`);
+          const data = admins?.[0];
+          
+          if (!data) {
+            setLoading(false);
+            return;
+          }
+          
             setAdmin(data);
-            // Set form values
             setValue('admin_name', data.admin_name);
             setValue('admin_email', data.admin_email);
             setValue('admin_country', data.admin_country);
             setValue('admin_job', data.admin_job);
             setValue('admin_contact', data.admin_contact);
             setValue('admin_about', data.admin_about);
-          }
-        } else if (userError) {
-        console.error('Error getting user:', userError.message);
+        } catch (error) {
+          console.error('Error fetching admin data:', error);
       }
         setLoading(false);
       };
@@ -85,91 +83,63 @@ export function ProfileDesktop() {
 
     // Update Admin function
     const onSubmit = async (data: FormData) => {
-      // Handle image upload
-      let imagePath = admin?.admin_image; // Keep the existing image if no new image is uploaded
+      let imagePath = admin?.admin_image;
       if (imageFile) {
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('media') // Replace with your storage bucket name
-          .upload(`admins/${imageFile.name}`, imageFile);
-  
-        if (uploadError) {
-          console.error('Error uploading image:', uploadError.message);
+        const uploaded = await uploadFile(imageFile);
+        if (!uploaded) {
+          console.error('Error uploading image');
           return;
         }
-        imagePath = uploadData.path; // Get the uploaded image path
+        imagePath = uploaded;
       }
   
-      // Update admin details
-      const { error } = await supabase
-        .from('admins')
-        .update({
+      try {
+        await apiPut('/admins.php', {
+          admin_email: admin?.admin_email,
           admin_name: data.admin_name,
-          admin_email: data.admin_email,
           admin_country: data.admin_country,
           admin_job: data.admin_job,
           admin_contact: data.admin_contact,
           admin_about: data.admin_about,
           admin_image: imagePath,
-        })
-        .eq('admin_email', admin?.admin_email);
-  
-      if (error) {
-        console.error('Error updating admin data:', error.message);
-      } else {
+        });
         console.log('Admin data updated successfully');
-        // Optionally, show a success message or redirect
+      } catch (error) {
+        console.error('Error updating admin data:', error);
       }
     };
 
     // Change Password function
     const changePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
-      // Sign in with the current password to verify it
-      const { data: { user } } = await supabase.auth.getUser();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user?.email || '', // Get the current user's email
-        password: currentPassword,
-      });
-    
-      if (signInError) {
-        console.error('Current password is incorrect:', signInError.message);
-        return;
-      }
-    
-      // If sign in is successful, update the password
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-    
-      if (updateError) {
-        console.error('Error updating password:', updateError.message);
-      } else {
+      const email = localStorage.getItem('auth_email');
+      if (!email) return;
+      
+      try {
+        await apiPost('/change_password.php', {
+          email,
+          current_password: currentPassword,
+          new_password: newPassword,
+          role: 'admin',
+        });
         console.log('Password updated successfully');
+      } catch (error) {
+        console.error('Error updating password:', error);
       }
     };
   
   // Delete Account function
   const deleteAccount = async (): Promise<void> => {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      console.error('Error getting user:', userError?.message);
-      return;
-    }
+    const email = localStorage.getItem('auth_email');
+    if (!email) return;
 
-    // You need to implement a secure backend function to delete a user.
-    // For demonstration, we'll just remove the admin record from the 'admins' table.
-    // WARNING: This does NOT delete the user from Supabase Auth!
-    const { error } = await supabase
-      .from('admins')
-      .delete()
-      .eq('admin_email', user.email);
-
-    if (error) {
-      console.error('Error deleting admin data:', error.message);
-    } else {
+    try {
+      await fetch(`${window.location.origin}/api/admins.php?email=${encodeURIComponent(email)}`, { method: 'DELETE' });
+      localStorage.removeItem('auth_email');
+      localStorage.removeItem('auth_role');
       console.log('Admin data deleted successfully');
-      // Optionally, sign out the user
-      await supabase.auth.signOut();
-      // Optionally, redirect the user or show a success message
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Error deleting admin data:', error);
     }
   };
   
@@ -203,7 +173,7 @@ export function ProfileDesktop() {
           <Avatar className="w-24 h-24">
             {admin.admin_image ? (
             <AvatarImage
-             src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${admin.admin_image}`} 
+             src={`/${admin.admin_image}`} 
              alt="Profile" />
         ): (
           <Avatar className="w-24 h-24" />

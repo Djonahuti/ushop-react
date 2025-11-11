@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import supabase from "@/lib/supabaseClient"
+import { apiGet, apiPost } from "@/lib/api"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -11,14 +11,15 @@ import { cn } from "@/lib/utils"
 import { useEffect, useState } from "react"
 import { Loader2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { toast } from "sonner"
 
 const getEnumValues = async (enumType: string): Promise<string[]> => {
-  const { data, error } = await supabase.rpc('get_enum_values', { enum_name: enumType });
-  if (error) {
-    console.error(`Error fetching ${enumType}:`, error.message);
+  try {
+    return await apiGet<string[]>(`/enum_values.php?enum=${encodeURIComponent(enumType)}`);
+  } catch (error) {
+    console.error(`Error fetching ${enumType}:`, error);
     return [];
   }
-  return data || [];
 };
 
 
@@ -65,45 +66,21 @@ export function RegisterForm({
   }, []);
 
   const onSubmit = async (data: FormData) => {
-    setIsPending(true); // Show loader
-      // Step 1: Sign up the user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.customer_email,
-        password: data.customer_pass,
+    setIsPending(true);
+    try {
+      await apiPost('/register_customer.php', {
+        ...data,
       });
-
-      if (authError) {
-        console.error('Error signing up:', authError.message);
-        setIsPending(false);
-        return;
-      }
-      const user = authData?.user;
-  
-      // Step 2: Store additional customer information in the customers table
-      const { error: dbError } = await supabase
-        .from('customers')
-        .insert([
-          {
-            customer_email: data.customer_email,
-            customer_name: data.customer_name,
-            customer_country: data.customer_country,
-            state: data.state,
-            customer_city: data.customer_city,
-            customer_contact: data.customer_contact,
-            customer_address: data.customer_address,
-            provider: 'supabase', // Optional: specify the provider
-            provider_id: user?.id, // Store the Supabase user ID
-          },
-        ]);
-  
-        setIsPending(false); // Hide loader
-  
-      if (dbError) {
-        console.error('Error storing customer information:', dbError.message);
-      } else {
-        console.log('Customer information stored successfully');
-        navigate('/');
-      }
+      localStorage.setItem('auth_email', data.customer_email);
+      localStorage.setItem('auth_role', 'customer');
+      toast.success('Account created successfully');
+      navigate('/overview');
+    } catch (error: any) {
+      console.error('Error storing customer information:', error?.message || error);
+      toast.error(error?.message || 'Failed to register');
+    } finally {
+      setIsPending(false);
+    }
     };
   
     return (
@@ -239,21 +216,6 @@ export function RegisterForm({
             "Sign Up"
           )}
         </Button>
-        <Button
-          variant="outline"
-          className="w-full"
-          type="button"
-          onClick={async () => {
-            await supabase.auth.signInWithOAuth({
-              provider: 'google',
-              options: {
-                redirectTo: `${window.location.origin}/role-redirect`,
-              }
-            });
-          }}
-        >
-          Sign Up with Google
-        </Button>            
           </div>
         </div>
         <div className="mt-4 text-center text-sm">

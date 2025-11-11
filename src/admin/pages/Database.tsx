@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/shared/data-table";
-import supabase from "@/lib/supabaseClient";
+import { apiGet, apiPost, apiDelete } from "@/lib/api";
 import { Customer, PendingOrder, Payment, Order } from "@/types";
 import { toast } from "sonner";
 import { BanknoteX, Handshake, PackageCheck, Truck } from "lucide-react";
@@ -21,15 +21,20 @@ export const Database = () => {
   
   useEffect(() => {
     const fetchPayments = async () => {
-      const { data, error } = await supabase.from('payments').select('*, banks(bank_name)').order('payment_id', { ascending: false });
-
-      if (error) {
+      try {
+        const paymentsData = await apiGet<any[]>('/payments.php');
+        const banks = await apiGet<any[]>('/banks.php');
+        
+        const hydrated = (paymentsData || []).sort((a, b) => b.payment_id - a.payment_id).map(p => ({
+          ...p,
+          banks: banks?.find(b => b.bank_id === p.bank_id),
+        }));
+        
+        setPayments(hydrated);
+      } catch (error) {
         setError('Failed to fetch payments');
         console.error(error);
-      } else {
-        setPayments(data || []);
       }
-
     };
 
     fetchPayments();
@@ -37,16 +42,19 @@ export const Database = () => {
   
   useEffect(() => {
     const fetchOrders = async () => {
-        const { data, error } = await supabase
-        .from('orders')
-        .select('*, customers(customer_name)')
-        .order('order_id', { ascending: false });
-
-        if (error) {
+        try {
+            const ordersData = await apiGet<any[]>('/orders.php');
+            const customers = await apiGet<any[]>('/customers.php');
+            
+            const hydrated = (ordersData || []).sort((a, b) => b.order_id - a.order_id).map(o => ({
+                ...o,
+                customers: customers?.find(c => c.customer_id === o.customer_id),
+            }));
+            
+            setOrders(hydrated);
+        } catch (error) {
             setError('Failed to fetch orders');
             console.error(error);
-        } else {
-            setOrders(data || []);
         }
     };
     fetchOrders();
@@ -54,13 +62,12 @@ export const Database = () => {
 
   useEffect(() => {
     const fetchCustomerData = async () => {
-        const { data, error } = await supabase.from('customers').select('*').order('customer_id', { ascending: false });
-
-        if (error) {
-            setError('Failed to fetch orders');
+        try {
+            const customersData = await apiGet<any[]>('/customers.php');
+            setUsers((customersData || []).sort((a, b) => b.customer_id - a.customer_id));
+        } catch (error) {
+            setError('Failed to fetch customers');
             console.error(error);
-        } else {
-            setUsers(data || []);
         }
     };
     fetchCustomerData();
@@ -68,16 +75,25 @@ export const Database = () => {
   
   useEffect(() => {
     const fetchPendingOrders = async () => {
-      const { data, error } = await supabase
-        .from('pending_orders')
-        .select(`*, pending_order_items(qty, products(product_title, product_img1)), customers(customer_name)`)
-        .order('invoice_no', { ascending: false });
-
-      if (error) {
+      try {
+        const pendingOrdersData = await apiGet<any[]>('/pending_orders.php');
+        const pendingOrderItems = await apiGet<any[]>('/pending_order_items.php');
+        const products = await apiGet<any[]>('/products.php');
+        const customers = await apiGet<any[]>('/customers.php');
+        
+        const hydrated = (pendingOrdersData || []).sort((a, b) => b.invoice_no - a.invoice_no).map(po => ({
+          ...po,
+          pending_order_items: pendingOrderItems?.filter(poi => poi.pending_order_id === po.pending_order_id).map(poi => ({
+            ...poi,
+            products: products?.find(p => p.product_id === poi.product_id),
+          })),
+          customers: customers?.find(c => c.customer_id === po.customer_id),
+        }));
+        
+        setPOrders(hydrated);
+      } catch (error) {
         setError('Failed to fetch pending orders');
         console.error(error);
-      } else {
-        setPOrders(data || []);
       }
     };
 
@@ -85,110 +101,117 @@ export const Database = () => {
   }, []);
 
   const handleConfirm = async (invoice_no: number) => {
-    await supabase
-      .from('orders')
-      .update({ order_status: 'Payment confirmed' })
-      .eq('invoice_no', invoice_no);
-
-    await supabase
-      .from('pending_orders')
-      .update({ order_status: 'Payment confirmed' })
-      .eq('invoice_no', invoice_no);
-
-    alert('Payment confirmed!');
-    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+    try {
+      await apiPost('/orders_status_set.php', { invoice_no, status: 'Payment confirmed' });
+      await apiPost('/pending_orders_status_set.php', { invoice_no, status: 'Payment confirmed' });
+      await fetch(`${window.location.origin}/api/order_status_history.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoice_no, status: 'Payment confirmed', updated_by: 'admin' }),
+      });
+      setOrders(prev => prev.map(o => o.invoice_no === invoice_no ? { ...o, order_status: 'Payment confirmed' } : o));
+      setPOrders(prev => prev.map(po => po.invoice_no === invoice_no ? { ...po, order_status: 'Payment confirmed' } : po));
+      toast.success('Payment confirmed!');
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to confirm payment');
+    }
   };
 
   const handleShipped = async (invoice_no: number) => {
-    await supabase
-      .from('orders')
-      .update({ order_status: 'SHIPPED' })
-      .eq('invoice_no', invoice_no);
-
-    await supabase
-      .from('pending_orders')
-      .update({ order_status: 'SHIPPED' })
-      .eq('invoice_no', invoice_no);
-
-    alert('SHIPPED!');
-    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+    try {
+      await apiPost('/orders_status_set.php', { invoice_no, status: 'SHIPPED' });
+      await apiPost('/pending_orders_status_set.php', { invoice_no, status: 'SHIPPED' });
+      await fetch(`${window.location.origin}/api/order_status_history.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoice_no, status: 'SHIPPED', updated_by: 'admin' }),
+      });
+      setOrders(prev => prev.map(o => o.invoice_no === invoice_no ? { ...o, order_status: 'SHIPPED' } : o));
+      setPOrders(prev => prev.map(po => po.invoice_no === invoice_no ? { ...po, order_status: 'SHIPPED' } : po));
+      toast.success('Marked as SHIPPED!');
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to mark as shipped');
+    }
   };
 
   const handleWaiting = async (invoice_no: number) => {
-    await supabase
-      .from('orders')
-      .update({ order_status: 'WAITING TO BE SHIPPED' })
-      .eq('invoice_no', invoice_no);
-
-    await supabase
-      .from('pending_orders')
-      .update({ order_status: 'WAITING TO BE SHIPPED' })
-      .eq('invoice_no', invoice_no);
-
-    alert('WAITING TO BE SHIPPED!');
-    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+    try {
+      await apiPost('/orders_status_set.php', { invoice_no, status: 'WAITING TO BE SHIPPED' });
+      await apiPost('/pending_orders_status_set.php', { invoice_no, status: 'WAITING TO BE SHIPPED' });
+      await fetch(`${window.location.origin}/api/order_status_history.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoice_no, status: 'WAITING TO BE SHIPPED', updated_by: 'admin' }),
+      });
+      setOrders(prev => prev.map(o => o.invoice_no === invoice_no ? { ...o, order_status: 'WAITING TO BE SHIPPED' } : o));
+      setPOrders(prev => prev.map(po => po.invoice_no === invoice_no ? { ...po, order_status: 'WAITING TO BE SHIPPED' } : po));
+      toast.success('Marked as WAITING TO BE SHIPPED!');
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to mark as waiting');
+    }
   };
 
   const handleOutForDelivery = async (invoice_no: number) => {
-    await supabase
-      .from('orders')
-      .update({ order_status: 'OUT FOR DELIVERY' })
-      .eq('invoice_no', invoice_no);
-
-    await supabase
-      .from('pending_orders')
-      .update({ order_status: 'OUT FOR DELIVERY' })
-      .eq('invoice_no', invoice_no);
-
-    alert('OUT FOR DELIVERY!');
-    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+    try {
+      await apiPost('/orders_status_set.php', { invoice_no, status: 'OUT FOR DELIVERY' });
+      await apiPost('/pending_orders_status_set.php', { invoice_no, status: 'OUT FOR DELIVERY' });
+      await fetch(`${window.location.origin}/api/order_status_history.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoice_no, status: 'OUT FOR DELIVERY', updated_by: 'admin' }),
+      });
+      setOrders(prev => prev.map(o => o.invoice_no === invoice_no ? { ...o, order_status: 'OUT FOR DELIVERY' } : o));
+      setPOrders(prev => prev.map(po => po.invoice_no === invoice_no ? { ...po, order_status: 'OUT FOR DELIVERY' } : po));
+      toast.success('Marked as OUT FOR DELIVERY!');
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to mark as out for delivery');
+    }
   };
 
   const handleDelivered = async (invoice_no: number) => {
-    await supabase
-      .from('orders')
-      .update({ order_status: 'DELIVERED' })
-      .eq('invoice_no', invoice_no);
-
-    await supabase
-      .from('pending_orders')
-      .update({ order_status: 'DELIVERED' })
-      .eq('invoice_no', invoice_no);
-
-    alert('DELIVERED!');
-    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+    try {
+      await apiPost('/orders_status_set.php', { invoice_no, status: 'DELIVERED' });
+      await apiPost('/pending_orders_status_set.php', { invoice_no, status: 'DELIVERED' });
+      await fetch(`${window.location.origin}/api/order_status_history.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoice_no, status: 'DELIVERED', updated_by: 'admin' }),
+      });
+      setOrders(prev => prev.map(o => o.invoice_no === invoice_no ? { ...o, order_status: 'DELIVERED' } : o));
+      setPOrders(prev => prev.map(po => po.invoice_no === invoice_no ? { ...po, order_status: 'DELIVERED' } : po));
+      toast.success('Marked as DELIVERED!');
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to mark as delivered');
+    }
   };
-
 
   // Function to delete a payment
   const deletePayment = async (paymentId: number) => {
-    const { error } = await supabase
-      .from('payments')
-      .delete()
-      .eq('payment_id', paymentId);
-  
-    if (error) {
-      console.error('Error deleting payment:', error.message);
-      toast.error('Failed to delete payment');
-    } else {
+    try {
+      await apiDelete('/payments.php', { payment_id: paymentId });
       toast.success('Payment deleted successfully');
-      setPayments(payments.filter(payment => payment.payment_id !== paymentId));
+      setPayments(prev => prev.filter(payment => payment.payment_id !== paymentId));
+    } catch (error: any) {
+      console.error('Error deleting payment:', error);
+      toast.error('Failed to delete payment');
     }
   };
 
   
 
   const deleteUser = async (customerId: number): Promise<void> => {
-    const { error } = await supabase
-      .from('customers')
-      .delete()
-      .eq('customer_id', customerId);
-  
-    if (error) {
-      console.error('Error deleting account:', error.message);
-    } else {
-      console.log('Account deleted successfully');
-      // Optionally, redirect the user or show a success message
+    try {
+      await apiDelete('/customers.php', { customer_id: customerId });
+      setUsers(prev => prev.filter(u => u.customer_id !== customerId));
+      toast.success('Account deleted successfully');
+    } catch (error: any) {
+      console.error('Error deleting account:', error);
+      toast.error('Failed to delete account');
     }
   };
 
@@ -322,7 +345,7 @@ export const Database = () => {
       cell: ({ row }) => (
         row.original.customer_image ? (
           <img
-           src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${row.original.customer_image}`}
+           src={`/${row.original.customer_image}`}
            alt={row.original.customer_name} 
            className="w-10 h-10 rounded-full border" />
         ) : (

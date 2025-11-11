@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import supabase from '@/lib/supabaseClient';
+import { apiGet } from '@/lib/api';
 import { WishlistItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
@@ -18,29 +18,40 @@ export default function Wishlist({
   
   // Handle remove item from wishlist
   const handleRemove = async (wishlist_id: number) => {
-    await supabase.from('wishlist').delete().eq('wishlist_id', wishlist_id);
+    // find the row to delete product by id
+    const row = items.find(i => i.wishlist_id === wishlist_id);
+    if (!row) return;
+    const email = localStorage.getItem('auth_email');
+    if (!email) return;
+    // get customer_id by email
+    const customers = await apiGet<Array<{ customer_id: number; customer_email: string }>>('/customers.php?email=' + encodeURIComponent(email));
+    const customerId = customers?.[0]?.customer_id;
+    if (!customerId) return;
+    await fetch(`${window.location.origin}/api/wishlist.php?customer_id=${customerId}&product_id=${row.product_id}`, { method: 'DELETE' });
     setItems(items.filter(item => item.wishlist_id !== wishlist_id));
   };
 
   useEffect(() => {
     const fetchWishlist = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: customer, error } = await supabase
-        .from('customers')
-        .select('customer_id')
-        .eq('customer_email', user.email)
-        .single();
-
-      if (error || !customer) return;
-
-      const { data, error: fetchError } = await supabase
-        .from('wishlist')
-        .select('*, products(product_title, product_img1, product_price, product_psp_price, manufacturers(manufacturer_title), manufacturer_id)')
-        .eq('customer_id', customer.customer_id);
-
-      if (!fetchError) setItems(data || []);
+      const email = localStorage.getItem('auth_email');
+      if (!email) { setLoading(false); return; }
+      // fetch customer_id by email
+      const customers = await apiGet<Array<{ customer_id: number; customer_email: string }>>('/customers.php?email=' + encodeURIComponent(email));
+      const customer = customers?.[0];
+      if (!customer) { setLoading(false); return; }
+      // load wishlist items; the UI expects joined product data previously,
+      // so we will fetch wishlist then fetch product details for each
+      const wishlist = await apiGet<any[]>(`/wishlist.php?customer_id=${customer.customer_id}`);
+      const productsById = new Map<number, any>();
+      const results: any[] = [];
+      for (const w of wishlist) {
+        if (!productsById.has(w.product_id)) {
+          const p = await apiGet<any>(`/product.php?product_id=${w.product_id}`);
+          productsById.set(w.product_id, p);
+        }
+        results.push({ ...w, products: productsById.get(w.product_id) });
+      }
+      setItems(results as any);
       setLoading(false);
     };
 

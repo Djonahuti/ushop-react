@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Customer } from "@/types";
 import { useEffect, useState } from "react";
-import supabase from "@/lib/supabaseClient";
+import { apiGet } from "@/lib/api";
 import ThemeToggle from "../ThemeToggle";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
@@ -13,22 +13,14 @@ const Topbar = () => {
 
   useEffect(() => {
     const fetchCustomerData = async () => {
-      const {data: {user}, error: userError} = await supabase.auth.getUser();
+      const email = localStorage.getItem('auth_email');
+      if (!email) return;
 
-      if (user) {
-        const {data, error} = await supabase
-        .from('customers')
-        .select('*')
-        .eq('customer_email', user.email)
-        .single();
-
-        if (error) {
-          console.error('Error fetching customer data:', error.message);
-        } else {
-          setCustomer(data);
-        }
-      } else if (userError) {
-        console.error('Error getting user:', userError.message);
+      try {
+        const customers = await apiGet<Customer[]>(`/customers.php?email=${encodeURIComponent(email)}`);
+        setCustomer(customers?.[0] || null);
+      } catch (error) {
+        console.error('Error fetching customer data:', error);
       }
     };
 
@@ -36,7 +28,8 @@ const Topbar = () => {
   }, []); 
 
     const handleLogout = async () => {
-      await supabase.auth.signOut()
+      localStorage.removeItem('auth_email');
+      localStorage.removeItem('auth_role');
       window.location.href = "/login"
     }  
   //const navigate = useNavigate();
@@ -59,7 +52,7 @@ const Topbar = () => {
             <Avatar className="h-10 w-10 rounded-full">
             {customer.customer_image ? (
             <AvatarImage
-            src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
+            src={`/${customer.customer_image}`}
             alt={customer.customer_name}
             className="w-10 h-10 rounded-full border-gray-300" 
             />
@@ -78,7 +71,7 @@ const Topbar = () => {
               <Avatar className="h-8 w-8 rounded-full grayscale">
             {customer.customer_image ? (
                 <AvatarImage
-                  src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`} 
+                  src={`/${customer.customer_image}`} 
                   alt={customer.customer_name}
                   className="rounded-full" 
                 />

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import supabase from '@/lib/supabaseClient';
+import { apiGet, apiPost, apiPut, uploadFile } from '@/lib/api';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -13,12 +13,12 @@ import { CameraIcon } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const getEnumValues = async (enumType: string): Promise<string[]> => {
-  const { data, error } = await supabase.rpc('get_enum_values', { enum_name: enumType });
-  if (error) {
-    console.error(`Error fetching ${enumType}:`, error.message);
+  try {
+    return await apiGet<string[]>(`/enum_values.php?enum=${encodeURIComponent(enumType)}`) || [];
+  } catch (error) {
+    console.error(`Error fetching ${enumType}:`, error);
     return [];
   }
-  return data || [];
 };
 
 
@@ -82,21 +82,20 @@ export function MobileEdit() {
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   useEffect(() => {
-    // Fetch customer data from Supabase
     const fetchCustomerData = async () => {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (user) {
-        const { data, error } = await supabase
-          .from('customers')
-          .select('*')
-          .eq('customer_email', user.email)
-          .single();
-
-        if (error) {
-          console.error('Error fetching customer data:', error.message);
-        } else {
+      const email = localStorage.getItem('auth_email');
+      if (!email) { setLoading(false); return; }
+      
+      try {
+        const customers = await apiGet<Customer[]>(`/customers.php?email=${encodeURIComponent(email)}`);
+        const data = customers?.[0];
+        
+        if (!data) {
+          setLoading(false);
+          return;
+        }
+        
           setCustomer(data);
-          // Set form values
           setValue('customer_name', data.customer_name);
           setValue('customer_email', data.customer_email);
           setValue('customer_country', data.customer_country);
@@ -104,9 +103,8 @@ export function MobileEdit() {
           setValue('customer_city', data.customer_city);
           setValue('customer_contact', data.customer_contact);
           setValue('customer_address', data.customer_address);
-        }
-      } else if (userError) {
-        console.error('Error getting user:', userError.message);
+      } catch (error) {
+        console.error('Error fetching customer data:', error);
       }
       setLoading(false);
     };
@@ -126,86 +124,64 @@ export function MobileEdit() {
     setSaving(true);
     let imagePath = customer?.customer_image;
     if (imageFile) {
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('media')
-        .upload(`customers/${imageFile.name}`, imageFile);
-      if (uploadError) {
+      const uploaded = await uploadFile(imageFile);
+      if (!uploaded) {
         setSaving(false);
-        console.error('Error uploading image:', uploadError.message);
+        console.error('Error uploading image');
         return;
       }
-      imagePath = uploadData.path;
+      imagePath = uploaded;
     }
-    const { error } = await supabase
-      .from('customers')
-      .update({
+    
+    try {
+      await apiPut('/customers.php', {
+        customer_email: customer?.customer_email,
         customer_name: data.customer_name,
-        customer_email: data.customer_email,
         customer_country: data.customer_country,
         state: data.state,
         customer_city: data.customer_city,
         customer_contact: data.customer_contact,
         customer_address: data.customer_address,
         customer_image: imagePath,
-      })
-      .eq('customer_email', customer?.customer_email);
-    setSaving(false);
-    if (error) {
-      console.error('Error updating customer data:', error.message);
-    } else {
+      });
       window.location.reload();
+    } catch (error) {
+      console.error('Error updating customer data:', error);
     }
+    setSaving(false);
   };
 
   // Change Password function
   const changePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
-    // Sign in with the current password to verify it
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: user?.email || '', // Get the current user's email
-      password: currentPassword,
-    });
-  
-    if (signInError) {
-      console.error('Current password is incorrect:', signInError.message);
-      return;
-    }
-  
-    // If sign in is successful, update the password
-    const { error: updateError } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-  
-    if (updateError) {
-      console.error('Error updating password:', updateError.message);
-    } else {
+    const email = localStorage.getItem('auth_email');
+    if (!email) return;
+    
+    try {
+      await apiPost('/change_password.php', {
+        email,
+        current_password: currentPassword,
+        new_password: newPassword,
+        role: 'customer',
+      });
       console.log('Password updated successfully');
+    } catch (error) {
+      console.error('Error updating password:', error);
     }
   };
 
 // Delete Account function
   const deleteAccount = async (): Promise<void> => {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      console.error('Error getting user:', userError?.message);
-      return;
-    }
+    const email = localStorage.getItem('auth_email');
+    if (!email) return;
 
-    // You need to implement a secure backend function to delete a user.
-    // For demonstration, we'll just remove the customer record from the 'customers' table.
-    // WARNING: This does NOT delete the user from Supabase Auth!
-    const { error } = await supabase
-      .from('customers')
-      .delete()
-      .eq('customer_email', user.email);
-
-    if (error) {
-      console.error('Error deleting customer data:', error.message);
-    } else {
+    try {
+      await fetch(`${window.location.origin}/api/customers.php?email=${encodeURIComponent(email)}`, { method: 'DELETE' });
+      localStorage.removeItem('auth_email');
+      localStorage.removeItem('auth_role');
       console.log('Customer data deleted successfully');
-      // Optionally, sign out the user
-      await supabase.auth.signOut();
-      // Optionally, redirect the user or show a success message
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Error deleting customer data:', error);
     }
   };
 
@@ -242,7 +218,7 @@ export function MobileEdit() {
              <Avatar className="rounded-full w-32 h-32 mx-auto border-4 border-orange-700 mb-4 transition-transform duration-300 hover:scale-105 ring ring-gray-300">
               {customer.customer_image ? (
                 <AvatarImage 
-                  src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
+                  src={`/${customer.customer_image}`}
                   alt="Profile" />
                 ): (
                   <AvatarFallback className='text-3xl'>{customer.customer_name.split(" ").map((n) => n[0]).join("")}</AvatarFallback>

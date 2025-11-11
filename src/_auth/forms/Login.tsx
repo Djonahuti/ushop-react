@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import supabase from "@/lib/supabaseClient"
+import { apiPost } from "@/lib/api"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
@@ -30,58 +30,24 @@ export function LoginForm({
   });
   
   const onSubmit = async (data: FormData) => {
-    setIsPending(true); // Show loader
-    const { error } = await supabase.auth.signInWithPassword({
-      email: data.customer_email,
-      password: data.customer_pass,
-    });
-
-    if (error) {
-      console.error('Error logging in:', error.message);
-    } else {
-      console.log('Login successful');
-      toast.success('Login Successful')
-
-      // Check if the user is an admin
-      const { error: userError } = await supabase
-        .from('admins')
-        .select('*')
-        .eq('admin_email', data.customer_email)
-        .single();
-
-      if (!userError) {
-        // Redirect to admin dashboard
-        navigate('/admin-dashboard');
-      } else {
-        // If no admin found, check if it's a customer
-        const { error: customerError } = await supabase
-          .from('customers')
-          .select('*')
-          .eq('customer_email', data.customer_email)
-          .single();
-        if (!customerError) {
-          //Redirect to customer dashboard
-          navigate('/overview');
-        } else {
-          // If no customer found, check if it's a seller
-          const { error: sellerError } = await supabase
-            .from('sellers')
-            .select('*')
-            .eq('seller_email', data.customer_email)
-            .single();
-
-          if (!sellerError) {
-            // Redirect to seller dashboard
-            navigate('/seller-dashboard');
-          } else {
-            console.error('Error finding user:', customerError.message);
-            toast.error('Error finding user')
-          }
-        }
-
-      }
+    setIsPending(true);
+    try {
+      const res = await apiPost<{ role: 'admin' | 'customer' | 'seller'; email: string }>(
+        '/login.php',
+        { email: data.customer_email, password: data.customer_pass }
+      );
+      localStorage.setItem('auth_email', res.email);
+      localStorage.setItem('auth_role', res.role);
+      toast.success('Login Successful');
+      if (res.role === 'admin') navigate('/admin-dashboard');
+      else if (res.role === 'seller') navigate('/seller-dashboard');
+      else navigate('/overview');
+    } catch (e: any) {
+      console.error('Login failed', e?.message);
+      toast.error('Invalid email or password');
+    } finally {
+      setIsPending(false);
     }
-    setIsPending(false); // Hide loader
   };
     
       return (
@@ -130,21 +96,7 @@ export function LoginForm({
                     "Login"
                   )}
                 </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  type="button"
-                  onClick={async () => {
-                    await supabase.auth.signInWithOAuth({
-                      provider: 'google',
-                      options: {
-                        redirectTo: `${window.location.origin}/role-redirect`,
-                      }
-                     });
-                  }}
-                >
-                  Login with Google
-                </Button>
+                {/* Google OAuth removed as Supabase is no longer used */}
                   </div>
                 </div>
                 <div className="mt-4 text-center text-sm">

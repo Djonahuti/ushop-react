@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Heart, Ticket, CreditCard, Truck, Package, CheckCircle, Clock, Wallet } from "lucide-react"
 import { Customer, Order, OrderItem, Product } from "@/types"
 import { useEffect, useState } from "react"
-import supabase from "@/lib/supabaseClient"
+import { apiGet } from "@/lib/api"
 import { toast } from "sonner"
 import { Link } from "react-router-dom"
 import { Badge } from "../ui/badge"
@@ -16,73 +16,85 @@ export default function Overview() {
 
     useEffect(() => {
       const fetchCustomerData = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        const email = localStorage.getItem('auth_email');
+        if (!email) { setLoading(false); return; }
   
-        const { data: customerData, error } = await supabase
-          .from('customers')
-          .select('*')
-          .eq('customer_email', user.email)
-          .single();
+        try {
+          const customers = await apiGet<Customer[]>(`/customers.php?email=${encodeURIComponent(email)}`);
+          const customerData = customers?.[0];
+          
+          if (!customerData) {
+            toast.error('No customer found');
+            setLoading(false);
+            return;
+          }
   
-        if (error || !customerData) {
-          toast.error('No customer found');
-          setLoading(false);
-          return;
-        }
+          setCustomer(customerData);
   
-        setCustomer(customerData);
-  
-        const { data: orders, error: ordersError } = await supabase
-          .from('orders')
-          .select(`*, order_items(*, product_id, products(cat_id, p_cat_id, manufacturer_id))`)
-          .eq('customer_id', customerData.customer_id);
-
-          if (ordersError) {
+          const orders = await apiGet<Order[]>(`/orders.php?customer_id=${customerData.customer_id}`);
+          if (!orders) {
             toast.error('Error fetching orders');
             setLoading(false);
             return;
-          }          
-  
-        const seenIds = new Set<number>();
-        const catIds = new Set<number>();
-        const pCatIds = new Set<number>();
-        const manuIds = new Set<number>();
-  
-    // Loop through orders and extract product information
-
-    (orders as Order[])?.forEach((order: Order) => {
-      order.order_items.forEach((item: OrderItem) => {
-        if (item.product_id) seenIds.add(item.product_id);
-        if (item.products) {
-          if (item.products.cat_id) catIds.add(item.products.cat_id);
-          if (item.products.p_cat_id) pCatIds.add(item.products.p_cat_id);
-          if (item.products.manufacturer_id) manuIds.add(item.products.manufacturer_id);
-        }
-      });
-    });
-  
-        const filters = [
-          ...Array.from(catIds).map(id => `cat_id.eq.${id}`),
-          ...Array.from(pCatIds).map(id => `p_cat_id.eq.${id}`),
-          ...Array.from(manuIds).map(id => `manufacturer_id.eq.${id}`)
-        ];
-  
-        if (filters.length > 0) {
-          const { data: recs, error: recsError } = await supabase
-            .from('products')
-            .select('*, manufacturers(manufacturer_title)')
-            .or(filters.join(','))
-            .not('product_id', 'in', `(${Array.from(seenIds).join(',')})`)
-            .limit(10);
-      
-          if (recsError) {
-            toast.error('Error fetching recommendations');
-          } else {
-            setRecommended(recs || []);
           }
-        } else {
-          setRecommended([]);
+
+          const enrichedOrders: Order[] = [];
+          for (const order of orders) {
+            const orderItems = await apiGet<OrderItem[]>(`/order_items.php?order_id=${order.order_id}`);
+            const enrichedItems: OrderItem[] = [];
+            for (const item of orderItems || []) {
+              const product = await apiGet<any>(`/products.php?product_id=${item.product_id}`);
+              enrichedItems.push({
+                ...item,
+                products: product || null,
+              });
+            }
+            enrichedOrders.push({
+              ...order,
+              order_items: enrichedItems,
+            });
+          }
+  
+          const seenIds = new Set<number>();
+          const catIds = new Set<number>();
+          const pCatIds = new Set<number>();
+          const manuIds = new Set<number>();
+  
+          enrichedOrders.forEach((order: Order) => {
+            order.order_items.forEach((item: OrderItem) => {
+              if (item.product_id) seenIds.add(item.product_id);
+              if (item.products) {
+                if (item.products.cat_id) catIds.add(item.products.cat_id);
+                if (item.products.p_cat_id) pCatIds.add(item.products.p_cat_id);
+                if (item.products.manufacturer_id) manuIds.add(item.products.manufacturer_id);
+              }
+            });
+          });
+  
+          if (catIds.size > 0 || pCatIds.size > 0 || manuIds.size > 0) {
+            const allProducts = await apiGet<Product[]>('/products.php');
+            const manufacturers = await apiGet<Array<{ manufacturer_id: number; manufacturer_title: string }>>('/manufacturers.php');
+            
+            const recs = (allProducts || [])
+              .filter(p => 
+                (catIds.has(p.cat_id) || pCatIds.has(p.p_cat_id) || manuIds.has(p.manufacturer_id)) &&
+                !seenIds.has(p.product_id)
+              )
+              .slice(0, 10)
+              .map(p => ({
+                ...p,
+                manufacturers: manufacturers?.find(m => m.manufacturer_id === p.manufacturer_id)
+                  ? { manufacturer_title: manufacturers.find(m => m.manufacturer_id === p.manufacturer_id)!.manufacturer_title }
+                  : null,
+              })) as Product[];
+            
+            setRecommended(recs);
+          } else {
+            setRecommended([]);
+          }
+        } catch (error) {
+          console.error('Error fetching customer data:', error);
+          toast.error('Error loading data');
         }
         setLoading(false);
       };
@@ -104,7 +116,7 @@ export default function Overview() {
               <Avatar className="h-14 w-14 rounded-full">
                 {customer.customer_image ? (
                 <AvatarImage
-                 src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
+                 src={`/${customer.customer_image}`}
                  alt={customer.customer_name}
                  className="rounded-full" 
                  />

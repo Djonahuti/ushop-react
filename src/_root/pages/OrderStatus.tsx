@@ -1,7 +1,7 @@
 'use client'
 
 import { JSX, useEffect, useState } from 'react';
-import supabase from '@/lib/supabaseClient';
+import { apiGet } from '@/lib/api';
 import { OrderStatusHistory } from '@/types'; // Define this type according to your needs
 import { useLocation } from 'react-router-dom';
 import { CircleDollarSign, Clock, Handshake, Hourglass, Package, PackageCheck, ShieldCheck, Truck } from 'lucide-react';
@@ -53,17 +53,7 @@ const OrderStatus = () => {
   useEffect(() => {
     const fetchStatusHistory = async () => {
       if (!order_id) return;
-
-      const { data, error } = await supabase
-        .from('order_status_history')
-        .select('*, orders(invoice_no)')
-        .eq('order_id', order_id)
-        .order('updated_at', { ascending: true });
-
-      if (error) {
-        console.error('Failed to fetch status history:', error.message);
-      }
-
+      const data = await apiGet<any[]>(`/order_status_history.php?order_id=${order_id}`);
       setLoading(false);
       setStatusHistory(data || []);
     };

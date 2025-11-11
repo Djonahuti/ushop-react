@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom'; // remove if you're using Next.js
-import supabase from '@/lib/supabaseClient';
+import { apiGet, apiPost } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -24,25 +24,21 @@ export default function ProductDetails() {
 
   // Add to Cart functionality
   const handleAddToCart = async (product: Product) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const email = localStorage.getItem('auth_email');
+    if (!email) {
       toast.error('You must be logged in to add to cart.');
       return;
     }
   
-    // Fetch customer_id
-    const { data: customer, error } = await supabase
-      .from('customers')
-      .select('customer_id')
-      .eq('customer_email', user.email)
-      .single();
+    const customers = await apiGet<Array<{ customer_id: number }>>(`/customers.php?email=${encodeURIComponent(email)}`);
+    const customer = customers?.[0];
   
-    if (error || !customer) {
+    if (!customer) {
       toast.error('Customer not found.');
       return;
     }
   
-    await supabase.from('cart').insert({
+    await apiPost('/cart.php', {
       customer_id: customer.customer_id,
       product_id: product.product_id,
       qty,
@@ -56,34 +52,28 @@ export default function ProductDetails() {
 
   // Add to Cart Wishlist
   const handleAddWishlist = async (product: Product) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const email = localStorage.getItem('auth_email');
   
-    if (!user) {
+    if (!email) {
       toast.error('You must be logged in to add to wishlist.');
       return;
     }
   
-    // First, get customer_id from customers table
-    const { data: customer, error } = await supabase
-      .from('customers')
-      .select('customer_id')
-      .eq('customer_email', user.email)
-      .single();
+    const customers = await apiGet<Array<{ customer_id: number }>>(`/customers.php?email=${encodeURIComponent(email)}`);
+    const customer = customers?.[0];
   
-    if (error || !customer) {
+    if (!customer) {
       toast.error('Customer not found.');
       return;
     }
   
-    // Insert into wishlist
-    const { error: insertError } = await supabase.from('wishlist').insert({
+    const result = await apiPost('/wishlist.php', {
       customer_id: customer.customer_id,
-      product_id: product.product_id, // assuming `product` is in scope
+      product_id: product.product_id,
     });
   
-    if (insertError) {
+    if (!result) {
       toast.error('Failed to add to wishlist.');
-      console.error(insertError);
     } else {
       toast.success('Added to wishlist!');
     }
@@ -91,25 +81,37 @@ export default function ProductDetails() {
 
   useEffect(() => {
     const fetchProduct = async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
-          *,
-          manufacturers(manufacturer_title),
-          categories(cat_title),
-          product_categories(p_cat_title)
-        `)
-        .eq('product_id', productId)
-        .single();
-
-      if (error) {
-        console.error('Error loading product:', error.message);
-      } else {
-        setProduct(data);
+      if (!productId) return;
+      try {
+        const productData = await apiGet<Product>(`/products.php?product_id=${productId}`);
+        if (!productData) return;
+        
+        const [manufacturers, categories, productCategories] = await Promise.all([
+          apiGet<Array<{ manufacturer_id: number; manufacturer_title: string }>>('/manufacturers.php'),
+          apiGet<Array<{ cat_id: number; cat_title: string }>>('/categories.php'),
+          apiGet<Array<{ p_cat_id: number; p_cat_title: string }>>('/product_categories.php'),
+        ]);
+        
+        const enriched: Product = {
+          ...productData,
+          manufacturers: manufacturers?.find(m => m.manufacturer_id === productData.manufacturer_id)
+            ? { manufacturer_title: manufacturers.find(m => m.manufacturer_id === productData.manufacturer_id)!.manufacturer_title }
+            : null,
+          categories: categories?.find(c => c.cat_id === productData.cat_id)
+            ? { cat_title: categories.find(c => c.cat_id === productData.cat_id)!.cat_title }
+            : null,
+          product_categories: productCategories?.find(pc => pc.p_cat_id === productData.p_cat_id)
+            ? { p_cat_title: productCategories.find(pc => pc.p_cat_id === productData.p_cat_id)!.p_cat_title }
+            : null,
+        };
+        
+        setProduct(enriched);
+      } catch (error) {
+        console.error('Error loading product:', error);
       }
     };
 
-    if (productId) fetchProduct();
+    fetchProduct();
   }, [productId]);
 
   if (!product) return <div className="p-6 text-center">Loading product...</div>;

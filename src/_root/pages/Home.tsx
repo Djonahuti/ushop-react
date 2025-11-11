@@ -2,7 +2,7 @@ import ProductCard from "@/components/shared/ProductCard"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import supabase from "@/lib/supabaseClient"
+import { apiGet } from "@/lib/api"
 import { Category, Manufacturer, Product, ProductCategory } from "@/types"
 import { FilterIcon, Search } from "lucide-react"
 import { useEffect, useState } from "react"
@@ -77,85 +77,43 @@ const filteredProducts = products.filter((product) => {
 });    
 
     useEffect(() => {
-      const fetchProducts = async () => {
-        const { data, error } = await supabase
-          .from('products')
-          .select(`
-            *,
-            manufacturers(manufacturer_title),
-            product_categories(p_cat_title),
-            categories(cat_title)
-          `)
-          .order('product_id', { ascending: false });
+      const loadData = async () => {
+        try {
+          setLoading(true);
+          const [cats, pCats, mans, prods] = await Promise.all([
+            apiGet<Category[]>('/categories.php'),
+            apiGet<ProductCategory[]>('/product_categories.php'),
+            apiGet<Manufacturer[]>('/manufacturers.php'),
+            apiGet<Product[]>('/products.php'),
+          ]);
 
-        if (error) {
-          setError('Failed to fetch products');
-          console.error(error);
-        } else {
-          setProducts(data || []);
+          setCategories(cats || []);
+          setPCategories(pCats || []);
+          setManufacturers(mans || []);
+
+          const enriched = (prods || []).map((product) => ({
+            ...product,
+            manufacturers: mans?.find((m) => m.manufacturer_id === product.manufacturer_id)
+              ? { manufacturer_title: mans.find((m) => m.manufacturer_id === product.manufacturer_id)!.manufacturer_title }
+              : null,
+            product_categories: pCats?.find((p) => p.p_cat_id === product.p_cat_id)
+              ? { p_cat_title: pCats.find((p) => p.p_cat_id === product.p_cat_id)!.p_cat_title }
+              : null,
+            categories: cats?.find((c) => c.cat_id === product.cat_id)
+              ? { cat_title: cats.find((c) => c.cat_id === product.cat_id)!.cat_title }
+              : null,
+          })) as Product[];
+
+          setProducts(enriched);
+        } catch (err) {
+          console.error(err);
+          setError('Failed to fetch data');
+        } finally {
+          setLoading(false);
         }
-
-        //Final load complete
-        setLoading(false);
-      };
-      fetchProducts();
-    }, []);
-
-    // Fetch and display Categories
-    useEffect(() => {
-      const fetchCategories = async () => {
-        const { data, error } = await supabase.from('categories').select('*');
-
-        if (error) {
-          setError('Failed to fetch categories');
-          console.error(error);
-        } else {
-          setCategories(data || []);
-        }
-
-        //Final load complete
-        setLoading(false);        
       };
 
-      fetchCategories();
-    }, []);
-
-    // Fetch and display Manufacturers
-    useEffect(() => {
-      const fetchManufacturers = async () => {
-        const { data, error } = await supabase.from('manufacturers').select('*');
-
-        if (error) {
-          setError('Failed to fetch manufacturers');
-          console.error(error);
-        } else {
-          setManufacturers(data || []);
-        }
-
-        //Final load complete
-        setLoading(false);        
-      };
-
-      fetchManufacturers();
-    }, []);
-
-    // Fetch and display Product Categories
-    useEffect(() => {
-      const fetchPCategories = async () => {
-        const { data, error } = await supabase.from('product_categories').select('*');
-
-        if (error) {
-          setError('Failed to fetch product categories');
-          console.error(error);
-        } else {
-          setPCategories(data || []);
-        }
-
-        //Final load complete
-        setLoading(false);        
-      };
-
-      fetchPCategories();
+      loadData();
     }, []);
 
   if (error) {

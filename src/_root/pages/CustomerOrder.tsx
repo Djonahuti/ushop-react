@@ -12,7 +12,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { useEffect, useState } from 'react'
-import supabase from '@/lib/supabaseClient'
+import { apiGet } from '@/lib/api'
 import { Bank, Order, OrderItem } from '@/types'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -32,65 +32,42 @@ const CustomerOrders = () => {
   const [customer, setCustomer] = useState<{ customer_id: string } | null>(null);    
 
   const handleReceive = async (invoice_no: number) => {
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .select('order_id')
-      .eq('invoice_no', invoice_no)
-      .single();
-
-    if (orderError || !orderData) {
-      toast.error('Failed to find order.');
-      return;
-    }
-
-    const orderId = orderData.order_id;
-
-    await supabase
-      .from('orders')
-      .update({ order_status: 'COMPLETED' })
-      .eq('invoice_no', invoice_no);
-
-    await supabase
-      .from('pending_orders')
-      .update({ order_status: 'RECEIVED' })
-      .eq('invoice_no', invoice_no);
-
-    // Log the status update in order_status_history
-    await supabase
-      .from('order_status_history')
-      .insert([{ order_id: orderId, status: 'COMPLETED' }]);
-
+    try {
+      const all = await apiGet<any[]>('/orders.php');
+      const found = all.find(o => o.invoice_no === invoice_no);
+      if (!found) { toast.error('Failed to find order.'); return; }
+      const orderId = found.order_id;
+      await fetch(`${window.location.origin}/api/order_status_history.php`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: orderId, status: 'COMPLETED' }) });
+      await fetch(`${window.location.origin}/api/orders_status_set.php?invoice_no=${invoice_no}&status=COMPLETED`, { method: 'POST' });
+      await fetch(`${window.location.origin}/api/pending_orders_status_set.php?invoice_no=${invoice_no}&status=RECEIVED`, { method: 'POST' });
     toast.success('RECEIVED!');
     setOrders(order.filter(o => o.invoice_no !== invoice_no));
+    } catch {
+      toast.error('Failed to update order');
+    }
   };
 
   useEffect(() => {
     const fetchOrders = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: customerData } = await supabase
-        .from('customers')
-        .select('customer_id')
-        .eq('customer_email', user?.email)
-        .single();
-
+      const email = localStorage.getItem('auth_email');
+      if (!email) return;
+      const customers = await apiGet<Array<{ customer_id:string; customer_name:string; customer_email:string }>>('/customers.php?email=' + encodeURIComponent(email));
+      const customerData = customers?.[0];
       if (!customerData) return;
-        setCustomer(customerData);
-
-      const { data: orderData, error } = await supabase
-        .from('orders')
-        .select(`*, order_items(*, qty, products(product_title, product_img1, product_price)), customers(customer_name, customer_email)`)
-        .eq('customer_id', customerData.customer_id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Failed to fetch orders', error.message);
-        return;
+      setCustomer({ customer_id: customerData.customer_id as any });
+      const allOrders = await apiGet<any[]>(`/orders.php?customer_id=${customerData.customer_id}`);
+      const enriched: any[] = [];
+      for (const o of allOrders) {
+        const items = await apiGet<any[]>(`/order_items.php?order_id=${o.order_id}`);
+        const mapped: any[] = [];
+        for (const it of items) {
+          const p = await apiGet<any>(`/product.php?product_id=${it.product_id}`);
+          mapped.push({ ...it, products: { product_title: p?.product_title, product_img1: p?.product_img1, product_price: p?.product_price } });
+        }
+        enriched.push({ ...o, order_items: mapped, customers: { customer_name: customerData.customer_name, customer_email: customerData.customer_email } });
       }
-
-      setOrders(orderData || []);
-      setFilteredOrders(orderData || []);
+      setOrders(enriched as any);
+      setFilteredOrders(enriched as any);
     };
 
     fetchOrders();
@@ -134,11 +111,8 @@ const CustomerOrders = () => {
 
   useEffect(() => {
     const fetchBank = async () => {
-      const { data: bankData } = await supabase
-        .from('banks')
-        .select('*')
-
-      setBank(bankData || []);
+      const data = await apiGet<Bank[]>('/banks.php');
+      setBank(data || []);
     }
     fetchBank();
   }, []);  
@@ -253,14 +227,13 @@ const CustomerOrders = () => {
 const HighestProductFeedback: React.FC<{ orderId: number }> = ({ orderId }) => {
   const [feedback, setFeedback] = useState<{ rating: number }>({ rating: 0 })
   useEffect(() => {
-    supabase
-      .from('feedbacks')
-      .select('rating')
-      .eq('order_id', orderId)
-      .not('order_item_id', 'is', null)
-      .order('rating', { ascending: false })
-      .limit(1)
-      .then(({ data }) => data?.[0] && setFeedback(data[0]))
+    (async () => {
+      const data = await apiGet<Array<{ rating:number; order_item_id:number | null }>>(`/feedbacks.php?order_id=${orderId}`)
+      const top = (data || [])
+        .filter(f => f.order_item_id !== null)
+        .sort((a, b) => b.rating - a.rating)[0]
+      if (top) setFeedback({ rating: top.rating })
+    })()
   }, [orderId])
   return (
     <p className="flex items-center">

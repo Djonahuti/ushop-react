@@ -1,4 +1,3 @@
-import supabase from "@/lib/supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { LogOut } from "lucide-react";
@@ -6,15 +5,10 @@ import { LogOut } from "lucide-react";
 const Logout: React.FC = () => {
     const navigate = useNavigate();
     const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-
-    if (error) {
-      console.error('Error logging out:', error.message);
-    } else {
+      localStorage.removeItem('auth_email');
+      localStorage.removeItem('auth_role');
       console.log('Logged out successfully');
-      // Optionally, redirect the user or update the UI state
-      navigate ('/login'); // Redirect to login page or home page
-    }
+      navigate('/login');
   };
 
   return (

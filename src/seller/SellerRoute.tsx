@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import supabase from '@/lib/supabaseClient';
+import { apiGet } from '@/lib/api';
 
 export default function SellerRoute({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
@@ -9,22 +9,23 @@ export default function SellerRoute({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate('/login'); // Redirect to login if not authenticated
-      } else {
-        // Check if the user is an seller
-        const { data: sellerData, error } = await supabase
-          .from('sellers')
-          .select('*')
-          .eq('seller_email', user.email)
-          .single();
+      const email = localStorage.getItem('auth_email');
+      const role = localStorage.getItem('auth_role');
+      
+      if (!email || role !== 'seller') {
+        navigate('/login');
+        return;
+      }
 
-        if (error || !sellerData) {
-          navigate('/'); // Redirect to home if not an seller
+      try {
+        const sellers = await apiGet<any[]>(`/sellers.php?email=${encodeURIComponent(email)}`);
+        if (!sellers || sellers.length === 0) {
+          navigate('/');
         } else {
-          setChecking(false); // User is an seller, allow access
+          setChecking(false);
         }
+      } catch (error) {
+        navigate('/');
       }
     };
     checkAuth();

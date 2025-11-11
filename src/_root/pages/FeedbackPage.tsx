@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import supabase from "@/lib/supabaseClient"
+import { apiGet, apiPost } from "@/lib/api"
 import { IconStarFilled } from '@tabler/icons-react'
 import { useEffect, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
@@ -67,29 +67,28 @@ const FeedbackPage: React.FC = () => {
   // Fetch order items
   useEffect(() => {
     if (!order_id) return
-    supabase
-      .from('order_items')
-      .select('order_item_id, product_id, qty, products(product_title, product_img1)')
-      .eq('order_id', order_id)
-      .then(({ data }) => {
-        if (data) {
-          const mapped = data.map(item => ({
-            order_item_id: item.order_item_id,
-            product_id: item.product_id,
-            qty: item.qty ?? 1,
-            products: Array.isArray(item.products) ? item.products[0] : item.products,
-          }))
-          setItems(mapped)
-        }
-      })
+    ;(async () => {
+      const oi = await apiGet<any[]>(`/order_items.php?order_id=${order_id}`)
+      const results: OrderItem[] = []
+      for (const it of oi) {
+        const p = await apiGet<any>(`/product.php?product_id=${it.product_id}`)
+        results.push({
+          order_item_id: it.order_item_id,
+          product_id: it.product_id,
+          qty: it.qty ?? 1,
+          products: { product_title: p?.product_title, product_img1: p?.product_img1 },
+        })
+      }
+      setItems(results)
+    })()
   }, [order_id])
 
   // Fetch feed types
   useEffect(() => {
-    supabase
-      .from('feedtype')
-      .select('feedtype_id, feedback_type')
-      .then(({ data }) => data && setFeedTypes(data))
+    ;(async () => {
+      const data = await apiGet<FeedType[]>(`/feedtype.php`)
+      setFeedTypes(data)
+    })()
   }, [])
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
@@ -113,10 +112,10 @@ const FeedbackPage: React.FC = () => {
         comment: pf.comment,
       }))
       // insert product feedback
-      const { error: prodErr } = await supabase
-        .from('feedbacks')
-        .insert(feedbackRows)
-      if (prodErr) throw prodErr
+      await apiPost('/feedbacks.php', feedbackRows[0])
+      for (let i = 1; i < feedbackRows.length; i++) {
+        await apiPost('/feedbacks.php', feedbackRows[i])
+      }
 
       // Update product ratings in products table
       for (const pf of data.productFeedbacks) {
@@ -132,44 +131,30 @@ const FeedbackPage: React.FC = () => {
           .map(item => item.order_item_id)
 
         // Recalculate average rating for the product
-        const { data: ratings, error: ratingFetchError } = await supabase
-          .from('feedbacks')
-          .select('rating')
-          .in('order_item_id', relatedOrderItemIds)
-      
-        if (ratingFetchError || !ratings?.length) continue
+        const all = await apiGet<any[]>(`/feedbacks.php?order_id=${order_id}`)
+        const ratings = all.filter(r => relatedOrderItemIds.includes(r.order_item_id)).map(r => ({ rating: r.rating }))
+        if (!ratings.length) continue
       
         const avgRating = Math.round(
           ratings.reduce((acc, r) => acc + r.rating, 0) / ratings.length
         )
       
         // Update the product's rating
-        await supabase
-          .from('products')
-          .update({ rating: avgRating })
-          .eq('product_id', product_id)
+        await fetch(`${window.location.origin}/api/product_update_rating.php?product_id=${product_id}&rating=${avgRating}`, { method: 'POST' })
       }
 
 
       // insert overall order feedback
-      const { error: orderErr } = await supabase
-        .from('feedbacks')
-        .insert([
-          {
+      await apiPost('/feedbacks.php', {
             order_id,
             order_item_id: null,
             rating: data.orderRating,
             feedtype_id: data.orderFeedtype,
             comment: data.orderComment,
-          },
-        ])
-      if (orderErr) throw orderErr
+      })
 
       // mark feedback complete
-      await supabase
-        .from('orders')
-        .update({ feedback_complete: true })
-        .eq('order_id', order_id)
+      await fetch(`${window.location.origin}/api/orders_update.php?order_id=${order_id}&feedback_complete=1`, { method: 'POST' })
 
       toast.success('Feedback submitted successfully!')
       navigate(-1)

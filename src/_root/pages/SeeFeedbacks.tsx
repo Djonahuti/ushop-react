@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import supabase from "@/lib/supabaseClient";
+import { apiGet } from "@/lib/api";
 import { Feedback } from "@/types"
 import { AvatarImage } from "@radix-ui/react-avatar";
 import { IconTruckDelivery } from "@tabler/icons-react";
@@ -13,42 +13,30 @@ const SeeFeedbacks = () => {
 
     useEffect(() => {
         const fetchFeedbacks = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
+            const email = localStorage.getItem('auth_email');
+            if (!email) return;
 
-            const { data: customerData } = await supabase
-                .from('customers')
-                .select('customer_id')
-                .eq('customer_email', user?.email)
-                .single();
-
-            if (!customerData) return;
+            try {
+                const customers = await apiGet<any[]>(`/customers.php?email=${encodeURIComponent(email)}`);
+                if (!customers || customers.length === 0) return;
+                const customerData = customers[0];
             
-            const {data: feedbackData, error} = await supabase
-                .from('feedbacks')
-                .select(`
-                  feedback_id, order_id, order_item_id, rating, comment, created_at,
-                  feedtype:feedtype(feedback_type),
-                  order_item:order_items(order_item_id, products(product_id, product_title, product_img1)),
-                  orders:orders(order_id, customer_id, customers(customer_id, customer_name, customer_image))
-                `)
-
-                .order('created_at', { ascending: false});
-
-            if (error) {
-                console.error('Failed to fetch Feedbacks', error.message);
-                return;
-            }
-            setFeedbacks(
-                (feedbackData || []).map((item: Record<string, unknown>) => {
-                    // Flatten nested arrays if needed
-                    const feedtype = item.feedtype && Array.isArray(item.feedtype) ? item.feedtype[0] : item.feedtype;
-                    const order_item = item.order_item && Array.isArray(item.order_item) ? item.order_item[0] : item.order_item;
-                    const orders = item.orders && Array.isArray(item.orders) ? item.orders[0] : item.orders;
-                    // Extract customer_id safely
-                    const customer_id = orders?.customers?.customer_id ?? null;
-                    // Extract feedtype_id safely
-                    const feedtype_id = feedtype?.feedtype_id ?? null;
+                const feedbackData = await apiGet<any[]>(`/feedbacks.php?customer_id=${customerData.customer_id}`);
+                if (!feedbackData) return;
+                
+                // Hydrate nested data
+                const feedtypes = await apiGet<any[]>('/feedtype.php');
+                const orderItems = await apiGet<any[]>('/order_items.php');
+                const products = await apiGet<any[]>('/products.php');
+                const orders = await apiGet<any[]>('/orders.php');
+                const allCustomers = await apiGet<any[]>('/customers.php');
+                
+                const hydrated = feedbackData.map((item: any) => {
+                    const feedtype = feedtypes?.find(ft => ft.feedtype_id === item.feedtype_id);
+                    const order_item = orderItems?.find(oi => oi.order_item_id === item.order_item_id);
+                    const product = order_item ? products?.find(p => p.product_id === order_item.product_id) : null;
+                    const order = orders?.find(o => o.order_id === item.order_id);
+                    const customer = order ? allCustomers?.find(c => c.customer_id === order.customer_id) : null;
             
                     return {
                         feedback_id: Number(item.feedback_id),
@@ -58,14 +46,17 @@ const SeeFeedbacks = () => {
                         comment: String(item.comment),
                         created_at: String(item.created_at),
                         feedtype: feedtype,
-                        feedtype_id: feedtype_id !== undefined && feedtype_id !== null ? Number(feedtype_id) : null,
-                        order_item: order_item,
-                        orders: orders,
-                        customer_id: customer_id !== undefined && customer_id !== null ? Number(customer_id) : null,
+                        feedtype_id: item.feedtype_id,
+                        order_item: order_item ? { ...order_item, products: product } : null,
+                        orders: order ? { ...order, customers: customer } : null,
+                        customer_id: customer?.customer_id ?? null,
                     } as Feedback;
-                })
-            );
+                }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
+                setFeedbacks(hydrated);
+            } catch (error) {
+                console.error('Failed to fetch Feedbacks', error);
+            }
         };
 
         fetchFeedbacks();
@@ -83,7 +74,7 @@ const SeeFeedbacks = () => {
                                 <Avatar className="h-8 w-8 rounded-full">
                                     {item.orders?.customers?.customer_image ? (
                                         <AvatarImage
-                                        src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${item.orders?.customers.customer_image}`}
+                                        src={`/${item.orders?.customers.customer_image}`}
                                         alt={item.orders?.customers?.customer_name} />
                                     ):(
                                         <AvatarFallback className="rounded-full">{item.orders?.customers?.customer_name.substring(0, 2).toUpperCase()}</AvatarFallback>

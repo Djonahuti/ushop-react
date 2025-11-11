@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import supabase from '@/lib/supabaseClient';
+import { apiGet, apiPost } from '@/lib/api';
 //import { Card, CardContent } from '@/components/ui/card';
 //import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, Heart, ShoppingCart } from 'lucide-react';
@@ -29,25 +29,21 @@ export default function ProductCard({ products, itemsPerPage = 8 }: Props) {
 
   // Add to Cart functionality
   const handleAddToCart = async (product: Product) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const email = localStorage.getItem('auth_email');
+    if (!email) {
       toast.error('You must be logged in to add to cart.');
       return;
     }
   
-    // Fetch customer_id
-    const { data: customer, error } = await supabase
-      .from('customers')
-      .select('customer_id')
-      .eq('customer_email', user.email)
-      .single();
+    const customers = await apiGet<Array<{ customer_id: number }>>(`/customers.php?email=${encodeURIComponent(email)}`);
+    const customer = customers?.[0];
   
-    if (error || !customer) {
+    if (!customer) {
       toast.error('Customer not found.');
       return;
     }
   
-    await supabase.from('cart').insert({
+    await apiPost('/cart.php', {
       customer_id: customer.customer_id,
       product_id: product.product_id,
       qty: 1,
@@ -60,34 +56,28 @@ export default function ProductCard({ products, itemsPerPage = 8 }: Props) {
 
   // Add to Cart Wishlist
   const handleAddWishlist = async (product: Product) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const email = localStorage.getItem('auth_email');
   
-    if (!user) {
+    if (!email) {
       toast.error('You must be logged in to add to wishlist.');
       return;
     }
   
-    // First, get customer_id from customers table
-    const { data: customer, error } = await supabase
-      .from('customers')
-      .select('customer_id')
-      .eq('customer_email', user.email)
-      .single();
+    const customers = await apiGet<Array<{ customer_id: number }>>(`/customers.php?email=${encodeURIComponent(email)}`);
+    const customer = customers?.[0];
   
-    if (error || !customer) {
+    if (!customer) {
       toast.error('Customer not found.');
       return;
     }
   
-    // Insert into wishlist
-    const { error: insertError } = await supabase.from('wishlist').insert({
+    const result = await apiPost('/wishlist.php', {
       customer_id: customer.customer_id,
-      product_id: product.product_id, // assuming `product` is in scope
+      product_id: product.product_id,
     });
   
-    if (insertError) {
+    if (!result) {
       toast.error('Failed to add to wishlist.');
-      console.error(insertError);
     } else {
       toast.success('Added to wishlist!');
     }

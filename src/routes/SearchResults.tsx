@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import supabase from "@/lib/supabaseClient";
+import { apiGet } from "@/lib/api";
 import { Product } from "@/types";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -14,18 +14,29 @@ const SearchResults = () => {
 
   useEffect(() => {
     const fetchAndFilter = async () => {
-      const { data } = await supabase
-        .from('products')
-        .select(`
-          *,
-          manufacturers(manufacturer_title),
-          product_categories(p_cat_title),
-          categories(cat_title)
-        `);
+      try {
+        const [products, manufacturers, categories, productCategories] = await Promise.all([
+          apiGet<Product[]>('/products.php'),
+          apiGet<Array<{ manufacturer_id: number; manufacturer_title: string }>>('/manufacturers.php'),
+          apiGet<Array<{ cat_id: number; cat_title: string }>>('/categories.php'),
+          apiGet<Array<{ p_cat_id: number; p_cat_title: string }>>('/product_categories.php'),
+        ]);
 
-      if (data) {
+        const enriched = (products || []).map(p => ({
+          ...p,
+          manufacturers: manufacturers?.find(m => m.manufacturer_id === p.manufacturer_id)
+            ? { manufacturer_title: manufacturers.find(m => m.manufacturer_id === p.manufacturer_id)!.manufacturer_title }
+            : null,
+          categories: categories?.find(c => c.cat_id === p.cat_id)
+            ? { cat_title: categories.find(c => c.cat_id === p.cat_id)!.cat_title }
+            : null,
+          product_categories: productCategories?.find(pc => pc.p_cat_id === p.p_cat_id)
+            ? { p_cat_title: productCategories.find(pc => pc.p_cat_id === p.p_cat_id)!.p_cat_title }
+            : null,
+        })) as Product[];
+
         const lower = query.toLowerCase();
-        const filtered = data.filter((product) =>
+        const filtered = enriched.filter((product) =>
           product.product_title?.toLowerCase().includes(lower) ||
           product.product_keywords?.toLowerCase().includes(lower) ||
           product.product_label?.toLowerCase().includes(lower) ||
@@ -34,6 +45,8 @@ const SearchResults = () => {
           product.product_categories?.p_cat_title?.toLowerCase().includes(lower)
         );
         setResults(filtered);
+      } catch (error) {
+        console.error('Error fetching search results:', error);
       }
     };
 

@@ -3,7 +3,7 @@ import { Button } from "../ui/button";
 import { BellIcon, CreditCardIcon, Heart, LogOutIcon, Search, Send, ShoppingCart, UserCircleIcon } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ThemeToggle from "../ThemeToggle";
-import supabase from "@/lib/supabaseClient";
+import { apiGet } from "@/lib/api";
 import useCustomerData from "@/hooks/hooks";
 import { Product } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -23,29 +23,18 @@ const Navbar = () => {
 
   useEffect(() => {
     const fetchCounts = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const email = localStorage.getItem('auth_email');
+      if (!email) return;
       
-      const { data: customer, error } = await supabase
-        .from('customers')
-        .select('customer_id')
-        .eq('customer_email', user.email)
-        .single();
+      const customers = await apiGet<Array<{ customer_id: number }>>(`/customers.php?email=${encodeURIComponent(email)}`);
+      const customer = customers?.[0];
+      if (!customer) return;
 
-      if (error || !customer) return;
-
-      const { count: cCount } = await supabase
-        .from('cart')
-        .select('*', { count: 'exact', head: true })
-        .eq('customer_id', customer.customer_id);
-
-      const { count: wCount } = await supabase
-        .from('wishlist')
-        .select('*', { count: 'exact', head: true })
-        .eq('customer_id', customer.customer_id);
+      const cartItems = await apiGet<any[]>(`/cart.php?customer_id=${customer.customer_id}`);
+      const wishlistItems = await apiGet<any[]>(`/wishlist.php?customer_id=${customer.customer_id}`);
   
-      setWishlistCount(wCount || 0);
-      setCartCount(cCount || 0);
+      setWishlistCount(wishlistItems?.length || 0);
+      setCartCount(cartItems?.length || 0);
     };
   
     fetchCounts();
@@ -53,15 +42,31 @@ const Navbar = () => {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
-          *,
-          manufacturers(manufacturer_title),
-          product_categories(p_cat_title),
-          categories(cat_title)
-        `);
-      if (!error && data) setAllProducts(data);
+      try {
+        const [products, manufacturers, categories, productCategories] = await Promise.all([
+          apiGet<Product[]>('/products.php'),
+          apiGet<Array<{ manufacturer_id: number; manufacturer_title: string }>>('/manufacturers.php'),
+          apiGet<Array<{ cat_id: number; cat_title: string }>>('/categories.php'),
+          apiGet<Array<{ p_cat_id: number; p_cat_title: string }>>('/product_categories.php'),
+        ]);
+
+        const enriched = (products || []).map(p => ({
+          ...p,
+          manufacturers: manufacturers?.find(m => m.manufacturer_id === p.manufacturer_id)
+            ? { manufacturer_title: manufacturers.find(m => m.manufacturer_id === p.manufacturer_id)!.manufacturer_title }
+            : null,
+          product_categories: productCategories?.find(pc => pc.p_cat_id === p.p_cat_id)
+            ? { p_cat_title: productCategories.find(pc => pc.p_cat_id === p.p_cat_id)!.p_cat_title }
+            : null,
+          categories: categories?.find(c => c.cat_id === p.cat_id)
+            ? { cat_title: categories.find(c => c.cat_id === p.cat_id)!.cat_title }
+            : null,
+        })) as Product[];
+        
+        setAllProducts(enriched);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      }
     };
     fetchProducts();
   }, []);
@@ -98,7 +103,8 @@ const Navbar = () => {
   };  
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    localStorage.removeItem('auth_email');
+    localStorage.removeItem('auth_role');
     window.location.href = "/login"
   }  
 

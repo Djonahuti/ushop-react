@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import supabase from '@/lib/supabaseClient';
+import { apiGet } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Order, OrderItem } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -21,18 +21,21 @@ export default function AdminPendingOrders() {
 
   useEffect(() => {
     const fetchPending = async () => {
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`*, order_items(qty, products(product_title, product_price, product_img1)), customers(customer_name)`)
-        .order('created_at', {ascending: false});
-
-        if (error) {
-            console.error('Failed to fetch orders', error.message);
-            return;
+      const ords = await apiGet<any[]>('/orders.php');
+      const enriched: any[] = [];
+      for (const o of ords) {
+        const items = await apiGet<any[]>(`/order_items.php?order_id=${o.order_id}`);
+        const mapped: any[] = [];
+        for (const it of items) {
+          const p = await apiGet<any>(`/product.php?product_id=${it.product_id}`);
+          mapped.push({ ...it, products: { product_title: p?.product_title, product_price: p?.product_price, product_img1: p?.product_img1 } });
+        }
+        const custs = await apiGet<any[]>(`/customers.php`);
+        const customer = custs.find(c => c.customer_id === o.customer_id);
+        enriched.push({ ...o, order_items: mapped, customers: { customer_name: customer?.customer_name } });
           }        
-
-      setOrders(data || []);
-      setFilteredOrders(data || []);
+      setOrders(enriched as any);
+      setFilteredOrders(enriched as any);
     };
 
     fetchPending();
@@ -62,155 +65,56 @@ export default function AdminPendingOrders() {
   }, [search, tab, orders]);  
 
   const handleConfirm = async (invoice_no: number) => {
-    const { data: orderData, error: orderError } = await supabase
-    .from('orders')
-    .select('order_id')
-    .eq('invoice_no', invoice_no)
-    .single();
-
-    if (orderError || !orderData) {
-      toast.error('Failed to find order.');
-      return;
-    }
-
-    await supabase
-      .from('orders')
-      .update({ order_status: 'Payment confirmed' })
-      .eq('invoice_no', invoice_no);
-
-    await supabase
-      .from('pending_orders')
-      .update({ order_status: 'Payment confirmed' })
-      .eq('invoice_no', invoice_no);
-
-    // Log the status update in order_status_history
-    await supabase
-      .from('order_status_history')
-      .insert([{ order_id: orderData.order_id, status: 'Payment confirmed' }]);      
-
+    const ords = await apiGet<any[]>('/orders.php');
+    const found = ords.find(o => o.invoice_no === invoice_no);
+    if (!found) { toast.error('Failed to find order.'); return; }
+    await fetch(`${window.location.origin}/api/orders_status_set.php?invoice_no=${invoice_no}&status=${encodeURIComponent('Payment confirmed')}`, { method: 'POST' });
+    await fetch(`${window.location.origin}/api/pending_orders_status_set.php?invoice_no=${invoice_no}&status=${encodeURIComponent('Payment confirmed')}`, { method: 'POST' });
+    await fetch(`${window.location.origin}/api/order_status_history.php`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: found.order_id, status: 'Payment confirmed' }) });
     toast.success('Payment confirmed!');
     setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
 
   const handleShipped = async (invoice_no: number) => {
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .select('order_id')
-      .eq('invoice_no', invoice_no)
-      .single();
-
-    if (orderError || !orderData) {
-      toast.error('Failed to find order.');
-      return;
-    }
-
-    await supabase
-      .from('orders')
-      .update({ order_status: 'SHIPPED' })
-      .eq('invoice_no', invoice_no);
-
-    await supabase
-      .from('pending_orders')
-      .update({ order_status: 'SHIPPED' })
-      .eq('invoice_no', invoice_no);
-
-    // Log the status update in order_status_history
-    await supabase
-      .from('order_status_history')
-      .insert([{ order_id: orderData.order_id, status: 'Shipped' }]);      
-
+    const ords = await apiGet<any[]>('/orders.php');
+    const found = ords.find(o => o.invoice_no === invoice_no);
+    if (!found) { toast.error('Failed to find order.'); return; }
+    await fetch(`${window.location.origin}/api/orders_status_set.php?invoice_no=${invoice_no}&status=SHIPPED`, { method: 'POST' });
+    await fetch(`${window.location.origin}/api/pending_orders_status_set.php?invoice_no=${invoice_no}&status=SHIPPED`, { method: 'POST' });
+    await fetch(`${window.location.origin}/api/order_status_history.php`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: found.order_id, status: 'Shipped' }) });
     toast.success('SHIPPED!');
     setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
 
   const handleWaiting = async (invoice_no: number) => {
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .select('order_id')
-      .eq('invoice_no', invoice_no)
-      .single();
-
-    if (orderError || !orderData) {
-      toast.error('Failed to find order.');
-      return;
-    } 
-
-    await supabase
-      .from('orders')
-      .update({ order_status: 'WAITING TO BE SHIPPED' })
-      .eq('invoice_no', invoice_no);
-
-    await supabase
-      .from('pending_orders')
-      .update({ order_status: 'WAITING TO BE SHIPPED' })
-      .eq('invoice_no', invoice_no);
-
-    // Log the status update in order_status_history
-    await supabase
-      .from('order_status_history')
-      .insert([{ order_id: orderData.order_id, status: 'Waiting to be Shipped' }]);      
-
+    const ords = await apiGet<any[]>('/orders.php');
+    const found = ords.find(o => o.invoice_no === invoice_no);
+    if (!found) { toast.error('Failed to find order.'); return; }
+    await fetch(`${window.location.origin}/api/orders_status_set.php?invoice_no=${invoice_no}&status=${encodeURIComponent('WAITING TO BE SHIPPED')}`, { method: 'POST' });
+    await fetch(`${window.location.origin}/api/pending_orders_status_set.php?invoice_no=${invoice_no}&status=${encodeURIComponent('WAITING TO BE SHIPPED')}`, { method: 'POST' });
+    await fetch(`${window.location.origin}/api/order_status_history.php`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: found.order_id, status: 'Waiting to be Shipped' }) });
     toast.success('WAITING TO BE SHIPPED!');
     setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
 
   const handleOutForDelivery = async (invoice_no: number) => {
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .select('order_id')
-      .eq('invoice_no', invoice_no)
-      .single();
-
-    if (orderError || !orderData) {
-      toast.error('Failed to find order.');
-      return;
-    }    
-    await supabase
-      .from('orders')
-      .update({ order_status: 'OUT FOR DELIVERY' })
-      .eq('invoice_no', invoice_no);
-
-    await supabase
-      .from('pending_orders')
-      .update({ order_status: 'OUT FOR DELIVERY' })
-      .eq('invoice_no', invoice_no);
-
-    // Log the status update in order_status_history
-    await supabase
-      .from('order_status_history')
-      .insert([{ order_id: orderData.order_id, status: 'Out for delivery' }]);      
-
+    const ords = await apiGet<any[]>('/orders.php');
+    const found = ords.find(o => o.invoice_no === invoice_no);
+    if (!found) { toast.error('Failed to find order.'); return; }
+    await fetch(`${window.location.origin}/api/orders_status_set.php?invoice_no=${invoice_no}&status=${encodeURIComponent('OUT FOR DELIVERY')}`, { method: 'POST' });
+    await fetch(`${window.location.origin}/api/pending_orders_status_set.php?invoice_no=${invoice_no}&status=${encodeURIComponent('OUT FOR DELIVERY')}`, { method: 'POST' });
+    await fetch(`${window.location.origin}/api/order_status_history.php`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: found.order_id, status: 'Out for delivery' }) });
     toast.success('OUT FOR DELIVERY!');
     setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
 
   const handleDelivered = async (invoice_no: number) => {
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .select('order_id')
-      .eq('invoice_no', invoice_no)
-      .single();
-
-    if (orderError || !orderData) {
-      toast.error('Failed to find order.');
-      return;
-    }    
-    
-    await supabase
-      .from('orders')
-      .update({ order_status: 'DELIVERED' })
-      .eq('invoice_no', invoice_no);
-
-    await supabase
-      .from('pending_orders')
-      .update({ order_status: 'DELIVERED' })
-      .eq('invoice_no', invoice_no);
-
-    // Log the status update in order_status_history
-    await supabase
-      .from('order_status_history')
-      .insert([{ order_id: orderData.order_id, status: 'Delivered' }]);      
-
+    const ords = await apiGet<any[]>('/orders.php');
+    const found = ords.find(o => o.invoice_no === invoice_no);
+    if (!found) { toast.error('Failed to find order.'); return; }
+    await fetch(`${window.location.origin}/api/orders_status_set.php?invoice_no=${invoice_no}&status=DELIVERED`, { method: 'POST' });
+    await fetch(`${window.location.origin}/api/pending_orders_status_set.php?invoice_no=${invoice_no}&status=DELIVERED`, { method: 'POST' });
+    await fetch(`${window.location.origin}/api/order_status_history.php`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: found.order_id, status: 'Delivered' }) });
     toast.success('DELIVERED!');
     setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
@@ -358,14 +262,11 @@ export default function AdminPendingOrders() {
 const HighestProductFeedback: React.FC<{ orderId: number }> = ({ orderId }) => {
   const [feedback, setFeedback] = useState<{ rating: number }>({ rating: 0 })
   useEffect(() => {
-    supabase
-      .from('feedbacks')
-      .select('rating')
-      .eq('order_id', orderId)
-      .not('order_item_id', 'is', null)
-      .order('rating', { ascending: false })
-      .limit(1)
-      .then(({ data }) => data?.[0] && setFeedback(data[0]))
+    (async () => {
+      const data = await apiGet<Array<{ rating:number; order_item_id:number | null }>>(`/feedbacks.php?order_id=${orderId}`)
+      const top = (data || []).filter(f => f.order_item_id !== null).sort((a,b) => b.rating - a.rating)[0]
+      if (top) setFeedback({ rating: top.rating })
+    })()
   }, [orderId])
   return (
     <p className="flex items-center">

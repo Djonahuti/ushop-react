@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import supabase from "@/lib/supabaseClient";
+import { apiGet } from "@/lib/api";
 import { Coupon } from "@/types";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -21,18 +21,20 @@ export default function Coupons() {
 
   useEffect(() => {
       const fetchCoupons = async () => {
-        const { data, error } = await supabase
-          .from('coupons')
-          .select('*, products(product_title, product_img1, product_price, sellers(business_name), seller_id)')
-          .order('coupon_id', {ascending: false});
-
-          if (error) {
-            setError('Failed to fetch coupons');
-            console.error(error);
-          } else {
-            setCoupons(data || []);
+        try {
+          const data = await apiGet<any[]>('/coupons.php');
+          // hydrate product and seller
+          const results: any[] = [];
+          for (const c of data) {
+            const p = await apiGet<any>(`/product.php?product_id=${c.product_id}`);
+            const s = await apiGet<any[]>(`/sellers.php`);
+            const seller = s.find(x => x.seller_id === p?.seller_id);
+            results.push({ ...c, products: { ...p, sellers: { business_name: seller?.business_name ?? '' } } });
           }
-
+          setCoupons(results as any);
+        } catch (e) {
+          setError('Failed to fetch coupons');
+        }
       };
       fetchCoupons();
   }, []);

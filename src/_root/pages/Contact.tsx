@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
-import supabase from '@/lib/supabaseClient'
+import { apiGet, apiPost } from '@/lib/api'
 import { useEffect, useState } from 'react'
 
 const schema = z.object({
@@ -38,26 +38,15 @@ export default function Contact() {
 
     useEffect(() => {
         const fetchCustomer = async () => {
-          const {
-            data: { user },
-            error,
-          } = await supabase.auth.getUser()
-      
-          if (error || !user) {
+          const email = localStorage.getItem('auth_email')
+          if (!email) {
             toast.error('You must be logged in')
             navigate('/login') // Or wherever your login page is
             return
           }
-      
-          // Assuming your `customer_id` is the same as user.id or stored in a customer table
-          // If it's user.id:
-          const { data: customerData, error: customerError } = await supabase
-            .from('customers')
-            .select('customer_id')
-            .eq('customer_email', user?.email)
-            .single()
-      
-          if (customerError || !customerData) {
+          const customers = await apiGet<Array<{ customer_id:number }>>('/customers.php?email=' + encodeURIComponent(email))
+          const customerData = customers?.[0]
+          if (!customerData) {
             toast.error('Customer not found')
             navigate('/overview')
           } else {
@@ -71,23 +60,19 @@ export default function Contact() {
 
       useEffect(() => {
         const fetchSubject = async () => {
-          const { data, error } = await supabase.from('subject').select('*')
-          if (error) return toast.error('Failed to load subject')
+          const data = await apiGet<{ subject: string; subject_id:number }[]>('/subject.php')
           setSubject(data || [])
         }
         fetchSubject()
       }, [])
       
       const onSubmit = async (data: ContactFormData) => {
-        const { error } = await supabase.from('contacts').insert({
-          ...data,
-        })
-    
-        if (error) {
-          toast.error('Failed to submit Contact')
-        } else {
+        try {
+          await apiPost('/contacts.php', data)
           toast.success('Thanks! We will get back to you as soon as possible')
           navigate('/overview')
+        } catch {
+          toast.error('Failed to submit Contact')
         }
       }      
 

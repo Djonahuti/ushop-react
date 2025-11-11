@@ -1,15 +1,15 @@
-# 🛒 uShop — Modern E-Commerce Platform (React + TypeScript + Supabase)
+# 🛒 uShop — Modern E-Commerce Platform (React + TypeScript + PHP API)
 
 [![React](https://img.shields.io/badge/React-18.0+-61dafb?logo=react&logoColor=white)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5+-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-5+-646cff?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3+-06b6d4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3fcf8e?logo=supabase&logoColor=white)](https://supabase.com/)
+[![PHP](https://img.shields.io/badge/API-PHP%208+-777bb4?logo=php&logoColor=white)](https://www.php.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Dark Mode](https://img.shields.io/badge/Theme-Dark%20Mode-000000?logo=moon&logoColor=white)](#)
 
-uShop is a **modern full-stack e-commerce platform** built with **React, TypeScript, Vite, Supabase (PostgreSQL)**, and **ShadCN + Tailwind CSS**.  
-It provides a seamless online shopping experience with role-based dashboards for **customers, vendors, and admins** — all with secure authentication and offline payment verification.
+uShop is a **modern full-stack e-commerce platform** built with **React, TypeScript, Vite, and a custom PHP/PostgreSQL API** (deployable on cPanel).  
+It provides a seamless online shopping experience with role-based dashboards for **customers, vendors, and admins** — complete with offline payment verification and file uploads stored under your domain.
 
 ---
 
@@ -37,9 +37,8 @@ It provides a seamless online shopping experience with role-based dashboards for
 ## ✨ Features
 
 ### 👤 Authentication
-- Email/password authentication with **Supabase Auth**
-- **Google Sign-In** support
-- Role-based access control (Customer, Vendor, Admin)
+- Email/password authentication handled via the custom PHP API
+- Session persisted in local storage for role-based access (Customer, Vendor, Admin)
 
 ### 🛍️ Customer Dashboard
 - View and track all orders with real-time status updates
@@ -53,7 +52,7 @@ It provides a seamless online shopping experience with role-based dashboards for
 - Approve or decline vendor requests
 - View messages submitted via contact form
 - Export orders/invoices to CSV or ZIP (PDF)
-- Update order status and manage payments
+- Update order status and manage payments through the PHP API
 
 ### 🧑‍🌾 Vendor (Seller) Dashboard
 - Add and manage products (CRUD)
@@ -62,7 +61,7 @@ It provides a seamless online shopping experience with role-based dashboards for
 
 ### 💳 Payments
 - **Offline Payment** mode (bank transfer or manual verification)
-- Two-step confirmation workflow:
+- Two-step confirmation workflow managed entirely by the PHP API:
   1. Customer marks order as paid with transaction details
   2. Admin verifies and marks as completed
 
@@ -80,12 +79,13 @@ It provides a seamless online shopping experience with role-based dashboards for
 |-----------|--------------------|
 | Frontend | React, TypeScript, Vite |
 | UI Library | ShadCN UI, Tailwind CSS |
-| Database | Supabase (PostgreSQL) |
-| Authentication | Supabase Auth (Email + Google OAuth) |
+| Backend API | PHP 8+, custom endpoints (deployable on cPanel) |
+| Database | PostgreSQL (cPanel managed) |
+| Authentication | PHP session/token workflow + local storage |
 | Forms | React Hook Form, Zod |
 | State Management | React Context / Hooks |
 | PDF / Exports | jsPDF, FileSaver (optional) |
-| Deployment | Vercel / Netlify |
+| Deployment | GitHub Actions → FTP (frontend) + cPanel (API) |
 | Theme | Light + Dark Mode Support |
 
 ---
@@ -127,19 +127,64 @@ Visit: **http://localhost:5173**
 
 ---
 
+## 📦 Deploying to cPanel (FTP-Only Hosting)
+
+### Automatic Deployment via GitHub Actions
+
+The project includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that automatically deploys:
+- React frontend (`dist/`) to `public_html/`
+- PHP API (`api/`) to `public_html/api/`
+- Mail system (`mail/`) to `public_html/mail/`
+
+**Required GitHub Secrets:**
+- `FTP_SERVER` - Your FTP server address
+- `FTP_USERNAME` - Your FTP username
+- `FTP_PASSWORD` - Your FTP password
+- `FTP_PROTOCOL` - Usually `ftp` or `ftps`
+
+### Manual Setup Steps (One-Time)
+
+Since FTP-only hosting doesn't support SSH commands, you need to manually create the uploads directory:
+
+1. **Create uploads directory via cPanel File Manager:**
+   - Log into your cPanel
+   - Open **File Manager**
+   - Navigate to `public_html/`
+   - Create a new folder named `uploads`
+   - Right-click the `uploads` folder → **Change Permissions** → Set to `755` (or `777` if needed for write access)
+
+2. **Configure database credentials:**
+   - Edit `api/config.php` to match your cPanel PostgreSQL credentials:
+     - `$dbHost` (usually `localhost` on shared hosting)
+     - `$dbName` (your database name)
+     - `$dbUser` (your database username)
+     - `$dbPass` (your database password)
+
+3. **Verify file structure on server:**
+   ```
+   public_html/
+   ├── index.html (from dist/)
+   ├── assets/ (from dist/)
+   ├── api/
+   │   ├── config.php
+   │   └── ... (other API files)
+   ├── mail/
+   │   └── ... (mail system files)
+   └── uploads/ (manually created, permissions: 755)
+   ```
+
+4. **Test the deployment:**
+   - Visit your domain to see the React app
+   - Check `https://your-domain.com/api/products.php` to verify the API is working
+   - Upload a product image to test the uploads directory
+
+**Note:** The `uploads/` directory is listed in `.gitignore` for local development, but must exist on the server. Uploaded media will be accessible via `https://your-domain.com/uploads/<file>`.
+
+---
+
 ## 🔐 Environment Variables
 
-Create a `.env` file in the root directory and fill it like this:
-
-```bash
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-VITE_GOOGLE_CLIENT_ID=your_google_client_id
-VITE_GOOGLE_REDIRECT_URI=your_google_redirect_url
-VITE_ADMIN_EMAIL=admin@example.com
-```
-
-> **Note:** Never commit `.env` files to GitHub — keep them private!
+The current frontend no longer requires Supabase keys.  If you use optional 3rd-party integrations (e.g. PayPal), add them to a `.env` file and consume via `import.meta.env` as usual.  Otherwise, the key configuration lives in `api/config.php` on the server.
 
 ---
 
@@ -153,7 +198,7 @@ ushop-react/
 │   ├── components/       # Reusable UI components
 │   ├── pages/            # Page-level components (Home, Shop, Cart, etc.)
 │   ├── dashboard/        # Role-based dashboards (Customer, Vendor, Admin)
-│   ├── contexts/         # Auth and Supabase context providers
+│   ├── contexts/         # Auth and application context providers
 │   ├── hooks/            # Custom hooks (e.g., useAuth, useOrders)
 │   ├── lib/              # Utility functions and constants
 │   ├── styles/           # Tailwind and custom styles
@@ -215,10 +260,10 @@ See the [LICENSE](./LICENSE) file for details.
 
 ## 💖 Acknowledgments
 
-- [Supabase](https://supabase.com/) for the backend
 - [ShadCN](https://ui.shadcn.com/) for modern React UI components
 - [Tailwind CSS](https://tailwindcss.com/) for fast, flexible styling
 - [Vite](https://vitejs.dev/) for blazing-fast development
+- [PHPMailer](https://github.com/PHPMailer/PHPMailer) for email functionality
 - Open source community for the amazing ecosystem ❤️
 
 ---

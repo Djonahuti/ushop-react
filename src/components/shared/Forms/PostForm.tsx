@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import supabase from '@/lib/supabaseClient';
+import { apiGet, apiPost, uploadFile } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -52,13 +52,18 @@ const PostForm: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: categoriesData } = await supabase.from('categories').select('*');
-      const { data: manufacturersData } = await supabase.from('manufacturers').select('*');
-      const { data: productCategoriesData } = await supabase.from('product_categories').select('*');
+      try {
+        const categoriesData = await apiGet<Category[]>('/categories.php');
+        const manufacturersData = await apiGet<Manufacturer[]>('/manufacturers.php');
+        const productCategoriesData = await apiGet<ProductCategory[]>('/product_categories.php');
 
-      setCategories(categoriesData || []);
-      setManufacturers(manufacturersData || []);
-      setProductCategories(productCategoriesData || []);
+        setCategories(categoriesData || []);
+        setManufacturers(manufacturersData || []);
+        setProductCategories(productCategoriesData || []);
+      } catch (error) {
+        console.error('Failed to fetch product metadata', error);
+        toast.error('Failed to load product metadata');
+      }
     };
 
     fetchData();
@@ -67,23 +72,29 @@ const PostForm: React.FC = () => {
   const onSubmit = async (data: FormData) => {
     setIsPending(true);
     try {
-      const formData = {
-        ...data,
-        product_img1: data.product_img1?.[0]?.name || null,
-        product_img2: data.product_img2?.[0]?.name || null,
-        product_img3: data.product_img3?.[0]?.name || null,
-        product_video: data.product_video?.[0]?.name || null,
+      const payload: any = {
+        product_title: data.product_title,
+        product_price: data.product_price,
+        product_desc: data.product_desc,
+        product_keywords: data.product_keywords,
+        product_label: data.product_label,
+        status: data.status,
+        product_psp_price: data.product_psp_price,
+        product_features: data.product_features || [],
+        item_qty: data.item_qty,
+        product_url: data.product_url,
+        cat_id: data.cat_id,
+        manufacturer_id: data.manufacturer_id,
+        p_cat_id: data.p_cat_id,
       };
 
-      const { error } = await supabase.from('products').insert([formData]);
+      if ((data as any).product_img1?.[0]) payload.product_img1 = await uploadFile((data as any).product_img1[0]);
+      if ((data as any).product_img2?.[0]) payload.product_img2 = await uploadFile((data as any).product_img2[0]);
+      if ((data as any).product_img3?.[0]) payload.product_img3 = await uploadFile((data as any).product_img3[0]);
+      if ((data as any).product_video?.[0]) payload.product_video = await uploadFile((data as any).product_video[0]);
 
-      if (error) {
-        console.error('Error posting product:', error.message);
-        toast.error('Failed to post product.');
-      } else {
-        console.log('Product posted successfully');
-        toast.success('Product posted successfully!');
-      }
+      await apiPost('/products.php', payload);
+      toast.success('Product posted successfully!');
     } catch (err) {
       console.error('Unexpected error:', err);
       toast.error('An unexpected error occurred.');

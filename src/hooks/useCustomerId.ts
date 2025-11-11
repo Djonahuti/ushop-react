@@ -1,5 +1,5 @@
 // hooks/useCustomerId.ts
-import supabase from '@/lib/supabaseClient';
+import { apiGet } from '@/lib/api';
 import { useEffect, useState } from 'react';
 
 export const useCustomerId = () => {
@@ -7,17 +7,17 @@ export const useCustomerId = () => {
 
   useEffect(() => {
     const getCustomerId = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const email = localStorage.getItem('auth_email');
+      if (!email) return;
 
-      const { data: customer } = await supabase
-        .from('customers')
-        .select('customer_id')
-        .eq('customer_email', user.email)
-        .single();
-
-      if (customer?.customer_id) {
-        setCustomerId(customer.customer_id);
+      try {
+        const customers = await apiGet<Array<{ customer_id: number }>>(`/customers.php?email=${encodeURIComponent(email)}`);
+        const customer = customers?.[0];
+        if (customer?.customer_id) {
+          setCustomerId(customer.customer_id);
+        }
+      } catch (error) {
+        console.error('Error fetching customer ID:', error);
       }
     };
 

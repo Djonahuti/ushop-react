@@ -1,6 +1,6 @@
 // AddBundle.tsx
 import { useEffect, useState } from 'react';
-import supabase from '@/lib/supabaseClient';
+import { apiGet, apiPost } from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -33,10 +33,14 @@ export default function AddBundle() {
 
   useEffect(() => {
     const fetchSellersAndProducts = async () => {
-      const { data: sellerData } = await supabase.from('sellers').select('*');
-      const { data: productData } = await supabase.from('products').select('*');
+      try {
+        const sellerData = await apiGet<any[]>('/sellers.php');
+        const productData = await apiGet<any[]>('/products.php');
       setSellers(sellerData || []);
       setProducts(productData || []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
     };
     fetchSellersAndProducts();
   }, []);
@@ -70,16 +74,14 @@ export default function AddBundle() {
       const includedProducts = filteredProducts.filter(p => selectedProducts.includes(p.product_id));
       const bundlePrice = includedProducts.reduce((sum, p) => sum + (p.product_price / 2), 0);
 
-      const { data: bundle, error } = await supabase.from('bundles').insert([
-        {
+      const bundle = await apiPost<any>('/bundles.php', {
           seller_id: data.seller_id,
           bundle_title: data.bundle_title,
           bundle_description: data.bundle_description,
           total_price: bundlePrice
-        }
-      ]).select().single();
+      });
 
-      if (error || !bundle) throw new Error("Bundle creation failed");
+      if (!bundle) throw new Error("Bundle creation failed");
 
       const bundleItems = includedProducts.map(p => ({
         bundle_id: bundle.bundle_id,
@@ -88,8 +90,7 @@ export default function AddBundle() {
         discounted_price: p.product_price / 2
       }));
 
-      const { error: insertError } = await supabase.from('bundle_products').insert(bundleItems);
-      if (insertError) throw new Error("Failed to attach products");
+      await apiPost('/bundle_products.php', bundleItems);
 
       toast.success("Bundle created successfully");
       reset();

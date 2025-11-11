@@ -3,7 +3,7 @@ import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import supabase from '@/lib/supabaseClient';
+import { apiGet, apiPut, uploadFile } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
@@ -53,29 +53,21 @@ const EditProduct: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      try {
       // Fetch categories
-      const { data: categoriesData } = await supabase.from('categories').select('*');
-      setCategories(categoriesData ?? []);
+        const categoriesData = await apiGet<any[]>('/categories.php');
+        setCategories(categoriesData || []);
 
       // Fetch manufacturers
-      const { data: manufacturersData } = await supabase.from('manufacturers').select('*');
-      setManufacturers(manufacturersData ?? []);
+        const manufacturersData = await apiGet<any[]>('/manufacturers.php');
+        setManufacturers(manufacturersData || []);
 
       // Fetch product categories
-      const { data: productCategoriesData } = await supabase.from('product_categories').select('*');
-      setProductCategories(productCategoriesData ?? []);
+        const productCategoriesData = await apiGet<any[]>('/product_categories.php');
+        setProductCategories(productCategoriesData || []);
 
       // Fetch product details
-      const { data: productData, error: productError } = await supabase
-        .from('products')
-        .select('*')
-        .eq('product_id', productId)
-        .single();
-
-        if (productError) {
-          console.error('Error fetching product:', productError.message);
-          return;
-        }        
+        const productData = await apiGet<any>(`/products.php?product_id=${productId}`);
 
       if (productData) {
         setProduct(productData);
@@ -88,10 +80,15 @@ const EditProduct: React.FC = () => {
         setValue('status', productData.status);
         setValue('product_psp_price', productData.product_psp_price);
         setValue('product_url', productData.product_url);
+          if (productData.product_features && Array.isArray(productData.product_features)) {
         productData.product_features.forEach((feature: string) => append(feature));
+          }
         setValue('cat_id', productData.cat_id);
         setValue('manufacturer_id', productData.manufacturer_id);
         setValue('p_cat_id', productData.p_cat_id);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
       }
     };
 
@@ -100,28 +97,54 @@ const EditProduct: React.FC = () => {
 
   const onSubmit = async (data: FormData) => {
     try {
-        const formData = {
-            ...data,
-            product_img1: data.product_img1?.[0]?.name || null,
-            product_img2: data.product_img2?.[0]?.name || null,
-            product_img3: data.product_img3?.[0]?.name || null,
-            product_video: data.product_video?.[0]?.name || null,
-          };
+      // Handle file uploads
+      let product_img1 = product?.product_img1;
+      let product_img2 = product?.product_img2;
+      let product_img3 = product?.product_img3;
+      let product_video = product?.product_video;
 
-          const { error } = await supabase
-            .from('products')
-            .update(formData)
-            .eq('product_id', productId);
-      
-          if (error) {
-            console.error('Error updating product:', error.message);
-            toast.error('Failed to update product');
-          } else {
+      if (data.product_img1?.[0]) {
+        const uploaded = await uploadFile(data.product_img1[0]);
+        if (uploaded) product_img1 = uploaded;
+      }
+      if (data.product_img2?.[0]) {
+        const uploaded = await uploadFile(data.product_img2[0]);
+        if (uploaded) product_img2 = uploaded;
+      }
+      if (data.product_img3?.[0]) {
+        const uploaded = await uploadFile(data.product_img3[0]);
+        if (uploaded) product_img3 = uploaded;
+      }
+      if (data.product_video?.[0]) {
+        const uploaded = await uploadFile(data.product_video[0]);
+        if (uploaded) product_video = uploaded;
+      }
+
+        const formData = {
+        product_id: Number(productId),
+        product_title: data.product_title,
+        product_price: data.product_price,
+        product_desc: data.product_desc,
+        product_keywords: data.product_keywords,
+        product_label: data.product_label,
+        status: data.status,
+        product_psp_price: data.product_psp_price,
+        product_url: data.product_url,
+        product_img1,
+        product_img2,
+        product_img3,
+        product_video,
+        product_features: fields.map((_, i) => data.product_features?.[i] || '').filter(Boolean),
+        cat_id: data.cat_id,
+        manufacturer_id: data.manufacturer_id,
+        p_cat_id: data.p_cat_id,
+      };
+
+      await apiPut('/products.php', formData);
             toast.success('Product updated successfully');
-          }
     } catch (err) {
       console.error('Unexpected error:', err);
-      alert('An unexpected error occurred.');
+      toast.error('Failed to update product');
     }
   };
 

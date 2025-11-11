@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import supabase from '@/lib/supabaseClient';
+import { apiPost } from '@/lib/api';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -31,24 +31,18 @@ const AddBank: React.FC = () => {
   const onSubmit = async (data: FormData) => {
     setIsPending(true);
 
-    // Insert bank data into the database
-    const { error } = await supabase
-      .from('banks')
-      .insert({
+    try {
+      await apiPost('/banks.php', {
         bank_name: data.bank_name,
         account_number: data.account_number,
         account_name: data.account_name,
         logo_url: data.logo_url || null,
         payment_url: data.payment_url || null,
       });
-
-    if (error) {
-      console.error('Error adding bank:', error.message);
-        toast.error('Error adding bank: ' + error.message);
-    } else {
-      console.log('Bank added successfully');
       toast.success('Bank added successfully!');
-      // Optionally, reset the form or show a success message
+    } catch (error: any) {
+      console.error('Error adding bank:', error);
+      toast.error('Error adding bank: ' + (error?.message || 'Unknown error'));
     }
     setIsPending(false);
   };

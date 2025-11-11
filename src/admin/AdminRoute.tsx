@@ -1,7 +1,7 @@
 // src/components/AdminRoute.tsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import supabase from '@/lib/supabaseClient';
+import { apiGet } from '@/lib/api';
 
 export default function AdminRoute({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
@@ -9,22 +9,23 @@ export default function AdminRoute({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate('/login'); // Redirect to login if not authenticated
-      } else {
-        // Check if the user is an admin
-        const { data: adminData, error } = await supabase
-          .from('admins')
-          .select('*')
-          .eq('admin_email', user.email)
-          .single();
+      const email = localStorage.getItem('auth_email');
+      const role = localStorage.getItem('auth_role');
+      
+      if (!email || role !== 'admin') {
+        navigate('/login');
+        return;
+      }
 
-        if (error || !adminData) {
-          navigate('/'); // Redirect to home if not an admin
+      try {
+        const admins = await apiGet<any[]>(`/admins.php?email=${encodeURIComponent(email)}`);
+        if (!admins || admins.length === 0) {
+          navigate('/');
         } else {
-          setChecking(false); // User is an admin, allow access
+          setChecking(false);
         }
+      } catch (error) {
+        navigate('/');
       }
     };
     checkAuth();
