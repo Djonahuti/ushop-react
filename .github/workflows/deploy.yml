@@ -48,7 +48,7 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ${{ secrets.FTP_PROTOCOL }}
           local-dir: ./api/
-          server-dir: /public_html/api/
+          server-dir: ./api/
           exclude: |
             **/.git*
             **/.git*/**
@@ -61,7 +61,7 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ${{ secrets.FTP_PROTOCOL }}
           local-dir: ./mail/
-          server-dir: /public_html/mail/
+          server-dir: ./mail/
           exclude: |
             **/.git*
             **/.git*/**
