@@ -141,7 +141,7 @@ The project includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) 
 - `FTP_USERNAME` - Your FTP username
 - `FTP_PASSWORD` - Your FTP password
 - `FTP_PROTOCOL` - Usually `ftp` or `ftps`
-
+ 
 ### Manual Setup Steps (One-Time)
 
 Since FTP-only hosting doesn't support SSH commands, you need to manually create the uploads directory:
