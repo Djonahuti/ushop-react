@@ -23,45 +23,61 @@ const africanCountries = [
   "Zambia","Zimbabwe","Western Sahara"
 ];
 
-// Nigerian states (from db.sql enum list)
-const nigeriaStates = [
-  "Abuja","Abia State","Adamawa State","Akwa-Ibom State","Anambra State","Bauchi State","Benue State","Bornu State",
-  "Cross River State","Delta State","Edo State","Enugu State","Imo State","Jigawa State","Kaduna State","Lagos State",
-  "Niger State","Ogun State","Platue State","Rivers State","Kastina State","Osun State","Oyo State","Sokoto State",
-  "Taraba State","Kogi State","Ekiti State","Kano State","Bayelsa State"
-];
+// Map of states by country (extend as needed)
+const statesByCountry: Record<string, string[]> = {
+  Nigeria: [
+    "Abuja","Abia State","Adamawa State","Akwa Ibom State","Anambra State","Bauchi State","Bayelsa State","Benue State","Borno State",
+    "Cross River State","Delta State","Edo State","Ekiti State","Enugu State","Gombe State","Imo State","Jigawa State","Kaduna State","Kano State",
+    "Katsina State","Kebbi State","Kogi State","Kwara State","Lagos State","Nasarawa State","Niger State","Ogun State","Ondo State","Osun State",
+    "Oyo State","Plateau State","Rivers State","Sokoto State","Taraba State","Yobe State","Zamfara State"
+  ],
+  // Examples (add complete lists later if needed)
+  "South Africa": ["Eastern Cape","Free State","Gauteng","KwaZulu-Natal","Limpopo","Mpumalanga","North West","Northern Cape","Western Cape"],
+  "Kenya": ["Nairobi","Mombasa","Kisumu","Nakuru","Uasin Gishu","Kiambu","Machakos","Kajiado"],
+  "Ghana": ["Greater Accra","Ashanti","Northern","Western","Central","Volta","Eastern","Bono"],
+};
+
+// Nigerian states (reference list; statesByCountry.Nigeria is the source of truth)
 
 // Cities by state (sample comprehensive mapping; extend as needed)
 const citiesByState: Record<string, string[]> = {
   "Abuja": ["Abaji","Bwari","Gwagwalada","Kuje","Kwali","Abuja Municipal"],
   "Abia State": ["Aba","Umuahia","Ohafia","Arochukwu","Isuikwuato","Bende"],
   "Adamawa State": ["Yola","Mubi","Numan","Jimeta","Ganye","Michika"],
-  "Akwa-Ibom State": ["Uyo","Eket","Ikot Ekpene","Oron","Abak","Etinan"],
+  "Akwa Ibom State": ["Uyo","Eket","Ikot Ekpene","Oron","Abak","Etinan"],
   "Anambra State": ["Awka","Onitsha","Nnewi","Ekwulobia","Otuocha","Ihiala"],
   "Bauchi State": ["Bauchi","Azare","Misau","Jama'are","Katagum","Darazo"],
+  "Bayelsa State": ["Yenagoa","Ogbia","Brass","Sagbama","Ekeremor","Nembe"],
   "Benue State": ["Makurdi","Gboko","Otukpo","Katsina-Ala","Vandeikya","Oju"],
-  "Bornu State": ["Maiduguri","Biu","Monguno","Ngala","Damasak","Dikwa"],
+  "Borno State": ["Maiduguri","Biu","Monguno","Ngala","Damasak","Dikwa"],
   "Cross River State": ["Calabar","Ikom","Ogoja","Ugep","Obudu","Akamkpa"],
   "Delta State": ["Asaba","Warri","Sapele","Ughelli","Agbor","Oleh"],
+  "Ebonyi State": ["Abakaliki","Afikpo","Onicha","Ivo","Ezza","Ikwo"],
   "Edo State": ["Benin City","Ekpoma","Auchi","Uromi","Igueben","Igarra"],
+  "Ekiti State": ["Ado Ekiti","Ikere-Ekiti","Ikole","Ise/Orun","Ido Osi","Oye-Ekiti"],
   "Enugu State": ["Enugu","Nsukka","Awgu","Oji River","Udi","Ezeagu"],
+  "Gombe State": ["Gombe","Kaltungo","Bajoga","Dukku","Billiri","Nafada"],
   "Imo State": ["Owerri","Okigwe","Orlu","Oguta","Mbaise","Ngor Okpala"],
   "Jigawa State": ["Dutse","Hadejia","Gumel","Kazaure","Birnin Kudu","Ringim"],
   "Kaduna State": ["Kaduna","Zaria","Kafanchan","Kagarko","Soba","Saminaka"],
+  "Kano State": ["Kano","Wudil","Bichi","Gaya","Rano","Kura"],
+  "Katsina State": ["Katsina","Daura","Funtua","Malumfashi","Dutsin-Ma","Kankia"],
+  "Kebbi State": ["Birnin Kebbi","Argungu","Yelwa","Zuru","Jega","Koko"],
+  "Kogi State": ["Lokoja","Okene","Kabba","Idah","Ankpa","Ajaokuta"],
+  "Kwara State": ["Ilorin","Offa","Kaiama","Patigi","Share","Omu Aran"],
   "Lagos State": ["Ikeja","Lagos Island","Ikorodu","Epe","Badagry","Surulere","Lekki","Ajah","Yaba"],
+  "Nasarawa State": ["Lafia","Keffi","Akwanga","Karu","Doma","Nasarawa"],
   "Niger State": ["Minna","Bida","Suleja","Kontagora","New Bussa","Mokwa"],
   "Ogun State": ["Abeokuta","Ijebu Ode","Sagamu","Ota","Ilaro","Ayetoro"],
-  "Platue State": ["Jos","Barkin Ladi","Pankshin","Langtang","Shendam","Mangu"],
-  "Rivers State": ["Port Harcourt","Bonny","Omoku","Ahoada","Degema","Bori"],
-  "Kastina State": ["Katsina","Daura","Funtua","Malumfashi","Dutsin-Ma","Kankia"],
+  "Ondo State": ["Akure","Ondo","Owo","Okitipupa","Ikare","Irele"],
   "Osun State": ["Osogbo","Ile-Ife","Ilesa","Iwo","Ikirun","Ejigbo"],
   "Oyo State": ["Ibadan","Ogbomoso","Oyo","Iseyin","Saki","Eruwa"],
+  "Plateau State": ["Jos","Barkin Ladi","Pankshin","Langtang","Shendam","Mangu"],
+  "Rivers State": ["Port Harcourt","Bonny","Omoku","Ahoada","Degema","Bori"],
   "Sokoto State": ["Sokoto","Wamako","Binji","Illela","Tambuwal","Gwadabawa"],
   "Taraba State": ["Jalingo","Wukari","Sardauna (Gembu)","Bali","Takum","Ibi"],
-  "Kogi State": ["Lokoja","Okene","Kabba","Idah","Ankpa","Ajaokuta"],
-  "Ekiti State": ["Ado Ekiti","Ikere-Ekiti","Ikole","Ise/Orun","Ido Osi","Oye-Ekiti"],
-  "Kano State": ["Kano","Wudil","Bichi","Gaya","Rano","Kura"],
-  "Bayelsa State": ["Yenagoa","Ogbia","Brass","Sagbama","Ekeremor","Nembe"],
+  "Yobe State": ["Damaturu","Potiskum","Gashua","Nguru","Geidam","Buni Yadi"],
+  "Zamfara State": ["Gusau","Kaura Namoda","Talata Mafara","Anka","Bungudu","Maru"],
 };
 
 
@@ -96,10 +112,23 @@ export function RegisterForm({
   // Initialize selects: countries are static, states from constant, cities depend on selected state
   useEffect(() => {
     setCountries(africanCountries);
-    setStates(nigeriaStates);
+    // initial states empty; will populate after selecting a country
+    setStates([]);
   }, []);
 
+  const selectedCountry = watch("customer_country");
   const selectedState = watch("state");
+
+  // When country changes, load states for that country, reset state and city
+  useEffect(() => {
+    const nextStates = selectedCountry ? (statesByCountry[selectedCountry] || []) : [];
+    setStates(nextStates);
+    setValue("state", undefined as any);
+    setValue("customer_city", undefined as any);
+    // Also clear cities when country changes
+    setCities([]);
+  }, [selectedCountry, setValue]);
+
   useEffect(() => {
     const nextCities = selectedState ? (citiesByState[selectedState] || []) : [];
     setCities(nextCities);
