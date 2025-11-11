@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import supabase from '@/lib/supabaseClient';
+import { apiGet, apiPut, apiDelete, uploadFile, apiPost } from '@/lib/api';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -48,32 +48,29 @@ export function MobileView() {
   
     useEffect(() => {
       const fetchSellerData = async () => {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        const email = localStorage.getItem('auth_email');
+        if (!email) {
+          setLoading(false);
+          return;
+        }
 
-        if (user) {
-          const { data, error } = await supabase
-            .from('sellers')
-            .select('*')
-            .eq('seller_email', user.email)
-            .single();
-  
-          if (error) {
-            console.error('Error fetching seller data:', error.message);
-          } else {
-            setSeller(data);
-            // Set form values
-            setValue('seller_name', data.seller_name);
-            setValue('seller_email', data.seller_email);
-            setValue('shop_address', data.shop_address);
-            setValue('shop_city', data.shop_city);
-            setValue('shop_country', data.shop_country);
-            setValue('business_name', data.business_name);
-            setValue('seller_contact', data.seller_contact);
-            setValue('cac_no', data.cac_no);
+        try {
+          const sellers = await apiGet<any[]>(`/sellers.php?email=${encodeURIComponent(email)}`);
+          const sellerData = sellers?.[0];
+          if (sellerData) {
+            setSeller(sellerData);
+            setValue('seller_name', sellerData.seller_name);
+            setValue('seller_email', sellerData.seller_email);
+            setValue('shop_address', sellerData.shop_address || '');
+            setValue('shop_city', sellerData.shop_city || '');
+            setValue('shop_country', sellerData.shop_country || '');
+            setValue('business_name', sellerData.business_name || '');
+            setValue('seller_contact', sellerData.seller_contact || '');
+            setValue('cac_no', sellerData.cac_no || '');
           }
-        } else if (userError) {
-        console.error('Error getting user:', userError.message);
-      }
+        } catch (err) {
+          console.error('Error fetching seller data:', err);
+        }
         setLoading(false);
       };
   
@@ -89,26 +86,17 @@ export function MobileView() {
 
     // Update seller function
     const onSubmit = async (data: FormData) => {
-      // Handle image upload
-      let imagePath = seller?.seller_image; // Keep the existing image if no new image is uploaded
-      if (imageFile) {
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('media') // Replace with your storage bucket name
-          .upload(`sellers/${imageFile.name}`, imageFile);
-  
-        if (uploadError) {
-          console.error('Error uploading image:', uploadError.message);
-          return;
+      try {
+        // Handle image upload
+        let imagePath = seller?.seller_image;
+        if (imageFile) {
+          imagePath = await uploadFile(imageFile);
         }
-        imagePath = uploadData.path; // Get the uploaded image path
-      }
   
-      // Update seller details
-      const { error } = await supabase
-        .from('sellers')
-        .update({
+        // Update seller details
+        await apiPut('/sellers.php', {
+          seller_email: seller?.seller_email,
           seller_name: data.seller_name,
-          seller_email: data.seller_email,
           shop_address: data.shop_address,
           shop_city: data.shop_city,
           shop_country: data.shop_country,
@@ -116,66 +104,50 @@ export function MobileView() {
           seller_contact: data.seller_contact,
           cac_no: data.cac_no,
           seller_image: imagePath,
-        })
-        .eq('seller_email', seller?.seller_email);
+        });
   
-      if (error) {
-        console.error('Error updating seller data:', error.message);
-      } else {
-        console.log('seller data updated successfully');
-        // Optionally, show a success message or redirect
+        console.log('Seller data updated successfully');
+        // Refresh seller data
+        const sellers = await apiGet<any[]>(`/sellers.php?email=${encodeURIComponent(data.seller_email)}`);
+        if (sellers?.[0]) setSeller(sellers[0]);
+      } catch (err) {
+        console.error('Error updating seller data:', err);
       }
     };
 
     // Change Password function
     const changePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
-      // Sign in with the current password to verify it
-      const { data: { user } } = await supabase.auth.getUser();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user?.email || '', // Get the current user's email
-        password: currentPassword,
-      });
-    
-      if (signInError) {
-        console.error('Current password is incorrect:', signInError.message);
-        return;
-      }
-    
-      // If sign in is successful, update the password
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-    
-      if (updateError) {
-        console.error('Error updating password:', updateError.message);
-      } else {
+      const email = localStorage.getItem('auth_email');
+      if (!email || !seller) return;
+      
+      try {
+        // Update password via change_password endpoint (it verifies current password)
+        await apiPost('/change_password.php', {
+          email,
+          role: 'seller',
+          current_password: currentPassword,
+          new_password: newPassword,
+        });
+        
         console.log('Password updated successfully');
+      } catch (err) {
+        console.error('Error updating password:', err);
       }
     };
   
   // Delete Account function
   const deleteAccount = async (): Promise<void> => {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      console.error('Error getting user:', userError?.message);
-      return;
-    }
+    const email = localStorage.getItem('auth_email');
+    if (!email || !seller) return;
 
-    // You need to implement a secure backend function to delete a user.
-    // For demonstration, we'll just remove the seller record from the 'sellers' table.
-    // WARNING: This does NOT delete the user from Supabase Auth!
-    const { error } = await supabase
-      .from('sellers')
-      .delete()
-      .eq('seller_email', user.email);
-
-    if (error) {
-      console.error('Error deleting seller data:', error.message);
-    } else {
-      console.log('seller data deleted successfully');
-      // Optionally, sign out the user
-      await supabase.auth.signOut();
-      // Optionally, redirect the user or show a success message
+    try {
+      await apiDelete('/sellers.php', { email });
+      console.log('Seller data deleted successfully');
+      localStorage.removeItem('auth_email');
+      localStorage.removeItem('auth_role');
+      window.location.href = '/login';
+    } catch (err) {
+      console.error('Error deleting seller data:', err);
     }
   };
   
@@ -212,7 +184,7 @@ export function MobileView() {
              <Avatar className="rounded-full w-32 h-32 mx-auto border-4 border-orange-700 mb-4 transition-transform duration-300 hover:scale-105 ring ring-gray-300">
               {seller.seller_image ? (
                 <AvatarImage 
-                  src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${seller.seller_image}`}
+                  src={`/${seller.seller_image}`}
                   alt="Profile" />
                 ): (
                   <AvatarFallback className="text-3xl">{seller.business_name.split(" ").map((n) => n[0]).join("")}</AvatarFallback>

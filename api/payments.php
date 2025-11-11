@@ -27,6 +27,16 @@ if ($method === 'POST') {
     ok($stmt->fetch());
 }
 
+if ($method === 'DELETE') {
+    $body = json_input();
+    if (!isset($body['payment_id'])) {
+        fail('payment_id is required', 400);
+    }
+    $stmt = $pdo->prepare('DELETE FROM public.payments WHERE payment_id = :id');
+    $stmt->execute([':id' => $body['payment_id']]);
+    ok(['deleted' => true]);
+}
+
 fail('Invalid method', 405);
 
 

@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/shared/data-table";
-import supabase from "@/lib/supabaseClient";
+import { apiGet, apiPost, apiDelete } from "@/lib/api";
 import { Customer, PendingOrder, Product } from "@/types";
 import { toast } from "sonner";
 import { BanknoteX, Handshake, PackageCheck, Truck } from "lucide-react";
@@ -20,15 +20,24 @@ export const DataFetch = () => {
   
   useEffect(() => {
     const fetchProducts = async () => {
-      const { data, error } = await supabase.from('products').select('*, manufacturers(manufacturer_title), categories(cat_title), product_categories(p_cat_title)').order('product_id', { ascending: false });
-
-      if (error) {
+      try {
+        const productsData = await apiGet<Product[]>('/products.php');
+        const manufacturers = await apiGet<Array<{ manufacturer_id: number; manufacturer_title: string }>>('/manufacturers.php');
+        const categories = await apiGet<Array<{ cat_id: number; cat_title: string }>>('/categories.php');
+        const productCategories = await apiGet<Array<{ p_cat_id: number; p_cat_title: string }>>('/product_categories.php');
+        
+        const hydrated = (productsData || []).map(p => ({
+          ...p,
+          manufacturers: manufacturers?.find(m => m.manufacturer_id === p.manufacturer_id) || null,
+          categories: categories?.find(c => c.cat_id === p.cat_id) || null,
+          product_categories: productCategories?.find(pc => pc.p_cat_id === p.p_cat_id) || null,
+        }));
+        
+        setProducts(hydrated.sort((a, b) => b.product_id - a.product_id) as Product[]);
+      } catch (err) {
         setError('Failed to fetch products');
-        console.error(error);
-      } else {
-        setProducts(data || []);
+        console.error(err);
       }
-
     };
 
     fetchProducts();
@@ -37,219 +46,185 @@ export const DataFetch = () => {
   
   useEffect(() => {
     const fetchOrders = async () => {
-        const { data, error } = await supabase
-        .from('pending_orders')
-        .select(`*, pending_order_items(qty, products(product_title, product_price, product_img1)), customers(customer_name)`)
-        .order('p_order_id', { ascending: false });
-
-        if (error) {
-            setError('Failed to fetch orders');
-            console.error(error);
-        } else {
-            setOrders(data || []);
-        }
+      try {
+        const ordersData = await apiGet<any[]>('/pending_orders.php');
+        const customers = await apiGet<Array<{ customer_id: number; customer_name: string }>>('/customers.php');
+        const products = await apiGet<Array<{ product_id: number; product_title: string; product_price: number; product_img1: string }>>('/products.php');
+        
+        const hydrated = await Promise.all((ordersData || []).map(async (order) => {
+          const items = await apiGet<Array<{ qty: number; product_id: number }>>(`/pending_order_items.php?p_order_id=${order.p_order_id}`);
+          const customer = customers?.find(c => c.customer_id === order.customer_id);
+          
+          const pending_order_items = (items || []).map(item => ({
+            ...item,
+            products: products?.find(p => p.product_id === item.product_id),
+          }));
+          
+          return {
+            ...order,
+            customers: customer ? { customer_name: customer.customer_name } : undefined,
+            pending_order_items,
+          };
+        }));
+        
+        setOrders(hydrated.sort((a, b) => b.p_order_id - a.p_order_id));
+      } catch (err) {
+        setError('Failed to fetch orders');
+        console.error(err);
+      }
     };
     fetchOrders();
   }, []);
 
   useEffect(() => {
     const fetchCustomerData = async () => {
-        const { data, error } = await supabase.from('customers').select('*').order('customer_id', { ascending: false });
-
-        if (error) {
-            setError('Failed to fetch orders');
-            console.error(error);
-        } else {
-            setUsers(data || []);
-        }
+      try {
+        const customersData = await apiGet<Customer[]>('/customers.php');
+        setUsers((customersData || []).sort((a, b) => b.customer_id - a.customer_id));
+      } catch (err) {
+        setError('Failed to fetch customers');
+        console.error(err);
+      }
     };
     fetchCustomerData();
   }, []);  
 
   const handleConfirm = async (invoice_no: number) => {
-    const { data: orderData, error: orderError } = await supabase
-    .from('orders')
-    .select('order_id')
-    .eq('invoice_no', invoice_no)
-    .single();
+    try {
+      const ordersData = await apiGet<any[]>(`/orders.php?invoice_no=${invoice_no}`);
+      const order = ordersData?.[0];
+      
+      if (!order) {
+        alert('Failed to find order.');
+        return;
+      }
 
-    if (orderError || !orderData) {
-      alert('Failed to find order.');
-      return;
+      await apiPost('/orders_status_set.php', { invoice_no, order_status: 'Payment confirmed' });
+      await apiPost('/pending_orders_status_set.php', { invoice_no, order_status: 'Payment confirmed' });
+      await apiPost('/order_status_history.php', { order_id: order.order_id, status: 'Payment confirmed' });
+
+      alert('Payment confirmed!');
+      setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to confirm payment.');
     }
-
-    await supabase
-      .from('orders')
-      .update({ order_status: 'Payment confirmed' })
-      .eq('invoice_no', invoice_no);
-
-    await supabase
-      .from('pending_orders')
-      .update({ order_status: 'Payment confirmed' })
-      .eq('invoice_no', invoice_no);
-
-    // Log the status update in order_status_history
-    await supabase
-      .from('order_status_history')
-      .insert([{ order_id: orderData.order_id, status: 'Payment confirmed' }]);      
-
-    alert('Payment confirmed!');
-    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
 
   const handleShipped = async (invoice_no: number) => {
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .select('order_id')
-      .eq('invoice_no', invoice_no)
-      .single();
+    try {
+      const ordersData = await apiGet<any[]>(`/orders.php?invoice_no=${invoice_no}`);
+      const order = ordersData?.[0];
+      
+      if (!order) {
+        alert('Failed to find order.');
+        return;
+      }
 
-    if (orderError || !orderData) {
-      alert('Failed to find order.');
-      return;
+      await apiPost('/orders_status_set.php', { invoice_no, order_status: 'SHIPPED' });
+      await apiPost('/pending_orders_status_set.php', { invoice_no, order_status: 'SHIPPED' });
+      await apiPost('/order_status_history.php', { order_id: order.order_id, status: 'Shipped' });
+
+      alert('SHIPPED!');
+      setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update order status.');
     }
-
-    await supabase
-      .from('orders')
-      .update({ order_status: 'SHIPPED' })
-      .eq('invoice_no', invoice_no);
-
-    await supabase
-      .from('pending_orders')
-      .update({ order_status: 'SHIPPED' })
-      .eq('invoice_no', invoice_no);
-
-    // Log the status update in order_status_history
-    await supabase
-      .from('order_status_history')
-      .insert([{ order_id: orderData.order_id, status: 'Shipped' }]);      
-
-    alert('SHIPPED!');
-    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
   };
 
   const handleWaiting = async (invoice_no: number) => {
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .select('order_id')
-      .eq('invoice_no', invoice_no)
-      .single();
+    try {
+      const ordersData = await apiGet<any[]>(`/orders.php?invoice_no=${invoice_no}`);
+      const order = ordersData?.[0];
+      
+      if (!order) {
+        alert('Failed to find order.');
+        return;
+      }
 
-    if (orderError || !orderData) {
-      alert('Failed to find order.');
-      return;
-    } 
+      await apiPost('/orders_status_set.php', { invoice_no, order_status: 'WAITING TO BE SHIPPED' });
+      await apiPost('/pending_orders_status_set.php', { invoice_no, order_status: 'WAITING TO BE SHIPPED' });
+      await apiPost('/order_status_history.php', { order_id: order.order_id, status: 'Waiting to be Shipped' });
 
-    await supabase
-      .from('orders')
-      .update({ order_status: 'WAITING TO BE SHIPPED' })
-      .eq('invoice_no', invoice_no);
-
-    await supabase
-      .from('pending_orders')
-      .update({ order_status: 'WAITING TO BE SHIPPED' })
-      .eq('invoice_no', invoice_no);
-
-    // Log the status update in order_status_history
-    await supabase
-      .from('order_status_history')
-      .insert([{ order_id: orderData.order_id, status: 'Waiting to be Shipped' }]);      
-
-    alert('WAITING TO BE SHIPPED!');
-    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+      alert('WAITING TO BE SHIPPED!');
+      setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update order status.');
+    }
   };
 
   const handleOutForDelivery = async (invoice_no: number) => {
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .select('order_id')
-      .eq('invoice_no', invoice_no)
-      .single();
+    try {
+      const ordersData = await apiGet<any[]>(`/orders.php?invoice_no=${invoice_no}`);
+      const order = ordersData?.[0];
+      
+      if (!order) {
+        alert('Failed to find order.');
+        return;
+      }
 
-    if (orderError || !orderData) {
-      alert('Failed to find order.');
-      return;
-    }    
-    await supabase
-      .from('orders')
-      .update({ order_status: 'OUT FOR DELIVERY' })
-      .eq('invoice_no', invoice_no);
+      await apiPost('/orders_status_set.php', { invoice_no, order_status: 'OUT FOR DELIVERY' });
+      await apiPost('/pending_orders_status_set.php', { invoice_no, order_status: 'OUT FOR DELIVERY' });
+      await apiPost('/order_status_history.php', { order_id: order.order_id, status: 'Out for delivery' });
 
-    await supabase
-      .from('pending_orders')
-      .update({ order_status: 'OUT FOR DELIVERY' })
-      .eq('invoice_no', invoice_no);
-
-    // Log the status update in order_status_history
-    await supabase
-      .from('order_status_history')
-      .insert([{ order_id: orderData.order_id, status: 'Out for delivery' }]);      
-
-    alert('OUT FOR DELIVERY!');
-    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+      alert('OUT FOR DELIVERY!');
+      setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update order status.');
+    }
   };
 
   const handleDelivered = async (invoice_no: number) => {
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .select('order_id')
-      .eq('invoice_no', invoice_no)
-      .single();
+    try {
+      const ordersData = await apiGet<any[]>(`/orders.php?invoice_no=${invoice_no}`);
+      const order = ordersData?.[0];
+      
+      if (!order) {
+        alert('Failed to find order.');
+        return;
+      }
 
-    if (orderError || !orderData) {
-      alert('Failed to find order.');
-      return;
-    }    
-    
-    await supabase
-      .from('orders')
-      .update({ order_status: 'DELIVERED' })
-      .eq('invoice_no', invoice_no);
+      await apiPost('/orders_status_set.php', { invoice_no, order_status: 'DELIVERED' });
+      await apiPost('/pending_orders_status_set.php', { invoice_no, order_status: 'DELIVERED' });
+      await apiPost('/order_status_history.php', { order_id: order.order_id, status: 'Delivered' });
 
-    await supabase
-      .from('pending_orders')
-      .update({ order_status: 'DELIVERED' })
-      .eq('invoice_no', invoice_no);
-
-    // Log the status update in order_status_history
-    await supabase
-      .from('order_status_history')
-      .insert([{ order_id: orderData.order_id, status: 'Delivered' }]);      
-
-    alert('DELIVERED!');
-    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+      alert('DELIVERED!');
+      setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update order status.');
+    }
   };
 
 
   // Function to delete a product
   const deleteProduct = async (productId: number) => {
-    const { error } = await supabase
-      .from('products')
-      .delete()
-      .eq('product_id', productId);
-  
-    if (error) {
-      console.error('Error deleting product:', error.message);
-      toast.error('Failed to delete product');
-    } else {
+    try {
+      await apiDelete(`/products.php`, { product_id: productId });
       toast.success('Product deleted successfully');
-      // Optionally, refresh the product list or redirect
+      setProducts(products.filter(p => p.product_id !== productId));
+    } catch (err) {
+      console.error('Error deleting product:', err);
+      toast.error('Failed to delete product');
     }
   };
 
   
 
   const deleteUser = async (customerId: number): Promise<void> => {
-    const { error } = await supabase
-      .from('customers')
-      .delete()
-      .eq('customer_id', customerId);
-  
-    if (error) {
-      console.error('Error deleting account:', error.message);
-    } else {
-      console.log('Account deleted successfully');
-      // Optionally, redirect the user or show a success message
+    try {
+      const customer = users.find(u => u.customer_id === customerId);
+      if (!customer) return;
+      
+      await apiDelete(`/customers.php`, { email: customer.customer_email });
+      toast.success('Customer deleted successfully');
+      setUsers(users.filter(u => u.customer_id !== customerId));
+    } catch (err) {
+      console.error('Error deleting account:', err);
+      toast.error('Failed to delete customer');
     }
   };
 
@@ -346,7 +321,7 @@ export const DataFetch = () => {
       cell: ({ row }) => (
         row.original.customer_image ? (
           <img
-           src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${row.original.customer_image}`}
+           src={`/${row.original.customer_image}`}
            alt={row.original.customer_name} 
            className="w-10 h-10 rounded-full border" />
         ) : (

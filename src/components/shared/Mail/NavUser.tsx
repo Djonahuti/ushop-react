@@ -29,7 +29,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import supabase from "@/lib/supabaseClient"
+import { apiGet } from "@/lib/api"
 import { useEffect, useState } from "react"
 import { Admin } from "@/types"
 import { Link } from "react-router-dom"
@@ -41,22 +41,19 @@ export function NavUser() {
 
   useEffect(() => {
     const fetchAdminData = async () => {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const email = localStorage.getItem('auth_email');
+      if (!email) {
+        setLoading(false);
+        return;
+      }
 
-      if (user) {
-        const { data, error } = await supabase
-          .from('admins')
-          .select('*')
-          .eq('admin_email', user.email)
-          .single();
-
-        if (error) {
-          console.error('Error fetching admin data:', error.message);
-        } else {
-          setAdmin(data);
+      try {
+        const admins = await apiGet<any[]>(`/admins.php?email=${encodeURIComponent(email)}`);
+        if (admins && admins.length > 0) {
+          setAdmin(admins[0]);
         }
-      } else if (userError) {
-        console.error('Error getting user:', userError.message);
+      } catch (error) {
+        console.error('Error fetching admin data:', error);
       }
       setLoading(false);
     };
@@ -81,7 +78,8 @@ export function NavUser() {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    localStorage.removeItem('auth_email');
+    localStorage.removeItem('auth_role');
     window.location.href = "/login"
   }
 
@@ -97,7 +95,7 @@ export function NavUser() {
               <Avatar className="h-8 w-8 rounded-full">
                 {admin.admin_image ? (
                 <AvatarImage
-                 src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${admin.admin_image}`}
+                 src={`/${admin.admin_image}`}
                  alt={admin.admin_name} />
                 ):(
                   <AvatarFallback className="rounded-full">{admin.admin_name.split(" ").map((n) => n[0]).join("")}</AvatarFallback>
@@ -121,7 +119,7 @@ export function NavUser() {
               <Avatar className="h-8 w-8 rounded-full grayscale">
                 {admin.admin_image ? (
                 <AvatarImage
-                 src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${admin.admin_image}`} 
+                 src={`/${admin.admin_image}`} 
                  alt={admin.admin_name} />
                 ):(
                   <AvatarFallback className="rounded-full">{admin.admin_name.split(" ").map((n) => n[0]).join("")}</AvatarFallback>

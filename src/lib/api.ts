@@ -44,11 +44,11 @@ export async function apiPut<T>(path: string, body: any): Promise<T | null> {
 }
 
 export async function apiDelete<T>(path: string, body?: any): Promise<T | null> {
-  const url = new URL(`${base()}${path}`);
-  if (body) {
-    Object.keys(body).forEach(key => url.searchParams.append(key, String(body[key])));
-  }
-  const res = await fetch(url.toString(), { method: 'DELETE' });
+  const res = await fetch(`${base()}${path}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  });
   const json = (await res.json()) as { ok?: boolean; success?: boolean; data?: T; error?: string; message?: string };
   if ((json.ok === false || json.success === false) || (!json.ok && !json.success)) {
     console.error(`API DELETE error for ${path}:`, json.error || json.message);

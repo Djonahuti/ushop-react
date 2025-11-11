@@ -20,7 +20,7 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { NavUser } from "./NavUser"
 import { Contact } from "@/types"
-import supabase from "@/lib/supabaseClient"
+import { apiGet, apiPut } from "@/lib/api"
 import { MailContext } from "./MailContext"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import ThemeToggle from "@/components/ThemeToggle"
@@ -100,30 +100,40 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const handleSelectMail = async (mail: Contact) => {
     setOpen(true)
-    setSelectedMail(mail); // This now pushes it to Inbox.tsx
+    setSelectedMail(mail);
 
     // Mark the contact as read
-    await supabase
-      .from('contacts')
-      .update({ is_read: true })
-      .eq('id', mail.id);
+    try {
+      await apiPut('/contacts.php', { id: mail.id, is_read: true });
+    } catch (err) {
+      console.error('Error marking contact as read:', err);
+    }
   }
   
   React.useEffect(() => {
     const fetchContact = async () => {
-      let query =  supabase
-        .from('contacts')
-        .select('*, customers(customer_name, customer_email, customer_image), subject(subject)')
-        .order('submitted_at', { ascending: false }); // Optional: Order by submission date
-
+      try {
+        const contactsData = await apiGet<any[]>('/contacts.php');
+        const customers = await apiGet<Array<{ customer_id: number; customer_name: string; customer_email: string; customer_image: string | null }>>('/customers.php');
+        const subjects = await apiGet<Array<{ subject_id: number; subject: string }>>('/subject.php');
+        
+        let filtered = contactsData || [];
         if (activeFilter === "Starred") {
-          query = query.eq('is_starred', true);
+          filtered = filtered.filter(c => c.is_starred === true);
         } else if (activeFilter === "Important") {
-          query = query.eq('is_read', false);
+          filtered = filtered.filter(c => c.is_read === false);
         }
-
-        const { data } = await query;
-      setContacts(data || []);
+        
+        const hydrated = filtered.map(contact => ({
+          ...contact,
+          customers: customers?.find(c => c.customer_id === contact.customer_id),
+          subject: subjects?.find(s => s.subject_id === contact.subject_id),
+        }));
+        
+        setContacts(hydrated.sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()));
+      } catch (err) {
+        console.error('Error fetching contacts:', err);
+      }
     };
 
     fetchContact();
@@ -158,35 +168,34 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       
     const toggleStar = async (contact: Contact) => {
       const newStarredStatus = !contact.is_starred;
-      await supabase
-        .from('contacts')
-        .update({ is_starred: newStarredStatus })
-        .eq('id', contact.id);
-      
-      // Update local state
-      setContacts((prevContacts) =>
-        prevContacts.map((c) =>
-          c.id === contact.id ? { ...c, is_starred: newStarredStatus } : c
-        )
-      );
+      try {
+        await apiPut('/contacts.php', { id: contact.id, is_starred: newStarredStatus });
+        setContacts((prevContacts) =>
+          prevContacts.map((c) =>
+            c.id === contact.id ? { ...c, is_starred: newStarredStatus } : c
+          )
+        );
+      } catch (err) {
+        console.error('Error toggling star:', err);
+      }
     };
     
     const toggleUnreadFilter = async () => {
       const newUnreadStatus = !contacts.every((contact) => contact.is_read);
     
-      // Update the database
-      await supabase
-        .from('contacts')
-        .update({ is_read: newUnreadStatus })
-        .in('id', contacts.map((contact) => contact.id));
-    
-      // Update local state
-      setContacts((prevContacts) =>
-        prevContacts.map((contact) => ({
-          ...contact,
-          is_read: newUnreadStatus,
-        }))
-      );
+      try {
+        await Promise.all(contacts.map(contact =>
+          apiPut('/contacts.php', { id: contact.id, is_read: newUnreadStatus })
+        ));
+        setContacts((prevContacts) =>
+          prevContacts.map((contact) => ({
+            ...contact,
+            is_read: newUnreadStatus,
+          }))
+        );
+      } catch (err) {
+        console.error('Error toggling unread:', err);
+      }
     };    
 
   return (
@@ -292,7 +301,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <Avatar>
                   {contact.customers?.customer_image ? (
                     <AvatarImage
-                      src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${contact.customers?.customer_image}`}
+                      src={`/${contact.customers?.customer_image}`}
                       alt={contact.customers?.customer_name}
                       className="w-6 h-6 rounded-full object-cover"
                     />                     

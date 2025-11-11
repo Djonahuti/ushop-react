@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useContext } from "react"
-import supabase from "@/lib/supabaseClient"
+import { apiGet, apiPut } from "@/lib/api"
 import { Contact } from "@/types"
 import { MailContext } from "./MailContext"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -15,34 +15,40 @@ export default function ListView() {
   const { setSelectedMail, activeFilter } = useContext(MailContext)
 
   const handleSelectMail = async (mail: Contact) => {
-    setSelectedMail(mail); // This now pushes it to Inbox.tsx
+    setSelectedMail(mail);
 
     // Mark the contact as read
-    await supabase
-      .from('contacts')
-      .update({ is_read: true })
-      .eq('id', mail.id);
+    try {
+      await apiPut('/contacts.php', { id: mail.id, is_read: true });
+    } catch (err) {
+      console.error('Error marking contact as read:', err);
+    }
   };
 
   // Fetch messages
   useEffect(() => {
     const fetchContacts = async () => {
-      let query = supabase
-        .from('contacts')
-        .select('*, customers(customer_name, customer_email, customer_image), subject(subject)')
-        .order('submitted_at', { ascending: false });
-
-      if (activeFilter === "Starred") {
-        query = query.eq('is_starred', true);
-      } else if (activeFilter === "Important") {
-        query = query.eq('is_read', false);
-      }
-
-      const { data, error } = await query;
-      if (error) {
-        console.error('Error loading contacts:', error)
-      } else {
-        setContacts(data || [])
+      try {
+        const contactsData = await apiGet<any[]>('/contacts.php');
+        const customers = await apiGet<Array<{ customer_id: number; customer_name: string; customer_email: string; customer_image: string | null }>>('/customers.php');
+        const subjects = await apiGet<Array<{ subject_id: number; subject: string }>>('/subject.php');
+        
+        let filtered = contactsData || [];
+        if (activeFilter === "Starred") {
+          filtered = filtered.filter(c => c.is_starred === true);
+        } else if (activeFilter === "Important") {
+          filtered = filtered.filter(c => c.is_read === false);
+        }
+        
+        const hydrated = filtered.map(contact => ({
+          ...contact,
+          customers: customers?.find(c => c.customer_id === contact.customer_id),
+          subject: subjects?.find(s => s.subject_id === contact.subject_id),
+        }));
+        
+        setContacts(hydrated.sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()));
+      } catch (err) {
+        console.error('Error loading contacts:', err);
       }
     }
     fetchContacts()
@@ -73,17 +79,16 @@ export default function ListView() {
 
   const toggleStar = async (contact: Contact) => {
     const newStarredStatus = !contact.is_starred;
-    await supabase
-      .from('contacts')
-      .update({ is_starred: newStarredStatus })
-      .eq('id', contact.id);
-    
-    // Update local state
-    setContacts((prevContacts) =>
-      prevContacts.map((c) =>
-        c.id === contact.id ? { ...c, is_starred: newStarredStatus } : c
-      )
-    );
+    try {
+      await apiPut('/contacts.php', { id: contact.id, is_starred: newStarredStatus });
+      setContacts((prevContacts) =>
+        prevContacts.map((c) =>
+          c.id === contact.id ? { ...c, is_starred: newStarredStatus } : c
+        )
+      );
+    } catch (err) {
+      console.error('Error toggling star:', err);
+    }
   };  
 
   return (
@@ -103,7 +108,7 @@ export default function ListView() {
             <Avatar>
             {contact.customers?.customer_image ? (
               <AvatarImage
-                src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${contact.customers?.customer_image}`}
+                src={`/${contact.customers?.customer_image}`}
                 alt={contact.customers?.customer_name}
                 className="w-6 h-6 rounded-full object-cover"
               />                     

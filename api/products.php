@@ -6,12 +6,14 @@ switch ($_SERVER['REQUEST_METHOD']) {
         if (isset($_GET['product_id'])) {
             $stmt = $pdo->prepare('SELECT * FROM public.products WHERE product_id = :id');
             $stmt->execute([':id' => (int)$_GET['product_id']]);
-            ok($stmt->fetch());
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            ok(count($result) > 0 ? $result[0] : null);
         }
         if (isset($_GET['id'])) {
             $stmt = $pdo->prepare('SELECT * FROM public.products WHERE product_id = :id');
             $stmt->execute([':id' => (int)$_GET['id']]);
-            ok($stmt->fetch());
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            ok(count($result) > 0 ? $result[0] : null);
         }
         if (isset($_GET['seller_id'])) {
             $stmt = $pdo->prepare('SELECT * FROM public.products WHERE seller_id = :sid ORDER BY product_id DESC');

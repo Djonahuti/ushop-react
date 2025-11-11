@@ -32,12 +32,12 @@ export function AdminLogin({
     const onSubmit = async (data: FormData) => {
       setIsPending(true);
       try {
-        const res = await apiPost<{ role: string; email: string }>('/login.php', {
+        const res = await apiPost<{ success: boolean; role?: 'admin' | 'customer' | 'seller'; email?: string; error?: string }>('/login.php', {
           email: data.admin_email,
           password: data.admin_pass,
         });
-        if (!res) {
-          toast.error('Invalid credentials');
+        if (!res || !res.success || !res.role || !res.email) {
+          toast.error(res?.error || 'Invalid credentials');
           return;
         }
         if (res.role !== 'admin') {
@@ -45,6 +45,7 @@ export function AdminLogin({
         } else {
           localStorage.setItem('auth_email', res.email);
           localStorage.setItem('auth_role', res.role);
+          toast.success('Login Successful');
           navigate('/admin-dashboard');
         }
       } catch (error: any) {

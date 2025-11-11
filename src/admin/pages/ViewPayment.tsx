@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import supabase from '@/lib/supabaseClient';
+import { apiGet, apiDelete } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Payment } from '@/types';
 import { toast } from 'sonner';
@@ -9,28 +9,31 @@ export default function ViewPayment() {
   const [payments, setPayments] = useState<Payment[]>([]);
 
   const deletePayment = async (paymentId: number) => {
-    const { error } = await supabase
-        .from('payments')
-        .delete()
-        .eq('payment_id', paymentId);
-
-    if (error) {
-      console.error('Error deleting payment:', error.message);
-        toast.error('Failed to delete payment');
+    try {
+      await apiDelete('/payments.php', { payment_id: paymentId });
+      toast.success('Payment deleted successfully');
+      setPayments(payments.filter(payment => payment.payment_id !== paymentId));
+    } catch (err) {
+      console.error('Error deleting payment:', err);
+      toast.error('Failed to delete payment');
     }
-    else {
-        toast.success('Payment deleted successfully');
-        setPayments(payments.filter(payment => payment.payment_id !== paymentId));
-    }
-};
+  };
 
   useEffect(() => {
     const fetchPayment = async () => {
-      const { data } = await supabase
-        .from('payments')
-        .select('*, banks(bank_name)')
-
-      setPayments(data || []);
+      try {
+        const paymentsData = await apiGet<Payment[]>('/payments.php');
+        const banks = await apiGet<Array<{ bank_id: number; bank_name: string }>>('/banks.php');
+        
+        const hydrated = (paymentsData || []).map(p => ({
+          ...p,
+          banks: banks?.find(b => b.bank_id === p.bank_id),
+        }));
+        
+        setPayments(hydrated);
+      } catch (err) {
+        console.error('Error fetching payments:', err);
+      }
     };
 
     fetchPayment();

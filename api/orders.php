@@ -8,12 +8,14 @@ if ($method === 'GET') {
     if (isset($_GET['order_id'])) {
         $stmt = $pdo->prepare('SELECT * FROM public.orders WHERE order_id = :oid');
         $stmt->execute([':oid' => (int)$_GET['order_id']]);
-        ok($stmt->fetch());
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        ok(count($result) > 0 ? $result[0] : null);
     }
     if (isset($_GET['invoice_no'])) {
         $stmt = $pdo->prepare('SELECT * FROM public.orders WHERE invoice_no = :inv');
         $stmt->execute([':inv' => $_GET['invoice_no']]);
-        ok($stmt->fetch());
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        ok($result);
     }
     if (isset($_GET['customer_id'])) {
         $stmt = $pdo->prepare('SELECT * FROM public.orders WHERE customer_id = :cid ORDER BY created_at DESC');

@@ -32,12 +32,12 @@ export function LoginForm({
   const onSubmit = async (data: FormData) => {
     setIsPending(true);
     try {
-      const res = await apiPost<{ role: 'admin' | 'customer' | 'seller'; email: string }>(
+      const res = await apiPost<{ success: boolean; role?: 'admin' | 'customer' | 'seller'; email?: string; error?: string }>(
         '/login.php',
         { email: data.customer_email, password: data.customer_pass }
       );
-      if (!res) {
-        toast.error('Invalid email or password');
+      if (!res || !res.success || !res.role || !res.email) {
+        toast.error(res?.error || 'Invalid email or password');
         return;
       }
       localStorage.setItem('auth_email', res.email);

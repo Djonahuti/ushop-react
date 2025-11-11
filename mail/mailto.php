@@ -73,11 +73,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 
                 // Send notification to admin
                 $mailHelper->sendContactNotification('noreply@ushop.com.ng', $customer['customer_name'], $customer['customer_email'], $subjectText, $message);
-                
-                $response["status"] = "success";
-                $response["message"] = "Thank you for your message. An auto-reply has been sent to your email.";
-            } catch (Exception $e) {
-                $response["status"] = "error";
+
+            $response["status"] = "success";
+            $response["message"] = "Thank you for your message. An auto-reply has been sent to your email.";
+        } catch (Exception $e) {
+            $response["status"] = "error";
                 $response["message"] = "Error: " . $e->getMessage();
             }
             break;
@@ -123,8 +123,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($mailHelper->sendOrderStatusUpdate($email, $name, $invoiceNo, $status)) {
                 $response["status"] = "success";
                 $response["message"] = "Order status update email sent successfully";
-            } else {
-                $response["status"] = "error";
+    } else {
+        $response["status"] = "error";
                 $response["message"] = "Failed to send order status update email";
             }
             break;
@@ -138,9 +138,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if (!$email || !$name || !$code) {
                 $response["status"] = "error";
                 $response["message"] = "email, name, and code are required";
-                echo json_encode($response);
-                exit;
-            }
+    echo json_encode($response);
+    exit;
+}
             
             if ($mailHelper->sendVerificationEmail($email, $name, $code)) {
                 $response["status"] = "success";

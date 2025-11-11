@@ -11,53 +11,60 @@ const stubSupabase = {
     getUser: () => createMockPromise({ data: { user: null }, error: null }),
     signOut: () => createMockPromise({ error: null }),
     signUp: () => createMockPromise({ data: { user: null }, error: null }),
+    signInWithPassword: () => createMockPromise({ data: { user: null }, error: null }),
+    updateUser: () => createMockPromise({ data: { user: null }, error: null }),
   },
-  from: (table: string) => ({
-    select: (columns?: string) => ({
+  from: (_table: string) => ({
+    select: (_columns?: string) => ({
       data: [],
       error: null,
-      eq: (column: string, value: any) => ({
+      eq: (_column: string, _value: any) => ({
         data: [],
         error: null,
         single: () => createMockPromise({ data: null, error: null }),
         then: (onResolve: any) => createMockPromise({ data: [], error: null }).then(onResolve),
+        order: (_col: string, _opts?: any) => ({
+          data: [],
+          error: null,
+          then: (onResolve: any) => createMockPromise({ data: [], error: null }).then(onResolve),
+        }),
       }),
-      order: (column: string, options?: any) => ({
+      order: (_column: string, _options?: any) => ({
         data: [],
         error: null,
         then: (onResolve: any) => createMockPromise({ data: [], error: null }).then(onResolve),
       }),
-      in: (column: string, values: any[]) => ({
-        eq: (col: string, val: any) => createMockPromise({ data: null, error: null, count: 0 }),
+      in: (_column: string, _values: any[]) => ({
+        eq: (_col: string, _val: any) => createMockPromise({ data: null, error: null, count: 0 }),
         then: (onResolve: any) => createMockPromise({ data: null, error: null, count: 0 }).then(onResolve),
       }),
       then: (onResolve: any) => createMockPromise({ data: [], error: null }).then(onResolve),
     }),
-    insert: (values: any) => ({
+    insert: (_values: any) => ({
       data: null,
       error: null,
-      select: (columns?: string) => ({
+      select: (_columns?: string) => ({
         single: () => createMockPromise({ data: null, error: null }),
         then: (onResolve: any) => createMockPromise({ data: null, error: null }).then(onResolve),
       }),
       then: (onResolve: any) => createMockPromise({ data: null, error: null }).then(onResolve),
     }),
-    update: (values: any) => ({
+    update: (_values: any) => ({
       data: null,
       error: null,
-      eq: (column: string, value: any) => createMockPromise({ data: null, error: null }),
+      eq: (_column: string, _value: any) => createMockPromise({ data: null, error: null }),
       then: (onResolve: any) => createMockPromise({ data: null, error: null }).then(onResolve),
     }),
     delete: () => ({
       data: null,
       error: null,
-      eq: (column: string, value: any) => createMockPromise({ data: null, error: null }),
+      eq: (_column: string, _value: any) => createMockPromise({ data: null, error: null }),
       then: (onResolve: any) => createMockPromise({ data: null, error: null }).then(onResolve),
     }),
   }),
   storage: {
-    from: (bucket: string) => ({
-      upload: (path: string, file: File) => createMockPromise({ data: { path: null }, error: null }),
+    from: (_bucket: string) => ({
+      upload: (_path: string, _file: File) => createMockPromise({ data: { path: null }, error: null }),
     }),
   },
 };
