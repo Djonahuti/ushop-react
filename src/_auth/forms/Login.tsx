@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Link, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -25,10 +25,11 @@ export function LoginForm({
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
   const navigate = useNavigate();
-    const [isPending, setIsPending] = useState(false);
+  const [isPending, setIsPending] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
+  const googleButtonRef = useRef<HTMLDivElement | null>(null);
   const onSubmit = async (data: FormData) => {
     setIsPending(true);
     try {
@@ -70,7 +71,10 @@ export function LoginForm({
       try {
         await loadGoogleScript();
         const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
-        if (!clientId) return;
+        if (!clientId) {
+          console.warn('VITE_GOOGLE_CLIENT_ID not set; Google sign-in disabled.');
+          return;
+        }
         initGoogleSignIn(clientId, async (credential: string) => {
           const res = await apiPost<{ success?: boolean; role?: string; email?: string; name?: string; error?: string }>(
             '/google_login.php',
@@ -88,8 +92,9 @@ export function LoginForm({
           else navigate('/overview');
         });
         // Render button when available
-        const container = document.getElementById('google-signin-btn-login');
-        if (container) renderGoogleButton(container);
+        if (!renderGoogleButton(googleButtonRef.current)) {
+          console.warn('Failed to render Google sign-in button.');
+        }
       } catch {
         // ignore script load errors here; user can still use email/password
       }
@@ -143,7 +148,7 @@ export function LoginForm({
                   )}
                 </Button>
                 <div className="mt-2 flex justify-center">
-                  <div id="google-signin-btn-login" />
+                  <div ref={googleButtonRef} id="google-signin-btn-login" />
                 </div>
                   </div>
                 </div>

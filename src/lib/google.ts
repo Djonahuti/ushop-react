@@ -25,9 +25,10 @@ export function initGoogleSignIn(clientId: string, callback: (credential: string
   });
 }
 
-export function renderGoogleButton(container: HTMLElement) {
+export function renderGoogleButton(container: HTMLElement | null) {
   const google = (window as any).google;
-  if (!google?.accounts?.id) return;
+  if (!google?.accounts?.id || !container) return false;
+  container.innerHTML = '';
   google.accounts.id.renderButton(container, {
     theme: 'outline',
     size: 'large',
@@ -36,6 +37,7 @@ export function renderGoogleButton(container: HTMLElement) {
     logo_alignment: 'left',
     width: 320,
   });
+  return true;
 }
 
 export function promptGoogleOneTap() {

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Link, useNavigate } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { loadGoogleScript, initGoogleSignIn, renderGoogleButton } from "@/lib/google"
 import { Loader2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -105,6 +105,7 @@ export function RegisterForm({
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
+  const googleButtonRef = useRef<HTMLDivElement | null>(null);
 
   const [countries, setCountries] = useState<string[]>([]);
   const [states, setStates] = useState<string[]>([]);
@@ -143,7 +144,10 @@ export function RegisterForm({
       try {
         await loadGoogleScript();
         const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
-        if (!clientId) return;
+        if (!clientId) {
+          console.warn('VITE_GOOGLE_CLIENT_ID not set; Google sign-in disabled.');
+          return;
+        }
         initGoogleSignIn(clientId, async (credential: string) => {
           const res = await apiPost<{ success?: boolean; role?: string; email?: string; name?: string; error?: string }>(
             '/google_login.php',
@@ -159,8 +163,9 @@ export function RegisterForm({
           navigate('/overview');
         });
         // Render button when available
-        const container = document.getElementById('google-signin-btn-signup');
-        if (container) renderGoogleButton(container);
+        if (!renderGoogleButton(googleButtonRef.current)) {
+          console.warn('Failed to render Google sign-up button.');
+        }
       } catch {
         // ignore script load errors
       }
@@ -278,7 +283,7 @@ export function RegisterForm({
         </div>
         {/* Google Signup */}
         <div className="mt-2 flex justify-center">
-          <div id="google-signin-btn-signup" />
+          <div ref={googleButtonRef} id="google-signin-btn-signup" />
         </div>
         {/* <div className="grid gap-2">
         </div> */}
