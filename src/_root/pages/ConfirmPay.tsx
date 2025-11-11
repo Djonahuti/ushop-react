@@ -59,7 +59,7 @@ export default function ConfirmPay() {
 
     // Log the status update in order_status_history
     const all = await apiGet<any[]>('/orders.php');
-    const found = all.find(o => String(o.invoice_no) === String(invoice_no));
+    const found = all?.find(o => String(o.invoice_no) === String(invoice_no));
     if (!found) { alert('Failed to find order.'); setIsPending(false); return; }
     await fetch(`${window.location.origin}/api/order_status_history.php`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: found.order_id, status: 'Paid' }) });   
 

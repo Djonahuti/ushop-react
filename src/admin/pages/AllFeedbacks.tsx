@@ -18,7 +18,7 @@ const AllFeedbacks = () => {
             for (const f of (data || [])) {
                 const orders = await apiGet<any>(`/orders.php?order_id=${f.order_id}`)
                 const customers = await apiGet<any[]>(`/customers.php`)
-                const customer = customers.find(c => c.customer_id === orders?.customer_id)
+                const customer = customers?.find(c => c.customer_id === orders?.customer_id)
                 let order_item = null
                 if (f.order_item_id) {
                   order_item = await apiGet<any>(`/order_items.php?order_id=${f.order_id}`)
@@ -29,7 +29,7 @@ const AllFeedbacks = () => {
                   }
                 }
                 const feedtype = await apiGet<any[]>(`/feedtype.php`)
-                const ft = feedtype.find(x => x.feedtype_id === f.feedtype_id)
+                const ft = feedtype?.find(x => x.feedtype_id === f.feedtype_id)
                 results.push({
                     feedback_id: f.feedback_id,
                     order_id: f.order_id,

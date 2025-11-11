@@ -23,12 +23,13 @@ export default function Coupons() {
       const fetchCoupons = async () => {
         try {
           const data = await apiGet<any[]>('/coupons.php');
+          if (!data) return;
           // hydrate product and seller
           const results: any[] = [];
           for (const c of data) {
             const p = await apiGet<any>(`/product.php?product_id=${c.product_id}`);
             const s = await apiGet<any[]>(`/sellers.php`);
-            const seller = s.find(x => x.seller_id === p?.seller_id);
+            const seller = s?.find(x => x.seller_id === p?.seller_id);
             results.push({ ...c, products: { ...p, sellers: { business_name: seller?.business_name ?? '' } } });
           }
           setCoupons(results as any);

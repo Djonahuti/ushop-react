@@ -36,6 +36,10 @@ export function LoginForm({
         '/login.php',
         { email: data.customer_email, password: data.customer_pass }
       );
+      if (!res) {
+        toast.error('Invalid email or password');
+        return;
+      }
       localStorage.setItem('auth_email', res.email);
       localStorage.setItem('auth_role', res.role);
       toast.success('Login Successful');

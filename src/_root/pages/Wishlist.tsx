@@ -42,6 +42,7 @@ export default function Wishlist({
       // load wishlist items; the UI expects joined product data previously,
       // so we will fetch wishlist then fetch product details for each
       const wishlist = await apiGet<any[]>(`/wishlist.php?customer_id=${customer.customer_id}`);
+      if (!wishlist) return;
       const productsById = new Map<number, any>();
       const results: any[] = [];
       for (const w of wishlist) {

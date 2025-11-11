@@ -129,9 +129,8 @@ export function DesktopEdit() {
 
     try {
       await apiPut('/customers.php', {
-        customer_email: customer?.customer_email,
-        customer_name: data.customer_name,
         customer_email: data.customer_email,
+        customer_name: data.customer_name,
         customer_country: data.customer_country,
         state: data.state,
         customer_city: data.customer_city,

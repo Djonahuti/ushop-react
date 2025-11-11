@@ -34,17 +34,18 @@ export default function SellerPendingOrders() {
     const fetchPending = async () => {
       if (sellerId === null) return;
       const po = await apiGet<any[]>('/pending_orders.php');
+      if (!po) return;
       const enriched: any[] = [];
       for (const p of po) {
         const items = await apiGet<any[]>(`/pending_order_items.php?pending_order_id=${p.p_order_id}`);
         const mapped: any[] = [];
-        for (const it of items.filter(x => x.seller_id === sellerId)) {
+        for (const it of (items || []).filter(x => x.seller_id === sellerId)) {
           const prod = await apiGet<any>(`/product.php?product_id=${it.product_id}`);
           mapped.push({ ...it, products: { product_title: prod?.product_title, product_price: prod?.product_price, product_img1: prod?.product_img1 } });
         }
         if (mapped.length === 0) continue;
         const custs = await apiGet<any[]>('/customers.php');
-        const customer = custs.find(c => c.customer_id === p.customer_id);
+        const customer = custs?.find(c => c.customer_id === p.customer_id);
         enriched.push({ ...p, pending_order_items: mapped, customers: { customer_name: customer?.customer_name } });
       }
       setOrders(enriched as any);
@@ -70,7 +71,7 @@ export default function SellerPendingOrders() {
 
   const handleShipped = async (invoice_no: number) => {
     const ords = await apiGet<any[]>('/orders.php');
-    const found = ords.find(o => o.invoice_no === invoice_no);
+    const found = ords?.find(o => o.invoice_no === invoice_no);
     if (!found) { alert('Failed to find order.'); return; }
     await fetch(`${window.location.origin}/api/orders_status_set.php?invoice_no=${invoice_no}&status=SHIPPED`, { method: 'POST' });
     await fetch(`${window.location.origin}/api/pending_orders_status_set.php?invoice_no=${invoice_no}&status=SHIPPED`, { method: 'POST' });
@@ -81,7 +82,7 @@ export default function SellerPendingOrders() {
 
   const handleWaiting = async (invoice_no: number) => {
     const ords = await apiGet<any[]>('/orders.php');
-    const found = ords.find(o => o.invoice_no === invoice_no);
+    const found = ords?.find(o => o.invoice_no === invoice_no);
     if (!found) { alert('Failed to find order.'); return; }
     await fetch(`${window.location.origin}/api/orders_status_set.php?invoice_no=${invoice_no}&status=${encodeURIComponent('WAITING TO BE SHIPPED')}`, { method: 'POST' });
     await fetch(`${window.location.origin}/api/pending_orders_status_set.php?invoice_no=${invoice_no}&status=${encodeURIComponent('WAITING TO BE SHIPPED')}`, { method: 'POST' });
@@ -92,7 +93,7 @@ export default function SellerPendingOrders() {
 
   const handleOutForDelivery = async (invoice_no: number) => {
     const ords = await apiGet<any[]>('/orders.php');
-    const found = ords.find(o => o.invoice_no === invoice_no);
+    const found = ords?.find(o => o.invoice_no === invoice_no);
     if (!found) { alert('Failed to find order.'); return; }
     await fetch(`${window.location.origin}/api/orders_status_set.php?invoice_no=${invoice_no}&status=${encodeURIComponent('OUT FOR DELIVERY')}`, { method: 'POST' });
     await fetch(`${window.location.origin}/api/pending_orders_status_set.php?invoice_no=${invoice_no}&status=${encodeURIComponent('OUT FOR DELIVERY')}`, { method: 'POST' });
@@ -103,7 +104,7 @@ export default function SellerPendingOrders() {
 
   const handleDelivered = async (invoice_no: number) => {
     const ords = await apiGet<any[]>('/orders.php');
-    const found = ords.find(o => o.invoice_no === invoice_no);
+    const found = ords?.find(o => o.invoice_no === invoice_no);
     if (!found) { alert('Failed to find order.'); return; }
     await fetch(`${window.location.origin}/api/orders_status_set.php?invoice_no=${invoice_no}&status=DELIVERED`, { method: 'POST' });
     await fetch(`${window.location.origin}/api/pending_orders_status_set.php?invoice_no=${invoice_no}&status=DELIVERED`, { method: 'POST' });

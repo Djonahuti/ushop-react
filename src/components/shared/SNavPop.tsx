@@ -30,7 +30,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { Seller } from "@/types"
-import supabase from "@/lib/supabaseClient"
+import { apiGet } from "@/lib/api"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import ThemeToggle from "../ThemeToggle"
 

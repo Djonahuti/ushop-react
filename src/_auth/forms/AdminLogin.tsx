@@ -36,6 +36,10 @@ export function AdminLogin({
           email: data.admin_email,
           password: data.admin_pass,
         });
+        if (!res) {
+          toast.error('Invalid credentials');
+          return;
+        }
         if (res.role !== 'admin') {
           toast.error('Admin account not found');
         } else {

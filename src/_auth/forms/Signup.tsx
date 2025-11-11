@@ -15,7 +15,8 @@ import { toast } from "sonner"
 
 const getEnumValues = async (enumType: string): Promise<string[]> => {
   try {
-    return await apiGet<string[]>(`/enum_values.php?enum=${encodeURIComponent(enumType)}`);
+    const result = await apiGet<string[]>(`/enum_values.php?enum=${encodeURIComponent(enumType)}`);
+    return result || [];
   } catch (error) {
     console.error(`Error fetching ${enumType}:`, error);
     return [];

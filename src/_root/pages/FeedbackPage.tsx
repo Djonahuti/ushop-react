@@ -69,6 +69,7 @@ const FeedbackPage: React.FC = () => {
     if (!order_id) return
     ;(async () => {
       const oi = await apiGet<any[]>(`/order_items.php?order_id=${order_id}`)
+      if (!oi) return;
       const results: OrderItem[] = []
       for (const it of oi) {
         const p = await apiGet<any>(`/product.php?product_id=${it.product_id}`)
@@ -87,7 +88,7 @@ const FeedbackPage: React.FC = () => {
   useEffect(() => {
     ;(async () => {
       const data = await apiGet<FeedType[]>(`/feedtype.php`)
-      setFeedTypes(data)
+      setFeedTypes(data || [])
     })()
   }, [])
 
@@ -132,7 +133,7 @@ const FeedbackPage: React.FC = () => {
 
         // Recalculate average rating for the product
         const all = await apiGet<any[]>(`/feedbacks.php?order_id=${order_id}`)
-        const ratings = all.filter(r => relatedOrderItemIds.includes(r.order_item_id)).map(r => ({ rating: r.rating }))
+        const ratings = (all || []).filter(r => relatedOrderItemIds.includes(r.order_item_id)).map(r => ({ rating: r.rating }))
         if (!ratings.length) continue
       
         const avgRating = Math.round(

@@ -34,7 +34,7 @@ const CustomerOrders = () => {
   const handleReceive = async (invoice_no: number) => {
     try {
       const all = await apiGet<any[]>('/orders.php');
-      const found = all.find(o => o.invoice_no === invoice_no);
+      const found = all?.find(o => o.invoice_no === invoice_no);
       if (!found) { toast.error('Failed to find order.'); return; }
       const orderId = found.order_id;
       await fetch(`${window.location.origin}/api/order_status_history.php`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: orderId, status: 'COMPLETED' }) });
@@ -56,11 +56,12 @@ const CustomerOrders = () => {
       if (!customerData) return;
       setCustomer({ customer_id: customerData.customer_id as any });
       const allOrders = await apiGet<any[]>(`/orders.php?customer_id=${customerData.customer_id}`);
+      if (!allOrders) return;
       const enriched: any[] = [];
       for (const o of allOrders) {
         const items = await apiGet<any[]>(`/order_items.php?order_id=${o.order_id}`);
         const mapped: any[] = [];
-        for (const it of items) {
+        for (const it of items || []) {
           const p = await apiGet<any>(`/product.php?product_id=${it.product_id}`);
           mapped.push({ ...it, products: { product_title: p?.product_title, product_img1: p?.product_img1, product_price: p?.product_price } });
         }

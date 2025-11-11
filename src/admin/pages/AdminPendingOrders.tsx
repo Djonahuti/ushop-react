@@ -22,16 +22,17 @@ export default function AdminPendingOrders() {
   useEffect(() => {
     const fetchPending = async () => {
       const ords = await apiGet<any[]>('/orders.php');
+      if (!ords) return;
       const enriched: any[] = [];
       for (const o of ords) {
         const items = await apiGet<any[]>(`/order_items.php?order_id=${o.order_id}`);
         const mapped: any[] = [];
-        for (const it of items) {
+        for (const it of items || []) {
           const p = await apiGet<any>(`/product.php?product_id=${it.product_id}`);
           mapped.push({ ...it, products: { product_title: p?.product_title, product_price: p?.product_price, product_img1: p?.product_img1 } });
         }
         const custs = await apiGet<any[]>(`/customers.php`);
-        const customer = custs.find(c => c.customer_id === o.customer_id);
+        const customer = custs?.find(c => c.customer_id === o.customer_id);
         enriched.push({ ...o, order_items: mapped, customers: { customer_name: customer?.customer_name } });
           }        
       setOrders(enriched as any);
@@ -66,7 +67,7 @@ export default function AdminPendingOrders() {
 
   const handleConfirm = async (invoice_no: number) => {
     const ords = await apiGet<any[]>('/orders.php');
-    const found = ords.find(o => o.invoice_no === invoice_no);
+    const found = ords?.find(o => o.invoice_no === invoice_no);
     if (!found) { toast.error('Failed to find order.'); return; }
     await fetch(`${window.location.origin}/api/orders_status_set.php?invoice_no=${invoice_no}&status=${encodeURIComponent('Payment confirmed')}`, { method: 'POST' });
     await fetch(`${window.location.origin}/api/pending_orders_status_set.php?invoice_no=${invoice_no}&status=${encodeURIComponent('Payment confirmed')}`, { method: 'POST' });
@@ -77,7 +78,7 @@ export default function AdminPendingOrders() {
 
   const handleShipped = async (invoice_no: number) => {
     const ords = await apiGet<any[]>('/orders.php');
-    const found = ords.find(o => o.invoice_no === invoice_no);
+    const found = ords?.find(o => o.invoice_no === invoice_no);
     if (!found) { toast.error('Failed to find order.'); return; }
     await fetch(`${window.location.origin}/api/orders_status_set.php?invoice_no=${invoice_no}&status=SHIPPED`, { method: 'POST' });
     await fetch(`${window.location.origin}/api/pending_orders_status_set.php?invoice_no=${invoice_no}&status=SHIPPED`, { method: 'POST' });
@@ -88,7 +89,7 @@ export default function AdminPendingOrders() {
 
   const handleWaiting = async (invoice_no: number) => {
     const ords = await apiGet<any[]>('/orders.php');
-    const found = ords.find(o => o.invoice_no === invoice_no);
+    const found = ords?.find(o => o.invoice_no === invoice_no);
     if (!found) { toast.error('Failed to find order.'); return; }
     await fetch(`${window.location.origin}/api/orders_status_set.php?invoice_no=${invoice_no}&status=${encodeURIComponent('WAITING TO BE SHIPPED')}`, { method: 'POST' });
     await fetch(`${window.location.origin}/api/pending_orders_status_set.php?invoice_no=${invoice_no}&status=${encodeURIComponent('WAITING TO BE SHIPPED')}`, { method: 'POST' });
@@ -99,7 +100,7 @@ export default function AdminPendingOrders() {
 
   const handleOutForDelivery = async (invoice_no: number) => {
     const ords = await apiGet<any[]>('/orders.php');
-    const found = ords.find(o => o.invoice_no === invoice_no);
+    const found = ords?.find(o => o.invoice_no === invoice_no);
     if (!found) { toast.error('Failed to find order.'); return; }
     await fetch(`${window.location.origin}/api/orders_status_set.php?invoice_no=${invoice_no}&status=${encodeURIComponent('OUT FOR DELIVERY')}`, { method: 'POST' });
     await fetch(`${window.location.origin}/api/pending_orders_status_set.php?invoice_no=${invoice_no}&status=${encodeURIComponent('OUT FOR DELIVERY')}`, { method: 'POST' });
@@ -110,7 +111,7 @@ export default function AdminPendingOrders() {
 
   const handleDelivered = async (invoice_no: number) => {
     const ords = await apiGet<any[]>('/orders.php');
-    const found = ords.find(o => o.invoice_no === invoice_no);
+    const found = ords?.find(o => o.invoice_no === invoice_no);
     if (!found) { toast.error('Failed to find order.'); return; }
     await fetch(`${window.location.origin}/api/orders_status_set.php?invoice_no=${invoice_no}&status=DELIVERED`, { method: 'POST' });
     await fetch(`${window.location.origin}/api/pending_orders_status_set.php?invoice_no=${invoice_no}&status=DELIVERED`, { method: 'POST' });
