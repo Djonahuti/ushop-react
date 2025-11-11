@@ -123,7 +123,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         } else if (activeFilter === "Important") {
           filtered = filtered.filter(c => c.is_read === false);
         }
-        
+
         const hydrated = filtered.map(contact => ({
           ...contact,
           customers: customers?.find(c => c.customer_id === contact.customer_id),
@@ -170,11 +170,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const newStarredStatus = !contact.is_starred;
       try {
         await apiPut('/contacts.php', { id: contact.id, is_starred: newStarredStatus });
-        setContacts((prevContacts) =>
-          prevContacts.map((c) =>
-            c.id === contact.id ? { ...c, is_starred: newStarredStatus } : c
-          )
-        );
+      setContacts((prevContacts) =>
+        prevContacts.map((c) =>
+          c.id === contact.id ? { ...c, is_starred: newStarredStatus } : c
+        )
+      );
       } catch (err) {
         console.error('Error toggling star:', err);
       }
@@ -187,12 +187,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         await Promise.all(contacts.map(contact =>
           apiPut('/contacts.php', { id: contact.id, is_read: newUnreadStatus })
         ));
-        setContacts((prevContacts) =>
-          prevContacts.map((contact) => ({
-            ...contact,
-            is_read: newUnreadStatus,
-          }))
-        );
+      setContacts((prevContacts) =>
+        prevContacts.map((contact) => ({
+          ...contact,
+          is_read: newUnreadStatus,
+        }))
+      );
       } catch (err) {
         console.error('Error toggling unread:', err);
       }

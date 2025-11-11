@@ -34,12 +34,12 @@ export default function ListView() {
         const subjects = await apiGet<Array<{ subject_id: number; subject: string }>>('/subject.php');
         
         let filtered = contactsData || [];
-        if (activeFilter === "Starred") {
+      if (activeFilter === "Starred") {
           filtered = filtered.filter(c => c.is_starred === true);
-        } else if (activeFilter === "Important") {
+      } else if (activeFilter === "Important") {
           filtered = filtered.filter(c => c.is_read === false);
-        }
-        
+      }
+
         const hydrated = filtered.map(contact => ({
           ...contact,
           customers: customers?.find(c => c.customer_id === contact.customer_id),
@@ -81,11 +81,11 @@ export default function ListView() {
     const newStarredStatus = !contact.is_starred;
     try {
       await apiPut('/contacts.php', { id: contact.id, is_starred: newStarredStatus });
-      setContacts((prevContacts) =>
-        prevContacts.map((c) =>
-          c.id === contact.id ? { ...c, is_starred: newStarredStatus } : c
-        )
-      );
+    setContacts((prevContacts) =>
+      prevContacts.map((c) =>
+        c.id === contact.id ? { ...c, is_starred: newStarredStatus } : c
+      )
+    );
     } catch (err) {
       console.error('Error toggling star:', err);
     }

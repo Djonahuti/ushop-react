@@ -89,16 +89,16 @@ export default function Items({ items, itemsPerPage = 10, onSelectedUpdate, show
   
     // create bundle
     const choice = await apiPost<any>('/choices.php', {
-      customer_id: customer.customer_id,
+        customer_id: customer.customer_id,
       choice_title: `Bundle of ${products.length}`,
-      choice_description: null,
-      total_price: bundleTotal,
+        choice_description: null,
+        total_price: bundleTotal,
     });
   
     if (!choice || !choice.choice_id) {
       console.error("Failed to create choice");
-      return;
-    }
+        return;
+      }
   
     // link each product
     await Promise.all(products.map((p, i) =>

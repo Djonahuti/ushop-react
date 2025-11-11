@@ -11,13 +11,13 @@ export default function ViewPayment() {
   const deletePayment = async (paymentId: number) => {
     try {
       await apiDelete('/payments.php', { payment_id: paymentId });
-      toast.success('Payment deleted successfully');
-      setPayments(payments.filter(payment => payment.payment_id !== paymentId));
+        toast.success('Payment deleted successfully');
+        setPayments(payments.filter(payment => payment.payment_id !== paymentId));
     } catch (err) {
       console.error('Error deleting payment:', err);
       toast.error('Failed to delete payment');
     }
-  };
+};
 
   useEffect(() => {
     const fetchPayment = async () => {

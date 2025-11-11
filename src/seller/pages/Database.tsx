@@ -48,9 +48,9 @@ export const Database = () => {
         }));
         setOrders(hydrated.sort((a, b) => b.order_id - a.order_id) as Order[]);
       } catch (err) {
-        setError('Failed to fetch orders');
+            setError('Failed to fetch orders');
         console.error(err);
-      }
+        }
     };
     fetchOrders();
   }, []);
@@ -63,7 +63,7 @@ export const Database = () => {
       } catch (err) {
         setError('Failed to fetch customers');
         console.error(err);
-      }
+        }
     };
     fetchCustomerData();
   }, []);
@@ -95,8 +95,8 @@ export const Database = () => {
     try {
       await apiPost('/orders_status_set.php', { invoice_no, order_status: 'Payment confirmed' });
       await apiPost('/pending_orders_status_set.php', { invoice_no, order_status: 'Payment confirmed' });
-      alert('Payment confirmed!');
-      setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+    alert('Payment confirmed!');
+    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
     } catch (err) {
       console.error(err);
       alert('Failed to confirm payment.');
@@ -107,8 +107,8 @@ export const Database = () => {
     try {
       await apiPost('/orders_status_set.php', { invoice_no, order_status: 'SHIPPED' });
       await apiPost('/pending_orders_status_set.php', { invoice_no, order_status: 'SHIPPED' });
-      alert('SHIPPED!');
-      setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+    alert('SHIPPED!');
+    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
     } catch (err) {
       console.error(err);
       alert('Failed to update order status.');
@@ -119,8 +119,8 @@ export const Database = () => {
     try {
       await apiPost('/orders_status_set.php', { invoice_no, order_status: 'WAITING TO BE SHIPPED' });
       await apiPost('/pending_orders_status_set.php', { invoice_no, order_status: 'WAITING TO BE SHIPPED' });
-      alert('WAITING TO BE SHIPPED!');
-      setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+    alert('WAITING TO BE SHIPPED!');
+    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
     } catch (err) {
       console.error(err);
       alert('Failed to update order status.');
@@ -131,8 +131,8 @@ export const Database = () => {
     try {
       await apiPost('/orders_status_set.php', { invoice_no, order_status: 'OUT FOR DELIVERY' });
       await apiPost('/pending_orders_status_set.php', { invoice_no, order_status: 'OUT FOR DELIVERY' });
-      alert('OUT FOR DELIVERY!');
-      setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+    alert('OUT FOR DELIVERY!');
+    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
     } catch (err) {
       console.error(err);
       alert('Failed to update order status.');
@@ -143,8 +143,8 @@ export const Database = () => {
     try {
       await apiPost('/orders_status_set.php', { invoice_no, order_status: 'DELIVERED' });
       await apiPost('/pending_orders_status_set.php', { invoice_no, order_status: 'DELIVERED' });
-      alert('DELIVERED!');
-      setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+    alert('DELIVERED!');
+    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
     } catch (err) {
       console.error(err);
       alert('Failed to update order status.');

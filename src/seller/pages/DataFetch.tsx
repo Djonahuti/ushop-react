@@ -109,18 +109,18 @@ export const DataFetch = () => {
     try {
       const ordersData = await apiGet<any[]>(`/orders.php?invoice_no=${invoice_no}`);
       const order = ordersData?.[0];
-      
+
       if (!order) {
-        alert('Failed to find order.');
-        return;
-      }
+      alert('Failed to find order.');
+      return;
+    }
 
       await apiPost('/orders_status_set.php', { invoice_no, order_status: 'SHIPPED' });
       await apiPost('/pending_orders_status_set.php', { invoice_no, order_status: 'SHIPPED' });
       await apiPost('/order_status_history.php', { order_id: order.order_id, status: 'Shipped' });
 
-      alert('SHIPPED!');
-      setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+    alert('SHIPPED!');
+    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
     } catch (err) {
       console.error(err);
       alert('Failed to update order status.');
@@ -131,18 +131,18 @@ export const DataFetch = () => {
     try {
       const ordersData = await apiGet<any[]>(`/orders.php?invoice_no=${invoice_no}`);
       const order = ordersData?.[0];
-      
+
       if (!order) {
-        alert('Failed to find order.');
-        return;
-      }
+      alert('Failed to find order.');
+      return;
+    } 
 
       await apiPost('/orders_status_set.php', { invoice_no, order_status: 'WAITING TO BE SHIPPED' });
       await apiPost('/pending_orders_status_set.php', { invoice_no, order_status: 'WAITING TO BE SHIPPED' });
       await apiPost('/order_status_history.php', { order_id: order.order_id, status: 'Waiting to be Shipped' });
 
-      alert('WAITING TO BE SHIPPED!');
-      setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+    alert('WAITING TO BE SHIPPED!');
+    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
     } catch (err) {
       console.error(err);
       alert('Failed to update order status.');
@@ -153,18 +153,18 @@ export const DataFetch = () => {
     try {
       const ordersData = await apiGet<any[]>(`/orders.php?invoice_no=${invoice_no}`);
       const order = ordersData?.[0];
-      
+
       if (!order) {
-        alert('Failed to find order.');
-        return;
-      }
+      alert('Failed to find order.');
+      return;
+    }    
 
       await apiPost('/orders_status_set.php', { invoice_no, order_status: 'OUT FOR DELIVERY' });
       await apiPost('/pending_orders_status_set.php', { invoice_no, order_status: 'OUT FOR DELIVERY' });
       await apiPost('/order_status_history.php', { order_id: order.order_id, status: 'Out for delivery' });
 
-      alert('OUT FOR DELIVERY!');
-      setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+    alert('OUT FOR DELIVERY!');
+    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
     } catch (err) {
       console.error(err);
       alert('Failed to update order status.');
@@ -175,18 +175,18 @@ export const DataFetch = () => {
     try {
       const ordersData = await apiGet<any[]>(`/orders.php?invoice_no=${invoice_no}`);
       const order = ordersData?.[0];
-      
-      if (!order) {
-        alert('Failed to find order.');
-        return;
-      }
 
+      if (!order) {
+      alert('Failed to find order.');
+      return;
+    }    
+    
       await apiPost('/orders_status_set.php', { invoice_no, order_status: 'DELIVERED' });
       await apiPost('/pending_orders_status_set.php', { invoice_no, order_status: 'DELIVERED' });
       await apiPost('/order_status_history.php', { order_id: order.order_id, status: 'Delivered' });
 
-      alert('DELIVERED!');
-      setOrders(orders.filter(o => o.invoice_no !== invoice_no));
+    alert('DELIVERED!');
+    setOrders(orders.filter(o => o.invoice_no !== invoice_no));
     } catch (err) {
       console.error(err);
       alert('Failed to update order status.');

@@ -23,6 +23,7 @@ try {
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_TIMEOUT => 5, // 5 second timeout
+        PDO::ATTR_EMULATE_PREPARES => false, // Use native prepared statements
     ]);
 } catch (PDOException $e) {
     // If connection with port fails, try without port
@@ -32,6 +33,7 @@ try {
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_TIMEOUT => 5,
+            PDO::ATTR_EMULATE_PREPARES => false,
         ]);
     } catch (PDOException $e2) {
         // If both fail, return error in consistent format

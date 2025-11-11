@@ -21,30 +21,30 @@ export function SectionCards() {
   React.useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Expected Revenue (All due_amount)
+      // Expected Revenue (All due_amount)
         const orders = await apiGet<any[]>("/orders.php");
         if (orders) {
-          const dueTotal = orders.reduce((acc, o) => acc + (o.due_amount || 0), 0)
-          setExpectedRevenue(dueTotal)
+        const dueTotal = orders.reduce((acc, o) => acc + (o.due_amount || 0), 0)
+        setExpectedRevenue(dueTotal)
 
-          const completedTotal = orders
-            .filter((o) => o.order_status === "COMPLETED")
-            .reduce((acc, o) => acc + (o.due_amount || 0), 0)
-          setCompletedOrders(completedTotal)
-        }
+        const completedTotal = orders
+          .filter((o) => o.order_status === "COMPLETED")
+          .reduce((acc, o) => acc + (o.due_amount || 0), 0)
+        setCompletedOrders(completedTotal)
+      }
 
         // Net Worth (product_price * item_qty)
         const products = await apiGet<any[]>("/products.php");
         if (products) {
-          const worth = products.reduce((acc, p) => acc + (p.product_price || 0) * (p.item_qty || 0), 0)
-          setNetWorth(worth)
-        }
+        const worth = products.reduce((acc, p) => acc + (p.product_price || 0) * (p.item_qty || 0), 0)
+        setNetWorth(worth)
+      }
 
-        // Total Revenue (from payments)
+      // Total Revenue (from payments)
         const payments = await apiGet<any[]>("/payments.php");
         if (payments) {
-          const revenue = payments.reduce((acc, p) => acc + (p.amount || 0), 0)
-          setTotalRevenue(revenue)
+        const revenue = payments.reduce((acc, p) => acc + (p.amount || 0), 0)
+        setTotalRevenue(revenue)
         }
       } catch (error) {
         console.error("Error fetching stats:", error);

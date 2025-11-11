@@ -12,7 +12,7 @@ const AllFeedbacks = () => {
     const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
 
     useEffect(() => {
-        const fetchFeedbacks = async () => {
+        const fetchFeedbacks = async () => {            
           try {
             const data = await apiGet<any[]>(`/feedbacks.php`);
             const results: Feedback[] = [];

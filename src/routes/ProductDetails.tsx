@@ -86,6 +86,24 @@ export default function ProductDetails() {
         const productData = await apiGet<Product>(`/products.php?product_id=${productId}`);
         if (!productData) return;
         
+        // Normalize product_features into a string[] without mutating productData type directly
+        const rawFeatures: unknown = (productData as any).product_features;
+        let normalizedFeatures: string[] = [];
+        if (Array.isArray(rawFeatures)) {
+          normalizedFeatures = rawFeatures as string[];
+        } else if (typeof rawFeatures === 'string') {
+          try {
+            const parsed = JSON.parse(rawFeatures);
+            normalizedFeatures = Array.isArray(parsed) ? (parsed as string[]) : [];
+          } catch {
+            normalizedFeatures = rawFeatures
+              .replace(/[{}]/g, '')
+              .split(',')
+              .map(f => f.trim().replace(/^"|"$/g, ''))
+              .filter(f => f);
+          }
+        }
+        
         const [manufacturers, categories, productCategories] = await Promise.all([
           apiGet<Array<{ manufacturer_id: number; manufacturer_title: string }>>('/manufacturers.php'),
           apiGet<Array<{ cat_id: number; cat_title: string }>>('/categories.php'),
@@ -94,6 +112,7 @@ export default function ProductDetails() {
         
         const enriched: Product = {
           ...productData,
+          product_features: normalizedFeatures,
           manufacturers: manufacturers?.find(m => m.manufacturer_id === productData.manufacturer_id)
             ? { manufacturer_title: manufacturers.find(m => m.manufacturer_id === productData.manufacturer_id)!.manufacturer_title }
             : null,
@@ -124,7 +143,7 @@ export default function ProductDetails() {
             <ImageSlider images={[product.product_img1, product.product_img2, product.product_img3].filter(Boolean)} />
 
             {/* Product Features */}
-        {product.product_features && (
+        {product.product_features && Array.isArray(product.product_features) && product.product_features.length > 0 && (
           <div className="mt-6">
             <h2 className="text-lg font-bold text-gray-800">Features:</h2>
             <ScrollArea className="h-42 rounded-md border p-4">

@@ -69,7 +69,7 @@ const DesktopView: React.FC = () => {
           }
         } catch (err) {
           console.error('Error fetching seller data:', err);
-        }
+      }
         setLoading(false);
       };
   
@@ -86,13 +86,13 @@ const DesktopView: React.FC = () => {
     // Update seller function
     const onSubmit = async (data: FormData) => {
       try {
-        // Handle image upload
+      // Handle image upload
         let imagePath = seller?.seller_image;
-        if (imageFile) {
+      if (imageFile) {
           imagePath = await uploadFile(imageFile);
-        }
+      }
   
-        // Update seller details
+      // Update seller details
         await apiPut('/sellers.php', {
           seller_email: seller?.seller_email,
           seller_name: data.seller_name,

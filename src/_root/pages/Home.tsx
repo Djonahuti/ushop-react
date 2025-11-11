@@ -93,6 +93,10 @@ const filteredProducts = products.filter((product) => {
 
           const enriched = (prods || []).map((product) => ({
             ...product,
+            // Ensure product_features is always an array
+            product_features: Array.isArray(product.product_features) 
+              ? product.product_features 
+              : (product.product_features ? [product.product_features] : []),
             manufacturers: mans?.find((m) => m.manufacturer_id === product.manufacturer_id)
               ? { manufacturer_title: mans.find((m) => m.manufacturer_id === product.manufacturer_id)!.manufacturer_title }
               : null,

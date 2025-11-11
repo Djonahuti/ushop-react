@@ -32,12 +32,22 @@ export function LoginForm({
   const onSubmit = async (data: FormData) => {
     setIsPending(true);
     try {
-      const res = await apiPost<{ success: boolean; role?: 'admin' | 'customer' | 'seller'; email?: string; error?: string }>(
+      const res = await apiPost<{ success?: boolean; role?: 'admin' | 'customer' | 'seller'; email?: string; name?: string; error?: string }>(
         '/login.php',
         { email: data.customer_email, password: data.customer_pass }
       );
-      if (!res || !res.success || !res.role || !res.email) {
-        toast.error(res?.error || 'Invalid email or password');
+      console.log('Login response:', res); // Debug log
+      if (!res) {
+        toast.error('Invalid email or password');
+        return;
+      }
+      // Check if response indicates success (either success: true or has role/email)
+      if (res.success === false || res.error) {
+        toast.error(res.error || 'Invalid email or password');
+        return;
+      }
+      if (!res.role || !res.email) {
+        toast.error('Invalid response from server');
         return;
       }
       localStorage.setItem('auth_email', res.email);
@@ -47,7 +57,7 @@ export function LoginForm({
       else if (res.role === 'seller') navigate('/seller-dashboard');
       else navigate('/overview');
     } catch (e: any) {
-      console.error('Login failed', e?.message);
+      console.error('Login failed', e?.message || e);
       toast.error('Invalid email or password');
     } finally {
       setIsPending(false);
