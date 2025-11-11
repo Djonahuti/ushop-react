@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { apiPost } from "@/lib/api"
+import { loadGoogleScript, initGoogleSignIn, renderGoogleButton } from "@/lib/google"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
@@ -8,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Link, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -28,7 +29,6 @@ export function LoginForm({
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
-  
   const onSubmit = async (data: FormData) => {
     setIsPending(true);
     try {
@@ -63,6 +63,38 @@ export function LoginForm({
       setIsPending(false);
     }
   };
+  
+  // Google Sign-In
+  useEffect(() => {
+    (async () => {
+      try {
+        await loadGoogleScript();
+        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
+        if (!clientId) return;
+        initGoogleSignIn(clientId, async (credential: string) => {
+          const res = await apiPost<{ success?: boolean; role?: string; email?: string; name?: string; error?: string }>(
+            '/google_login.php',
+            { id_token: credential }
+          );
+          if (!res || res.success === false || !res.email || !res.role) {
+            toast.error(res?.error || 'Google sign-in failed');
+            return;
+          }
+          localStorage.setItem('auth_email', res.email);
+          localStorage.setItem('auth_role', res.role!);
+          toast.success('Login Successful');
+          if (res.role === 'admin') navigate('/admin-dashboard');
+          else if (res.role === 'seller') navigate('/seller-dashboard');
+          else navigate('/overview');
+        });
+        // Render button when available
+        const container = document.getElementById('google-signin-btn-login');
+        if (container) renderGoogleButton(container);
+      } catch {
+        // ignore script load errors here; user can still use email/password
+      }
+    })();
+  }, [navigate]);
     
       return (
         <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -110,7 +142,9 @@ export function LoginForm({
                     "Login"
                   )}
                 </Button>
-                {/* Google OAuth removed as Supabase is no longer used */}
+                <div className="mt-2 flex justify-center">
+                  <div id="google-signin-btn-login" />
+                </div>
                   </div>
                 </div>
                 <div className="mt-4 text-center text-sm">

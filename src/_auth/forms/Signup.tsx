@@ -9,6 +9,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { useEffect, useState } from "react"
+import { loadGoogleScript, initGoogleSignIn, renderGoogleButton } from "@/lib/google"
 import { Loader2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
@@ -136,6 +137,36 @@ export function RegisterForm({
     setValue("customer_city", undefined as any);
   }, [selectedState, setValue]);
 
+  // Google Sign-Up
+  useEffect(() => {
+    (async () => {
+      try {
+        await loadGoogleScript();
+        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
+        if (!clientId) return;
+        initGoogleSignIn(clientId, async (credential: string) => {
+          const res = await apiPost<{ success?: boolean; role?: string; email?: string; name?: string; error?: string }>(
+            '/google_login.php',
+            { id_token: credential }
+          );
+          if (!res || res.success === false || !res.email || !res.role) {
+            toast.error(res?.error || 'Google sign-in failed');
+            return;
+          }
+          localStorage.setItem('auth_email', res.email);
+          localStorage.setItem('auth_role', res.role!);
+          toast.success('Account created successfully');
+          navigate('/overview');
+        });
+        // Render button when available
+        const container = document.getElementById('google-signin-btn-signup');
+        if (container) renderGoogleButton(container);
+      } catch {
+        // ignore script load errors
+      }
+    })();
+  }, [navigate]);
+
   const onSubmit = async (data: FormData) => {
     setIsPending(true);
     try {
@@ -244,6 +275,10 @@ export function RegisterForm({
             </SelectContent>
           </Select>                       
         </div>
+        </div>
+        {/* Google Signup */}
+        <div className="mt-2 flex justify-center">
+          <div id="google-signin-btn-signup" />
         </div>
         {/* <div className="grid gap-2">
         </div> */}
