@@ -1,8 +1,65 @@
-import { createClient } from '@supabase/supabase-js'
+// Stub file - Supabase has been migrated to PHP API
+// This file exists only to prevent import errors during migration
+// All functionality should use the PHP API via apiGet, apiPost, etc.
+// DO NOT import @supabase/supabase-js here - it will cause initialization errors
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL!,
-  import.meta.env.VITE_SUPABASE_ANON_KEY!
-)
+// Create a mock that returns promises to satisfy TypeScript and runtime expectations
+const createMockPromise = <T>(value: T) => Promise.resolve(value);
 
-export default supabase
+const stubSupabase = {
+  auth: {
+    getUser: () => createMockPromise({ data: { user: null }, error: null }),
+    signOut: () => createMockPromise({ error: null }),
+    signUp: () => createMockPromise({ data: { user: null }, error: null }),
+  },
+  from: (table: string) => ({
+    select: (columns?: string) => ({
+      data: [],
+      error: null,
+      eq: (column: string, value: any) => ({
+        data: [],
+        error: null,
+        single: () => createMockPromise({ data: null, error: null }),
+        then: (onResolve: any) => createMockPromise({ data: [], error: null }).then(onResolve),
+      }),
+      order: (column: string, options?: any) => ({
+        data: [],
+        error: null,
+        then: (onResolve: any) => createMockPromise({ data: [], error: null }).then(onResolve),
+      }),
+      in: (column: string, values: any[]) => ({
+        eq: (col: string, val: any) => createMockPromise({ data: null, error: null, count: 0 }),
+        then: (onResolve: any) => createMockPromise({ data: null, error: null, count: 0 }).then(onResolve),
+      }),
+      then: (onResolve: any) => createMockPromise({ data: [], error: null }).then(onResolve),
+    }),
+    insert: (values: any) => ({
+      data: null,
+      error: null,
+      select: (columns?: string) => ({
+        single: () => createMockPromise({ data: null, error: null }),
+        then: (onResolve: any) => createMockPromise({ data: null, error: null }).then(onResolve),
+      }),
+      then: (onResolve: any) => createMockPromise({ data: null, error: null }).then(onResolve),
+    }),
+    update: (values: any) => ({
+      data: null,
+      error: null,
+      eq: (column: string, value: any) => createMockPromise({ data: null, error: null }),
+      then: (onResolve: any) => createMockPromise({ data: null, error: null }).then(onResolve),
+    }),
+    delete: () => ({
+      data: null,
+      error: null,
+      eq: (column: string, value: any) => createMockPromise({ data: null, error: null }),
+      then: (onResolve: any) => createMockPromise({ data: null, error: null }).then(onResolve),
+    }),
+  }),
+  storage: {
+    from: (bucket: string) => ({
+      upload: (path: string, file: File) => createMockPromise({ data: { path: null }, error: null }),
+    }),
+  },
+};
+
+export default stubSupabase;

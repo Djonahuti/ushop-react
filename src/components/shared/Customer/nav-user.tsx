@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/sidebar"
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import supabase from "@/lib/supabaseClient"
+import { apiGet } from "@/lib/api"
 import { Customer } from "@/types"
 
 
@@ -41,22 +41,19 @@ export function NavUser() {
   
     useEffect(() => {
       const fetchCustomerData = async () => {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
-        if (user) {
-          const { data, error } = await supabase
-            .from('customers')
-            .select('*')
-            .eq('customer_email', user.email)
-            .single();
-  
-          if (error) {
-            console.error('Error fetching customer data:', error.message);
-          } else {
-            setCustomer(data);
+        const email = localStorage.getItem('auth_email');
+        if (!email) {
+          setLoading(false);
+          return;
+        }
+
+        try {
+          const customers = await apiGet<Customer[]>(`/customers.php?email=${encodeURIComponent(email)}`);
+          if (customers && customers.length > 0) {
+            setCustomer(customers[0]);
           }
-        } else if (userError) {
-          console.error('Error getting user:', userError.message);
+        } catch (error) {
+          console.error('Error fetching customer data:', error);
         }
         setLoading(false);
       };
@@ -81,7 +78,8 @@ export function NavUser() {
     }
   
     const handleLogout = async () => {
-      await supabase.auth.signOut()
+      localStorage.removeItem('auth_email');
+      localStorage.removeItem('auth_role');
       window.location.href = "/login"
     }
 
@@ -97,7 +95,7 @@ export function NavUser() {
               <Avatar className="h-8 w-8 rounded-full">
                 {customer.customer_image ? (
                 <AvatarImage
-                 src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
+                 src={`/${customer.customer_image}`}
                  alt={customer.customer_name}
                  className="rounded-full" 
                  />
@@ -125,7 +123,7 @@ export function NavUser() {
                 <Avatar className="h-8 w-8 rounded-full grayscale">
                 {customer.customer_image ? (
                 <AvatarImage
-                 src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`} 
+                 src={`/${customer.customer_image}`} 
                  alt={customer.customer_name}
                  className="rounded-full" 
                  />

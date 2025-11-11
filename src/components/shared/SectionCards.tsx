@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import supabase from "@/lib/supabaseClient"
+import { apiGet } from "@/lib/api"
 
 export function SectionCards() {
   const [expectedRevenue, setExpectedRevenue] = React.useState(0)
@@ -20,39 +20,34 @@ export function SectionCards() {
 
   React.useEffect(() => {
     const fetchStats = async () => {
-      // Expected Revenue (All due_amount)
-      const { data: orders, error: ordersError } = await supabase
-        .from("orders")
-        .select("due_amount, order_status")
+      try {
+        // Expected Revenue (All due_amount)
+        const orders = await apiGet<any[]>("/orders.php");
+        if (orders) {
+          const dueTotal = orders.reduce((acc, o) => acc + (o.due_amount || 0), 0)
+          setExpectedRevenue(dueTotal)
 
-      if (!ordersError && orders) {
-        const dueTotal = orders.reduce((acc, o) => acc + (o.due_amount || 0), 0)
-        setExpectedRevenue(dueTotal)
+          const completedTotal = orders
+            .filter((o) => o.order_status === "COMPLETED")
+            .reduce((acc, o) => acc + (o.due_amount || 0), 0)
+          setCompletedOrders(completedTotal)
+        }
 
-        const completedTotal = orders
-          .filter((o) => o.order_status === "COMPLETED")
-          .reduce((acc, o) => acc + (o.due_amount || 0), 0)
-        setCompletedOrders(completedTotal)
-      }
+        // Net Worth (product_price * item_qty)
+        const products = await apiGet<any[]>("/products.php");
+        if (products) {
+          const worth = products.reduce((acc, p) => acc + (p.product_price || 0) * (p.item_qty || 0), 0)
+          setNetWorth(worth)
+        }
 
-      // Net Worth (product_price * 10)
-      const { data: products, error: productsError } = await supabase
-        .from("products")
-        .select("product_price, item_qty")
-
-      if (!productsError && products) {
-        const worth = products.reduce((acc, p) => acc + (p.product_price || 0) * (p.item_qty || 0), 0)
-        setNetWorth(worth)
-      }
-
-      // Total Revenue (from payments)
-      const { data: payments, error: paymentsError } = await supabase
-        .from("payments")
-        .select("amount")
-
-      if (!paymentsError && payments) {
-        const revenue = payments.reduce((acc, p) => acc + (p.amount || 0), 0)
-        setTotalRevenue(revenue)
+        // Total Revenue (from payments)
+        const payments = await apiGet<any[]>("/payments.php");
+        if (payments) {
+          const revenue = payments.reduce((acc, p) => acc + (p.amount || 0), 0)
+          setTotalRevenue(revenue)
+        }
+      } catch (error) {
+        console.error("Error fetching stats:", error);
       }
     }
 

@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 import { PendingOrder } from "@/types"
-import supabase from "@/lib/supabaseClient"
+import { apiGet } from "@/lib/api"
 import {
   Card,
   CardContent,
@@ -52,21 +52,14 @@ export function PendingOrdersChart() {
 
   React.useEffect(() => {
     const fetchOrders = async () => {
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
-
-      if (user) {
-        const { data, error } = await supabase
-          .from("pending_orders")
-          .select("*")
-
-        if (error) {
-          console.error("Error fetching pending orders:", error.message)
-        } else {
-          setOrders(data as PendingOrder[])
-          setChartData(transformToChartData(data as PendingOrder[]))
+      try {
+        const data = await apiGet<PendingOrder[]>("/pending_orders.php");
+        if (data) {
+          setOrders(data)
+          setChartData(transformToChartData(data))
         }
-      } else if (userError) {
-        console.error("Auth error:", userError.message)
+      } catch (error) {
+        console.error("Error fetching pending orders:", error)
       }
     }
 

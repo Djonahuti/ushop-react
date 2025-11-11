@@ -33,7 +33,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { Customer } from "@/types"
-import supabase from "@/lib/supabaseClient"
+import { apiGet } from "@/lib/api"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import ThemeToggle from "../ThemeToggle"
 import { Badge } from "../ui/badge"
@@ -47,44 +47,32 @@ export function NavPopUp() {
   
   React.useEffect(() => {
     const fetchCounts = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return; // Assuming user.id is the customer_id
+      const email = localStorage.getItem('auth_email');
+      if (!email) return;
 
-      const { data: customer, error } = await supabase
-        .from('customers')
-        .select('customer_id')
-        .eq('customer_email', user.email)
-        .single();
-
-      if (error || !customer) return;      
+      try {
+        const customers = await apiGet<Array<{ customer_id: number }>>(`/customers.php?email=${encodeURIComponent(email)}`);
+        const customer = customers?.[0];
+        if (!customer) return;
   
         // Count items in the cart
-        const { count: cartCount } = await supabase
-          .from('cart')
-          .select('*', { count: 'exact', head: true })
-          .eq('customer_id', customer.customer_id);
+        const cartItems = await apiGet<any[]>(`/cart.php?customer_id=${customer.customer_id}`);
+        const cartCount = cartItems?.length || 0;
   
         // Count items in the wishlist
-        const { count: wishlistCount } = await supabase
-          .from('wishlist')
-          .select('*', { count: 'exact', head: true })
-          .eq('customer_id', customer.customer_id);
-
+        const wishlistItems = await apiGet<any[]>(`/wishlist.php?customer_id=${customer.customer_id}`);
+        const wishlistCount = wishlistItems?.length || 0;
   
         // Count pending and delivered orders
-        const { count: notificationCount, error: notificationError } = await supabase
-          .from('orders')
-          .select('*', { count: 'exact', head: true })
-          .in('order_status', ['Pending', 'DELIVERED']) // Ensure you are using the correct column name
-          .eq('customer_id', customer.customer_id);
+        const orders = await apiGet<any[]>(`/orders.php?customer_id=${customer.customer_id}`);
+        const notificationCount = orders?.filter(o => o.order_status === 'Pending' || o.order_status === 'DELIVERED').length || 0;
   
-        if (notificationError) {
-          console.error('Error fetching notification count:', notificationError.message);
-        }
-  
-        setCartCount(cartCount || 0);
-        setWishlistCount(wishlistCount || 0);
-        setNotificationCount(notificationCount || 0);
+        setCartCount(cartCount);
+        setWishlistCount(wishlistCount);
+        setNotificationCount(notificationCount);
+      } catch (error) {
+        console.error('Error fetching counts:', error);
+      }
     };
   
     fetchCounts();
@@ -171,22 +159,19 @@ export function NavPopUp() {
 
   React.useEffect(() => {
     const fetchCustomerData = async () => {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const email = localStorage.getItem('auth_email');
+      if (!email) {
+        setLoading(false);
+        return;
+      }
 
-      if (user) {
-        const { data, error } = await supabase
-          .from('customers')
-          .select('*')
-          .eq('customer_email', user.email)
-          .single();
-
-        if (error) {
-          console.error('Error fetching customer data:', error.message);
-        } else {
-          setCustomer(data);
+      try {
+        const customers = await apiGet<Customer[]>(`/customers.php?email=${encodeURIComponent(email)}`);
+        if (customers && customers.length > 0) {
+          setCustomer(customers[0]);
         }
-      } else if (userError) {
-        console.error('Error getting user:', userError.message);
+      } catch (error) {
+        console.error('Error fetching customer data:', error);
       }
       setLoading(false);
     };
@@ -211,7 +196,8 @@ export function NavPopUp() {
   }  
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    localStorage.removeItem('auth_email');
+    localStorage.removeItem('auth_role');
     window.location.href = "/login"
   }  
 
@@ -223,7 +209,7 @@ export function NavPopUp() {
       <Avatar className="h-8 w-8 rounded-lg">
         {customer.customer_image ? (
         <AvatarImage
-         src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
+         src={`/${customer.customer_image}`}
          alt={customer.customer_name}
          className="rounded-full" 
          />

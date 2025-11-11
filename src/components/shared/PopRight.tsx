@@ -31,7 +31,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { Admin } from "@/types"
-import supabase from "@/lib/supabaseClient"
+import { apiGet } from "@/lib/api"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import ThemeToggle from "../ThemeToggle"
 import { Badge } from "../ui/badge"
@@ -113,22 +113,19 @@ export function PopRight() {
 
   React.useEffect(() => {
     const fetchAdminData = async () => {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const email = localStorage.getItem('auth_email');
+      if (!email) {
+        setLoading(false);
+        return;
+      }
 
-      if (user) {
-        const { data, error } = await supabase
-          .from('admins')
-          .select('*')
-          .eq('admin_email', user.email)
-          .single();
-
-        if (error) {
-          console.error('Error fetching admin data:', error.message);
-        } else {
-          setAdmin(data);
+      try {
+        const admins = await apiGet<any[]>(`/admins.php?email=${encodeURIComponent(email)}`);
+        if (admins && admins.length > 0) {
+          setAdmin(admins[0]);
         }
-      } else if (userError) {
-        console.error('Error getting user:', userError.message);
+      } catch (error) {
+        console.error('Error fetching admin data:', error);
       }
       setLoading(false);
     };
@@ -138,18 +135,18 @@ export function PopRight() {
 
   React.useEffect(() => {
     const fetchCounts = async () => {
-      const { count: unreadCount } = await supabase
-        .from('contacts')
-        .select('id', { count: 'exact', head: true })
-        .eq('is_read', false);
+      try {
+        const contacts = await apiGet<any[]>('/contacts.php');
+        const unreadCount = contacts?.filter(c => !c.is_read).length || 0;
   
-      const { count: paidOrderCount } = await supabase
-        .from('orders')
-        .select('*', { count: 'exact', head: true })
-        .eq('order_status', 'Paid');
+        const orders = await apiGet<any[]>('/orders.php');
+        const paidOrderCount = orders?.filter(o => o.order_status === 'Paid').length || 0;
   
-      setUnreadCount(unreadCount || 0);
-      setPaidOrderCount(paidOrderCount || 0);
+        setUnreadCount(unreadCount);
+        setPaidOrderCount(paidOrderCount);
+      } catch (error) {
+        console.error('Error fetching counts:', error);
+      }
     };
   
     fetchCounts();
@@ -172,7 +169,8 @@ export function PopRight() {
   }  
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    localStorage.removeItem('auth_email');
+    localStorage.removeItem('auth_role');
     window.location.href = "/login"
   }
 
@@ -184,7 +182,7 @@ export function PopRight() {
       <Avatar className="h-8 w-8 rounded-full">
         {admin.admin_image ? (
         <AvatarImage
-         src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${admin.admin_image}`}
+         src={`/${admin.admin_image}`}
          alt={admin.admin_name}
          className="rounded-full" 
          />

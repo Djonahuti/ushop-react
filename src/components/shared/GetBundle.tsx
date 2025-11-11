@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import supabase from '@/lib/supabaseClient';
+import { apiGet, apiPost } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 //import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -43,16 +43,21 @@ export default function GetBundle({selectedManufacturer, selectedPCat, selectedC
 
   useEffect(() => {
     const fetchBundles = async () => {
-      const { data: bundlesData } = await supabase.from('bundles').select('*');
+      const bundlesData = await apiGet<any[]>('/bundles.php');
+      if (!bundlesData) return;
+      
       const bundleList = [];
 
-      for (const bundle of bundlesData || []) {
-        const { data: items } = await supabase
-          .from('bundle_products')
-          .select(`*, products(*)`)
-          .eq('bundle_id', bundle.bundle_id);
+      for (const bundle of bundlesData) {
+        const items = await apiGet<any[]>(`/bundle_products.php?bundle_id=${bundle.bundle_id}`);
+        const products = await apiGet<any[]>('/products.php');
+        
+        const hydratedItems = (items || []).map(item => ({
+          ...item,
+          products: products?.find(p => p.product_id === item.product_id),
+        }));
 
-        bundleList.push({ ...bundle, products: items || [] });
+        bundleList.push({ ...bundle, products: hydratedItems });
       }
 
       setBundles(bundleList);
@@ -73,19 +78,16 @@ export default function GetBundle({selectedManufacturer, selectedPCat, selectedC
   });  
 
   const handleAddToCart = async (bundle: Bundle) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const email = localStorage.getItem('auth_email');
+    if (!email) return;
 
-    const { data: customer } = await supabase
-      .from('customers')
-      .select('customer_id')
-      .eq('customer_email', user.email)
-      .single();
+    const customers = await apiGet<Array<{ customer_id: number }>>(`/customers.php?email=${encodeURIComponent(email)}`);
+    const customer = customers?.[0];
 
     if (customer) {
       // Add each product in the bundle to the cart
       for (const product of bundle.products) {
-        await supabase.from('cart').insert({
+        await apiPost('/cart.php', {
           customer_id: customer.customer_id,
           product_id: product.product_id,
           qty: 1, // Default quantity

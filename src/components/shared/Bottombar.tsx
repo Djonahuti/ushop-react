@@ -3,29 +3,23 @@ import { Heart, Home, ShoppingCart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Customer } from "@/types";
-import supabase from "@/lib/supabaseClient";
+import { apiGet } from "@/lib/api";
 
 const Bottombar = () => {
   const [customer, setCustomer] = useState<Customer | null>(null);
 
   useEffect(() => {
     const fetchCustomerData = async () => {
-      const {data: {user}, error: userError} = await supabase.auth.getUser();
+      const email = localStorage.getItem('auth_email');
+      if (!email) return;
 
-      if (user) {
-        const {data, error} = await supabase
-        .from('customers')
-        .select('*')
-        .eq('customer_email', user.email)
-        .single();
-
-        if (error) {
-          console.error('Error fetching customer data:', error.message);
-        } else {
-          setCustomer(data);
+      try {
+        const customers = await apiGet<Customer[]>(`/customers.php?email=${encodeURIComponent(email)}`);
+        if (customers && customers.length > 0) {
+          setCustomer(customers[0]);
         }
-      } else if (userError) {
-        console.error('Error getting user:', userError.message);
+      } catch (error) {
+        console.error('Error fetching customer data:', error);
       }
     };
 
@@ -54,7 +48,7 @@ const Bottombar = () => {
         <Avatar className="h-9 w-9 rounded-full">  
           {customer.customer_image ? (
           <AvatarImage
-          src={`https://bggxudsqbvqiefwckren.supabase.co/storage/v1/object/public/media/${customer.customer_image}`}
+          src={`/${customer.customer_image}`}
           alt={customer.customer_name}
           className="rounded-full w-9 h-9" 
           /> 

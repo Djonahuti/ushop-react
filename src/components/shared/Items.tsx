@@ -8,7 +8,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationNext, Paginati
 import { useEffect, useState } from "react";
 import { IconArrowsMinimize, IconShoppingBagPlus, IconTruck } from "@tabler/icons-react";
 import { toast } from "sonner";
-import supabase from "@/lib/supabaseClient";
+import { apiGet, apiPost } from "@/lib/api";
 import { Link, useNavigate } from "react-router-dom";
 
 
@@ -76,13 +76,11 @@ export default function Items({ items, itemsPerPage = 10, onSelectedUpdate, show
   };  
   
   const saveToChoices = async (products: Product[]) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data: customer } = await supabase
-      .from('customers')
-      .select('customer_id')
-      .eq('customer_email', user.email)
-      .single();
+    const email = localStorage.getItem('auth_email');
+    if (!email) return;
+    
+    const customers = await apiGet<Array<{ customer_id: number }>>(`/customers.php?email=${encodeURIComponent(email)}`);
+    const customer = customers?.[0];
     if (!customer) return;
   
     // 30% off → 0.7× price
@@ -90,25 +88,21 @@ export default function Items({ items, itemsPerPage = 10, onSelectedUpdate, show
     const bundleTotal = discountedPrices.reduce((sum, d) => sum + d, 0);
   
     // create bundle
-    const { data: choice, error } = await supabase
-      .from('choices')
-      .insert({
-        customer_id: customer.customer_id,
-        choice_title:  `Bundle of ${products.length}`,
-        choice_description: null,
-        total_price: bundleTotal,
-      })
-      .select('choice_id')
-      .single();
+    const choice = await apiPost<any>('/choices.php', {
+      customer_id: customer.customer_id,
+      choice_title: `Bundle of ${products.length}`,
+      choice_description: null,
+      total_price: bundleTotal,
+    });
   
-      if (error) {
-        console.error("Failed to create choice:", error);
-        return;
-      }
+    if (!choice || !choice.choice_id) {
+      console.error("Failed to create choice");
+      return;
+    }
   
     // link each product
     await Promise.all(products.map((p, i) =>
-      supabase.from('choice_products').insert({
+      apiPost('/choice_products.php', {
         choice_id: choice.choice_id,
         product_id: p.product_id,
         original_price: p.product_price,
@@ -125,18 +119,15 @@ export default function Items({ items, itemsPerPage = 10, onSelectedUpdate, show
   };  
 
   const saveToCart = async (products: Product[]) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const email = localStorage.getItem('auth_email');
+    if (!email) return;
 
-    const { data: customer } = await supabase
-      .from('customers')
-      .select('customer_id')
-      .eq('customer_email', user.email)
-      .single();
+    const customers = await apiGet<Array<{ customer_id: number }>>(`/customers.php?email=${encodeURIComponent(email)}`);
+    const customer = customers?.[0];
 
     if (customer) {
       for (const product of products) {
-        await supabase.from('cart').insert({
+        await apiPost('/cart.php', {
           customer_id: customer.customer_id,
           product_id: product.product_id,
           qty: 1,
