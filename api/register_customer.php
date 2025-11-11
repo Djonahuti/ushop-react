@@ -42,12 +42,22 @@ $placeholders = array_map(static fn($c) => ':' . $c, $columns);
 
 $sql = 'INSERT INTO public.customers (' . implode(',', $columns) . ') VALUES (' . implode(',', $placeholders) . ') RETURNING customer_id, customer_name';
 $stmt = $pdo->prepare($sql);
-$stmt->execute(array_combine($placeholders, array_values($fields)));
+
+try {
+    $stmt->execute(array_combine($placeholders, array_values($fields)));
+} catch (PDOException $e) {
+    fail('Failed to create customer: ' . $e->getMessage(), 500);
+}
+
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$result) {
+    fail('Failed to create customer', 500);
+}
+
 $customerId = $result['customer_id'];
 $customerName = $result['customer_name'];
 
-// Send verification email
+// Send verification email (ignore failures but log them)
 $mailData = [
     'action' => 'verification',
     'email' => $email,
@@ -60,9 +70,17 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($mailData));
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-curl_exec($ch);
+$mailResponse = curl_exec($ch);
+
+if ($mailResponse === false) {
+    error_log('Failed to send verification email via mailto.php: ' . curl_error($ch));
+}
+
 curl_close($ch);
 
-ok(['customer_id' => $customerId, 'message' => 'Registration successful. Please check your email for verification link.']);
+ok([
+    'customer_id' => $customerId,
+    'message' => 'Registration successful. Please check your email for verification link.'
+]);
 
 
