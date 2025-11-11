@@ -153,14 +153,29 @@ Since FTP-only hosting doesn't support SSH commands, you need to manually create
    - Create a new folder named `uploads`
    - Right-click the `uploads` folder → **Change Permissions** → Set to `755` (or `777` if needed for write access)
 
-2. **Configure database credentials:**
+2. **Enable PostgreSQL PHP Extensions (REQUIRED):**
+   - Log into your cPanel
+   - Go to **Software** → **Select PHP Version** (or **MultiPHP Manager**)
+   - Select your PHP version (e.g., PHP 8.3)
+   - Click on **Extensions** tab
+   - Enable the following extensions:
+     - ✅ **pdo_pgsql** (PDO PostgreSQL driver)
+     - ✅ **pgsql** (PostgreSQL driver)
+   - Click **Save** or **Apply**
+   - Wait a few seconds for changes to take effect
+   - **Verify** by visiting: `https://your-domain.com/api/test_db.php`
+   - You should see `"pdo_pgsql_loaded": true` and `"pgsql_loaded": true`
+   
+   > **Note:** If these extensions are not available, contact your hosting provider. Some shared hosting plans don't support PostgreSQL.
+
+3. **Configure database credentials:**
    - Edit `api/config.php` to match your cPanel PostgreSQL credentials:
      - `$dbHost` (usually `localhost` on shared hosting)
      - `$dbName` (your database name)
      - `$dbUser` (your database username)
      - `$dbPass` (your database password)
 
-3. **Verify file structure on server:**
+4. **Verify file structure on server:**
    ```
    public_html/
    ├── index.html (from dist/)
@@ -173,12 +188,38 @@ Since FTP-only hosting doesn't support SSH commands, you need to manually create
    └── uploads/ (manually created, permissions: 755)
    ```
 
-4. **Test the deployment:**
+5. **Test the deployment:**
    - Visit your domain to see the React app
+   - Check `https://your-domain.com/api/test_db.php` to verify database connection
    - Check `https://your-domain.com/api/products.php` to verify the API is working
    - Upload a product image to test the uploads directory
 
 **Note:** The `uploads/` directory is listed in `.gitignore` for local development, but must exist on the server. Uploaded media will be accessible via `https://your-domain.com/uploads/<file>`.
+
+### Troubleshooting Database Connection Issues
+
+If you're getting "Database connection failed" or "could not find driver" errors:
+
+1. **Verify PostgreSQL extensions are enabled:**
+   - Visit `https://your-domain.com/api/test_db.php`
+   - Check that `pdo_pgsql_loaded` and `pgsql_loaded` are both `true`
+   - If they're `false`, follow step 2 above to enable them
+
+2. **Check database credentials:**
+   - Verify your database name, username, and password in cPanel → PostgreSQL Databases
+   - Ensure the database user has proper permissions
+   - Update `api/config.php` with correct credentials
+
+3. **Verify PostgreSQL is available:**
+   - Some hosting plans don't include PostgreSQL support
+   - Check with your hosting provider if PostgreSQL is available
+   - You may need to upgrade your hosting plan
+
+4. **Check PHP error logs:**
+   - In cPanel, check **Errors** or **Error Log** for detailed error messages
+   - This can help identify connection issues
+
+For detailed instructions, see `api/ENABLE_POSTGRESQL.md`.
 
 ---
 
