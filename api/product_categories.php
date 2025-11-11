@@ -5,6 +5,7 @@ switch ($_SERVER['REQUEST_METHOD']) {
     case 'GET':
         $stmt = $pdo->query('SELECT * FROM public.product_categories ORDER BY p_cat_id DESC');
         ok($stmt->fetchAll());
+        break;
     case 'POST':
         $body = json_input();
         $stmt = $pdo->prepare('INSERT INTO public.product_categories (p_cat_title, p_cat_top, p_cat_image) VALUES (:title, :top, :image) RETURNING *');
@@ -14,6 +15,7 @@ switch ($_SERVER['REQUEST_METHOD']) {
             ':image' => $body['p_cat_image'] ?? null,
         ]);
         ok($stmt->fetch());
+        break;
     default:
         fail('Invalid method', 405);
 }

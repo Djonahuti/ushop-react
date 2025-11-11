@@ -6,13 +6,19 @@ const base = () => {
 };
 
 export async function apiGet<T>(path: string): Promise<T | null> {
-  const res = await fetch(`${base()}${path}`);
-  const json = (await res.json()) as { ok?: boolean; success?: boolean; data?: T; error?: string; message?: string };
-  if ((json.ok === false || json.success === false) || (!json.ok && !json.success)) {
-    console.error(`API GET error for ${path}:`, json.error || json.message);
+  try {
+    const res = await fetch(`${base()}${path}`);
+    const json = (await res.json()) as { ok?: boolean; success?: boolean; data?: T; error?: string; message?: string };
+    if ((json.ok === false || json.success === false) || (!json.ok && !json.success)) {
+      console.error(`API GET error for ${path}:`, json.error || json.message);
+      return null;
+    }
+    // If response has data, return it; otherwise return the whole json (some endpoints return data directly)
+    return json.data !== undefined ? json.data : (json as any);
+  } catch (error) {
+    console.error(`API GET fetch error for ${path}:`, error);
     return null;
   }
-  return json.data || null;
 }
 
 export async function apiPost<T>(path: string, body: any): Promise<T | null> {

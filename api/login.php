@@ -1,6 +1,5 @@
 <?php
-header('Content-Type: application/json');
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -19,10 +18,8 @@ if (empty($email) || empty($password)) {
 }
 
 try {
-    $pdo = new PDO($dsn, $db_user, $db_pass, $options);
-    
     // Check admin
-    $stmt = $pdo->prepare("SELECT admin_email, admin_name FROM admins WHERE admin_email = ? AND admin_pass = ?");
+    $stmt = $pdo->prepare("SELECT admin_email, admin_name FROM public.admins WHERE admin_email = ? AND admin_pass = ?");
     $stmt->execute([$email, $password]);
     $admin = $stmt->fetch(PDO::FETCH_ASSOC);
     
@@ -37,7 +34,7 @@ try {
     }
     
     // Check seller
-    $stmt = $pdo->prepare("SELECT seller_email, seller_name FROM sellers WHERE seller_email = ? AND seller_pass = ?");
+    $stmt = $pdo->prepare("SELECT seller_email, seller_name FROM public.sellers WHERE seller_email = ? AND seller_pass = ?");
     $stmt->execute([$email, $password]);
     $seller = $stmt->fetch(PDO::FETCH_ASSOC);
     
@@ -52,7 +49,7 @@ try {
     }
     
     // Check customer
-    $stmt = $pdo->prepare("SELECT customer_email, customer_name FROM customers WHERE customer_email = ? AND customer_pass = ?");
+    $stmt = $pdo->prepare("SELECT customer_email, customer_name FROM public.customers WHERE customer_email = ? AND customer_pass = ?");
     $stmt->execute([$email, $password]);
     $customer = $stmt->fetch(PDO::FETCH_ASSOC);
     

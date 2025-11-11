@@ -32,6 +32,7 @@ switch ($_SERVER['REQUEST_METHOD']) {
         }
         $stmt = $pdo->query('SELECT * FROM public.products ORDER BY product_id DESC');
         ok($stmt->fetchAll());
+        break;
     case 'POST':
         $body = json_input();
         $sql = 'INSERT INTO public.products (
@@ -70,6 +71,7 @@ switch ($_SERVER['REQUEST_METHOD']) {
             ':qty' => $body['item_qty'] ?? 0,
         ]);
         ok($stmt->fetch());
+        break;
     case 'PUT':
     case 'PATCH':
         $body = json_input();
@@ -96,12 +98,14 @@ switch ($_SERVER['REQUEST_METHOD']) {
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         ok($stmt->fetch());
+        break;
     case 'DELETE':
         $productId = $_GET['product_id'] ?? null;
         if (!$productId) fail('product_id required');
         $stmt = $pdo->prepare('DELETE FROM public.products WHERE product_id = :id');
         $stmt->execute([':id' => (int)$productId]);
         ok(['deleted' => true]);
+        break;
     default:
         fail('Invalid method', 405);
 }
