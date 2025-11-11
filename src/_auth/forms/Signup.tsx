@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { apiGet, apiPost } from "@/lib/api"
+import { apiPost } from "@/lib/api"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -13,14 +13,55 @@ import { Loader2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 
-const getEnumValues = async (enumType: string): Promise<string[]> => {
-  try {
-    const result = await apiGet<string[]>(`/enum_values.php?enum=${encodeURIComponent(enumType)}`);
-    return result || [];
-  } catch (error) {
-    console.error(`Error fetching ${enumType}:`, error);
-    return [];
-  }
+// Static list of African countries (text field in DB, not enum)
+const africanCountries = [
+  "Algeria","Angola","Benin","Botswana","Burkina Faso","Burundi","Cabo Verde","Cameroon","Central African Republic","Chad",
+  "Comoros","Congo (Republic)","Congo (Democratic Republic)","Côte d’Ivoire","Djibouti","Egypt","Equatorial Guinea","Eritrea",
+  "Eswatini","Ethiopia","Gabon","Gambia","Ghana","Guinea","Guinea-Bissau","Kenya","Lesotho","Liberia","Libya","Madagascar",
+  "Malawi","Mali","Mauritania","Mauritius","Morocco","Mozambique","Namibia","Niger","Nigeria","Rwanda","São Tomé and Príncipe",
+  "Senegal","Seychelles","Sierra Leone","Somalia","South Africa","South Sudan","Sudan","Tanzania","Togo","Tunisia","Uganda",
+  "Zambia","Zimbabwe","Western Sahara"
+];
+
+// Nigerian states (from db.sql enum list)
+const nigeriaStates = [
+  "Abuja","Abia State","Adamawa State","Akwa-Ibom State","Anambra State","Bauchi State","Benue State","Bornu State",
+  "Cross River State","Delta State","Edo State","Enugu State","Imo State","Jigawa State","Kaduna State","Lagos State",
+  "Niger State","Ogun State","Platue State","Rivers State","Kastina State","Osun State","Oyo State","Sokoto State",
+  "Taraba State","Kogi State","Ekiti State","Kano State","Bayelsa State"
+];
+
+// Cities by state (sample comprehensive mapping; extend as needed)
+const citiesByState: Record<string, string[]> = {
+  "Abuja": ["Abaji","Bwari","Gwagwalada","Kuje","Kwali","Abuja Municipal"],
+  "Abia State": ["Aba","Umuahia","Ohafia","Arochukwu","Isuikwuato","Bende"],
+  "Adamawa State": ["Yola","Mubi","Numan","Jimeta","Ganye","Michika"],
+  "Akwa-Ibom State": ["Uyo","Eket","Ikot Ekpene","Oron","Abak","Etinan"],
+  "Anambra State": ["Awka","Onitsha","Nnewi","Ekwulobia","Otuocha","Ihiala"],
+  "Bauchi State": ["Bauchi","Azare","Misau","Jama'are","Katagum","Darazo"],
+  "Benue State": ["Makurdi","Gboko","Otukpo","Katsina-Ala","Vandeikya","Oju"],
+  "Bornu State": ["Maiduguri","Biu","Monguno","Ngala","Damasak","Dikwa"],
+  "Cross River State": ["Calabar","Ikom","Ogoja","Ugep","Obudu","Akamkpa"],
+  "Delta State": ["Asaba","Warri","Sapele","Ughelli","Agbor","Oleh"],
+  "Edo State": ["Benin City","Ekpoma","Auchi","Uromi","Igueben","Igarra"],
+  "Enugu State": ["Enugu","Nsukka","Awgu","Oji River","Udi","Ezeagu"],
+  "Imo State": ["Owerri","Okigwe","Orlu","Oguta","Mbaise","Ngor Okpala"],
+  "Jigawa State": ["Dutse","Hadejia","Gumel","Kazaure","Birnin Kudu","Ringim"],
+  "Kaduna State": ["Kaduna","Zaria","Kafanchan","Kagarko","Soba","Saminaka"],
+  "Lagos State": ["Ikeja","Lagos Island","Ikorodu","Epe","Badagry","Surulere","Lekki","Ajah","Yaba"],
+  "Niger State": ["Minna","Bida","Suleja","Kontagora","New Bussa","Mokwa"],
+  "Ogun State": ["Abeokuta","Ijebu Ode","Sagamu","Ota","Ilaro","Ayetoro"],
+  "Platue State": ["Jos","Barkin Ladi","Pankshin","Langtang","Shendam","Mangu"],
+  "Rivers State": ["Port Harcourt","Bonny","Omoku","Ahoada","Degema","Bori"],
+  "Kastina State": ["Katsina","Daura","Funtua","Malumfashi","Dutsin-Ma","Kankia"],
+  "Osun State": ["Osogbo","Ile-Ife","Ilesa","Iwo","Ikirun","Ejigbo"],
+  "Oyo State": ["Ibadan","Ogbomoso","Oyo","Iseyin","Saki","Eruwa"],
+  "Sokoto State": ["Sokoto","Wamako","Binji","Illela","Tambuwal","Gwadabawa"],
+  "Taraba State": ["Jalingo","Wukari","Sardauna (Gembu)","Bali","Takum","Ibi"],
+  "Kogi State": ["Lokoja","Okene","Kabba","Idah","Ankpa","Ajaokuta"],
+  "Ekiti State": ["Ado Ekiti","Ikere-Ekiti","Ikole","Ise/Orun","Ido Osi","Oye-Ekiti"],
+  "Kano State": ["Kano","Wudil","Bichi","Gaya","Rano","Kura"],
+  "Bayelsa State": ["Yenagoa","Ogbia","Brass","Sagbama","Ekeremor","Nembe"],
 };
 
 
@@ -52,19 +93,19 @@ export function RegisterForm({
   const [states, setStates] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
 
+  // Initialize selects: countries are static, states from constant, cities depend on selected state
   useEffect(() => {
-    const fetchEnums = async () => {
-      const [countryEnum, stateEnum, cityEnum] = await Promise.all([
-        getEnumValues('country'),
-        getEnumValues('states'),
-        getEnumValues('cities'),
-      ]);
-      setCountries(countryEnum);
-      setStates(stateEnum);
-      setCities(cityEnum);
-    };
-    fetchEnums();
+    setCountries(africanCountries);
+    setStates(nigeriaStates);
   }, []);
+
+  const selectedState = watch("state");
+  useEffect(() => {
+    const nextCities = selectedState ? (citiesByState[selectedState] || []) : [];
+    setCities(nextCities);
+    // reset city if state changes
+    setValue("customer_city", undefined as any);
+  }, [selectedState, setValue]);
 
   const onSubmit = async (data: FormData) => {
     setIsPending(true);
